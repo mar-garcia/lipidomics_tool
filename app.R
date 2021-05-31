@@ -1,0 +1,221 @@
+library(shiny)
+library(MetaboCoreUtils)
+library(Rdisop)
+
+.ppm <- function(x, ppm = 10) {
+  ppm * x / 1e6
+}
+matchWithPpm <- function(x, y, ppm = 0) {
+  lapply(x, function(z, ppm) {
+    which(abs(z - y) <= (.ppm(z, ppm)) + 1e-9)
+  }, ppm = force(ppm))
+}
+
+sn <- data.frame(
+  "C" = rep(seq(18, 19), each = 4),
+  "db" = rep(seq(0, 3), 2)
+)
+sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
+sn$sn <- paste0(sn$C, ":", sn$db)
+sn$mass <- NA
+sn.list <- list()
+for(i in seq(nrow(sn))){
+  sn$mass[i] <- getMolecule(sn$formula[i])$exactmass
+  
+  sn.list[[i]] <- sn$sn[i]
+  names(sn.list)[[i]] <- sn$sn[i]
+}
+
+ui <- navbarPage(
+  "Lipidomics",
+  
+  tabPanel(
+    "Diacylglycerols (DAGs)",
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("dagC", "C", value = 55)),
+             column(2, numericInput("dagdb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("dagformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvalspos")),
+           fluidRow("", verbatimTextOutput("dagmzvalsneg"))), 
+    column(1), 
+    column(6, h3("MS2"),
+           fluidRow(
+             column(3, numericInput("dagion1", "ion1", value = 0)),
+             column(3, numericInput("dagion2", "ion2", value = 0))
+             ),
+           fluidRow(
+             column(3, verbatimTextOutput("dagsn1")),
+             column(3, verbatimTextOutput("dagsn2")),
+             column(3, verbatimTextOutput("dagsum"))
+           ))), # close tab DAG
+  
+  tabPanel(
+    "Triacylglycerols (TAGs)",
+    column(2, h3("Formula"),
+           fluidRow(
+             column(6, numericInput("tagC", "C", value = 55)),
+             column(6, numericInput("tagdb", "db", value = 0))
+           ),
+           fluidRow(verbatimTextOutput("tagformula")),
+           fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals"))),
+    column(1),
+    column(6, h3("MS2"),
+           fluidRow(
+             column(3, numericInput("tagion1", "ion1", value = 0)),
+             column(3, numericInput("tagion2", "ion2", value = 0)),
+             column(3, numericInput("tagion3", "ion3", value = 0))
+           ),
+           fluidRow(
+             column(3, verbatimTextOutput("tagsn1")),
+             column(3, verbatimTextOutput("tagsn2")),
+             column(3, verbatimTextOutput("tagsn3")),
+             column(3, verbatimTextOutput("tagsum"))
+           ),
+           hr(),
+           fluidRow(
+             column(4, selectInput("tagsn1", "sn1", choices = sn.list)),
+             column(4, selectInput("tagsn2", "sn2", choices = sn.list)),
+             column(4, selectInput("tagsn3", "sn3", choices = sn.list))
+           ),
+           fluidRow(fluidRow(verbatimTextOutput("tagms2"))))
+    
+  ) # close tab TAG
+)# close ui
+
+server <- function(input, output) {
+  
+  dagfml <- reactive({
+    paste0("C", input$dagC + 3, "H", 
+           input$dagC*2 - (2 + 2*input$dagdb) + 6, "O5")
+  })
+  
+  dagmass <- reactive({
+    getMolecule(dagfml())$exactmass
+  })
+  
+  output$dagformula <- renderPrint({dagfml()})
+  
+  output$dagmzvalspos <- renderPrint({
+    unlist(mass2mz(
+      dagmass(), 
+      adduct = c("[M+H-H2O]+", "[M+H]+", "[M+NH4]+", "[M+Na]+", "[2M+NH4]+", "[2M+Na]+")))
+  })
+  output$dagmzvalsneg <- renderPrint({
+    unlist(mass2mz(
+      dagmass(), 
+      adduct = c("[M+CHO2]-", "[2M+CHO2]-")))
+  })
+  
+  output$dagms2 <- renderPrint({
+    ms2()
+  })
+  
+  output$dagsn1 <- renderPrint({
+    sn$sn[unlist(matchWithPpm(
+      unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion1, 
+      sn$mass, ppm = 10))]
+  })
+  
+  output$dagsn2 <- renderPrint({
+    sn$sn[unlist(matchWithPpm(
+      unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion2, 
+      sn$mass, ppm = 10))]
+  })
+  
+  output$dagsum <- renderPrint({
+    paste0(
+      sn$C[unlist(matchWithPpm(
+        unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion1, 
+        sn$mass, ppm = 10))] +
+        sn$C[unlist(matchWithPpm(
+          unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion2, 
+          sn$mass, ppm = 10))],
+      ":",
+      sn$db[unlist(matchWithPpm(
+        unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion1, 
+        sn$mass, ppm = 10))] +
+        sn$db[unlist(matchWithPpm(
+          unlist(mass2mz(dagmass(), adduct = c("[M+H]+"))) - input$dagion2, 
+          sn$mass, ppm = 10))]
+    )
+  })
+  
+  #########################################
+  
+  tagfml <- reactive({
+    paste0("C", input$tagC + 3, "H", 
+           input$tagC*2 - (3 + 2*input$tagdb) + 5, "O6")
+  })
+  
+  tagmass <- reactive({
+    getMolecule(tagfml())$exactmass
+  })
+  
+  tagms2 <- reactive({
+    tmp <- c(
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn1],
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn2],
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn3])
+    tmp <- unique(tmp)
+    names(tmp) <- unique(paste0("[M+H-C", c(input$sn1, input$sn2, input$sn3), "]+"))
+    tmp
+  })
+  
+  output$tagformula <- renderPrint({tagfml()})
+  
+  output$tagmzvals <- renderPrint({
+    unlist(mass2mz(tagmass(), adduct = c("[M+H]+", "[M+NH4]+")))
+  })
+  
+  output$tagms2 <- renderPrint({
+    tagms2()
+  })
+  
+  output$tagsn1 <- renderPrint({
+    sn$sn[unlist(matchWithPpm(
+      unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion1, 
+      sn$mass, ppm = 10))]
+  })
+  
+  output$tagsn2 <- renderPrint({
+    sn$sn[unlist(matchWithPpm(
+      unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion2, 
+      sn$mass, ppm = 10))]
+  })
+  
+  output$tagsn3 <- renderPrint({
+    sn$sn[unlist(matchWithPpm(
+      unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion3, 
+      sn$mass, ppm = 10))]
+  })
+  
+  output$tagsum <- renderPrint({
+    paste0(
+      sn$C[unlist(matchWithPpm(
+        unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion1, 
+        sn$mass, ppm = 10))] +
+        sn$C[unlist(matchWithPpm(
+          unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion2, 
+          sn$mass, ppm = 10))] +
+        sn$C[unlist(matchWithPpm(
+          unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion3, 
+          sn$mass, ppm = 10))],
+      ":",
+      sn$db[unlist(matchWithPpm(
+        unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion1, 
+        sn$mass, ppm = 10))] +
+        sn$db[unlist(matchWithPpm(
+          unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion2, 
+          sn$mass, ppm = 10))] +
+        sn$db[unlist(matchWithPpm(
+          unlist(mass2mz(tagmass(), adduct = c("[M+H]+"))) - input$tagion3, 
+          sn$mass, ppm = 10))]
+    )
+  })
+  
+} # close server
+
+shinyApp(ui = ui, server = server)
