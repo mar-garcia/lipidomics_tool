@@ -1,6 +1,6 @@
 library(shiny)
 library(MetaboCoreUtils)
-library(Rdisop)
+library(OrgMassSpecR)
 
 .ppm <- function(x, ppm = 10) {
   ppm * x / 1e6
@@ -20,7 +20,7 @@ sn$sn <- paste0(sn$C, ":", sn$db)
 sn$mass <- NA
 sn.list <- list()
 for(i in seq(nrow(sn))){
-  sn$mass[i] <- getMolecule(sn$formula[i])$exactmass
+  sn$mass[i] <- MonoisotopicMass(formula = ListFormula(sn$formula[i]))
   
   sn.list[[i]] <- sn$sn[i]
   names(sn.list)[[i]] <- sn$sn[i]
@@ -93,7 +93,7 @@ server <- function(input, output) {
   })
   
   dagmass <- reactive({
-    getMolecule(dagfml())$exactmass
+    MonoisotopicMass(formula = ListFormula(dagfml()))
   })
   
   output$dagformula <- renderPrint({dagfml()})
@@ -151,7 +151,7 @@ server <- function(input, output) {
   })
   
   tagmass <- reactive({
-    getMolecule(tagfml())$exactmass
+    MonoisotopicMass(formula = ListFormula(tagfml()))
   })
   
   tagms2 <- reactive({
