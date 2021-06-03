@@ -12,8 +12,8 @@ matchWithPpm <- function(x, y, ppm = 0) {
 }
 
 sn <- data.frame(
-  "C" = rep(seq(18, 19), each = 4),
-  "db" = rep(seq(0, 3), 2)
+  "C" = rep(seq(16, 20), each = 4),
+  "db" = rep(seq(0, 3), 5)
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn$sn <- paste0(sn$C, ":", sn$db)
@@ -96,12 +96,21 @@ server <- function(input, output) {
     MonoisotopicMass(formula = ListFormula(dagfml()))
   })
   
+  dagmzpos <- reactive({
+    tmp <- unlist(mass2mz(
+      dagmass(), 
+      adduct = c("[M+H-H2O]+", "[M+H]+", "[M+NH4]+", "[M+Na]+", "[2M+NH4]+", "[2M+Na]+")))
+    tmp2 <- colnames(tmp)
+    tmp <- c(tmp, mass2mz(dagmass(), "[M+H]+") + getMolecule("C2H7N")$exactmass)
+    names(tmp) <- c(tmp2, "[M+C2H8N]+")
+    tmp <- tmp[c(1:4,7,5:6)]
+    tmp
+  })
+  
   output$dagformula <- renderPrint({dagfml()})
   
   output$dagmzvalspos <- renderPrint({
-    unlist(mass2mz(
-      dagmass(), 
-      adduct = c("[M+H-H2O]+", "[M+H]+", "[M+NH4]+", "[M+Na]+", "[2M+NH4]+", "[2M+Na]+")))
+    dagmzpos()
   })
   output$dagmzvalsneg <- renderPrint({
     unlist(mass2mz(
