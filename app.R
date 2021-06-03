@@ -30,6 +30,40 @@ ui <- navbarPage(
   "Lipidomics",
   
   tabPanel(
+    "Phosphatidic acids (PAs)",
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("paC", "C", value = 32)),
+             column(2, numericInput("padb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("paformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("pamzvals"))
+    ),
+    column(1), 
+    column(6, h3("MS2 (-)"),
+           fluidRow(
+             column(3, numericInput("paion1", "ion1", value = 0)),
+             column(3, numericInput("paion2", "ion2", value = 0))
+           ),
+           fluidRow(
+             column(3, verbatimTextOutput("pasn1")),
+             column(3, verbatimTextOutput("pasn2")),
+             column(3, verbatimTextOutput("pasum"))
+           ),
+           hr(),
+           fluidRow(
+             column(4, selectInput("paion1x", "sn1", choices = sn.list)),
+             column(4, selectInput("paion2x", "sn2", choices = sn.list))
+           ),
+           fluidRow(
+             column(4, verbatimTextOutput("pasn1x")),
+             column(4, verbatimTextOutput("pasn2x"))
+             )
+           )
+  ), # close tab PAs
+  
+  tabPanel(
     "Diacylglycerols (DAGs)",
     column(4, h3("Formula"),
            fluidRow(
@@ -41,11 +75,11 @@ ui <- navbarPage(
            fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvalspos")),
            fluidRow("", verbatimTextOutput("dagmzvalsneg"))), 
     column(1), 
-    column(6, h3("MS2"),
+    column(6, h3("MS2 (+)"),
            fluidRow(
              column(3, numericInput("dagion1", "ion1", value = 0)),
              column(3, numericInput("dagion2", "ion2", value = 0))
-             ),
+           ),
            fluidRow(
              column(3, verbatimTextOutput("dagsn1")),
              column(3, verbatimTextOutput("dagsn2")),
@@ -62,7 +96,7 @@ ui <- navbarPage(
            fluidRow(verbatimTextOutput("tagformula")),
            fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals"))),
     column(1),
-    column(6, h3("MS2"),
+    column(6, h3("MS2 (+)"),
            fluidRow(
              column(3, numericInput("tagion1", "ion1", value = 0)),
              column(3, numericInput("tagion2", "ion2", value = 0)),
@@ -80,12 +114,89 @@ ui <- navbarPage(
              column(4, selectInput("tagsn2", "sn2", choices = sn.list)),
              column(4, selectInput("tagsn3", "sn3", choices = sn.list))
            ),
-           fluidRow(fluidRow(verbatimTextOutput("tagms2"))))
+           fluidRow(fluidRow(verbatimTextOutput("tagms2")))
+           )
     
   ) # close tab TAG
 )# close ui
 
 server <- function(input, output) {
+  
+  pafml <- reactive({
+    paste0("C", input$paC + 3, "H", 
+           input$paC*2 - (2 + 2*input$padb) + 7, "O8P")
+  })
+  
+  pamass <- reactive({
+    MonoisotopicMass(formula = ListFormula(pafml()))
+  })
+  
+  output$paformula <- renderPrint({pafml()})
+  
+  output$pamzvals <- renderPrint({
+    tmp <- unlist(mass2mz(
+      pamass(), 
+      adduct = c("[M+H]+", "[M+NH4]+", "[M-H]-")))
+    tmp2 <- colnames(tmp)
+    tmp <- c(as.numeric(unlist(mass2mz(pamass(), "[M+H]+"))) - 
+               MonoisotopicMass(formula = ListFormula("H3PO4")), tmp)
+    names(tmp) <- c("[M+H-PA]+", tmp2)
+    tmp
+  })
+  
+  output$pasn1 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(
+        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
+        sn$mass, ppm = 10))], " (",
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - 
+              sn$mass[unlist(matchWithPpm(
+                unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
+                sn$mass, ppm = 10))] + 
+              MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
+    )
+  })
+  
+  output$pasn2 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(
+        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
+        sn$mass, ppm = 10))], " (",
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - 
+              sn$mass[unlist(matchWithPpm(
+                unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
+                sn$mass, ppm = 10))] + 
+              MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
+    )
+  })
+  
+  output$pasum <- renderPrint({
+    paste0(
+      sn$C[unlist(matchWithPpm(
+        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
+        sn$mass, ppm = 10))] +
+        sn$C[unlist(matchWithPpm(
+          unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
+          sn$mass, ppm = 10))],
+      ":",
+      sn$db[unlist(matchWithPpm(
+        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
+        sn$mass, ppm = 10))] +
+        sn$db[unlist(matchWithPpm(
+          unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
+          sn$mass, ppm = 10))]
+    )
+  })
+  
+  output$pasn1x <- reactive({
+    round(unlist(mass2mz(sn$mass[sn$sn == input$paion1x], "[M-H]-")), 5)
+  })
+  
+  output$pasn2x <- reactive({
+    round(unlist(mass2mz(sn$mass[sn$sn == input$paion2x], "[M-H]-")), 5)
+  })
+  
+  #########################################
   
   dagfml <- reactive({
     paste0("C", input$dagC + 3, "H", 
