@@ -12,8 +12,8 @@ matchWithPpm <- function(x, y, ppm = 0) {
 }
 
 sn <- data.frame(
-  "C" = rep(seq(16, 22), each = 4),
-  "db" = rep(seq(0, 3), 7)
+  "C" = rep(seq(14, 22), each = 4),
+  "db" = rep(seq(0, 3), 9)
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn$sn <- paste0(sn$C, ":", sn$db)
@@ -26,9 +26,11 @@ for(i in seq(nrow(sn))){
   names(sn.list)[[i]] <- sn$sn[i]
 }
 
+# UI ------------------------------------------------------------------------
 ui <- navbarPage(
   "Lipidomics",
   
+  ## PA ----
   tabPanel(
     "Phosphatidic acids (PAs)",
     column(4, h3("Formula"),
@@ -59,10 +61,49 @@ ui <- navbarPage(
            fluidRow(
              column(4, verbatimTextOutput("pasn1x")),
              column(4, verbatimTextOutput("pasn2x"))
-             )
            )
+    )
   ), # close tab PAs
   
+  
+  ## PA methylated ----
+  tabPanel(
+    "Methylated phosphatidic acids (mPAs)",
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("mpaC", "C", value = 32)),
+             column(2, numericInput("mpadb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("mpaformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("mpamzvals"))
+    ),
+    column(1), 
+    column(6, h3("MS2 (-)"),
+           fluidRow(
+             column(3, numericInput("mpaion1", "ion1", value = 0)),
+             column(3, numericInput("mpaion2", "ion2", value = 0))
+           ),
+           fluidRow(
+             column(3, verbatimTextOutput("mpasn1")),
+             column(3, verbatimTextOutput("mpasn2"))
+           )),
+    fluidRow(),
+    hr(),
+    h3("Commonly occuring product ions for mPAs:"),
+    column(3,
+           strong("Positive [M+NH4]+:"),
+           tags$li("[M + H]+"),
+           tags$li("[M + H - methyl-phosphate]+")),
+    column(3, 
+           strong("Negative [M-H]-:"),
+           tags$li("[sn1 - H]-"),
+           tags$li("[sn2 - H]-"),
+           tags$li("[M - H - (sn1-H2O)]-"))
+  ), # close mPA
+  
+  
+  ## DAG ----
   tabPanel(
     "Diacylglycerols (DAGs)",
     column(4, h3("Formula"),
@@ -86,6 +127,7 @@ ui <- navbarPage(
              column(3, verbatimTextOutput("dagsum"))
            ))), # close tab DAG
   
+  ## TAG ----
   tabPanel(
     "Triacylglycerols (TAGs)",
     column(2, h3("Formula"),
@@ -115,13 +157,15 @@ ui <- navbarPage(
              column(4, selectInput("tagsn3", "sn3", choices = sn.list))
            ),
            fluidRow(fluidRow(verbatimTextOutput("tagms2")))
-           )
+    )
     
   ) # close tab TAG
 )# close ui
 
+# SERVER ---------------------------------------------------------------------
 server <- function(input, output) {
   
+  ## PA ----
   pafml <- reactive({
     paste0("C", input$paC + 3, "H", 
            input$paC*2 - (2 + 2*input$padb) + 7, "O8P")
@@ -136,7 +180,7 @@ server <- function(input, output) {
   output$pamzvals <- renderPrint({
     tmp <- unlist(mass2mz(
       pamass(), 
-      adduct = c("[M+H]+", "[M+NH4]+", "[M-H]-")))
+      adduct = c("[M+H]+", "[M+NH4]+", "[2M+H]+", "[2M+NH4]+", "[M-H]-")))
     tmp2 <- colnames(tmp)
     tmp <- c(as.numeric(unlist(mass2mz(pamass(), "[M+H]+"))) - 
                MonoisotopicMass(formula = ListFormula("H3PO4")), tmp)
@@ -196,7 +240,57 @@ server <- function(input, output) {
     round(unlist(mass2mz(sn$mass[sn$sn == input$paion2x], "[M-H]-")), 5)
   })
   
-  #########################################
+  
+  ## PA methylated -----
+  
+  mpafml <- reactive({
+    paste0("C", input$mpaC + 4, "H", 
+           input$mpaC*2 - (2 + 2*input$mpadb) + 9, "O8P")
+  })
+  
+  mpamass <- reactive({
+    MonoisotopicMass(formula = ListFormula(mpafml()))
+  })
+  
+  output$mpaformula <- renderPrint({mpafml()})
+  
+  output$mpamzvals <- renderPrint({
+    tmp <- unlist(mass2mz(
+      mpamass(), 
+      adduct = c("[M+H]+", "[M+NH4]+", "[2M+H]+", "[2M+NH4]+", "[M-H]-", "[2M-H]-")))
+    tmp2 <- colnames(tmp)
+    tmp <- c(as.numeric(unlist(mass2mz(mpamass(), "[M+H]+"))) - 
+               MonoisotopicMass(formula = ListFormula("H3PO4CH2")), tmp)
+    names(tmp) <- c("[M+H-mPA]+", tmp2)
+    tmp
+  })
+  
+  output$mpasn1 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))], " (",
+      round(
+        unlist(mass2mz(mpamass(), adduct = c("[M-H]-"))) - 
+          MonoisotopicMass(formula = ListFormula(subtractElements(
+            sn$formula[unlist(matchWithPpm(input$mpaion1 + 1.007276, 
+                                           sn$mass, ppm = 10))], "H2O"))), 
+        4), ")"
+    )
+  })
+  
+  output$mpasn2 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))], " (",
+      round(
+        unlist(mass2mz(mpamass(), adduct = c("[M-H]-"))) - 
+          MonoisotopicMass(formula = ListFormula(subtractElements(
+            sn$formula[unlist(matchWithPpm(input$mpaion2 + 1.007276, 
+                                           sn$mass, ppm = 10))], "H2O"))), 
+        4), ")"
+    )
+  })
+  
+  
+  ## DAG ----
   
   dagfml <- reactive({
     paste0("C", input$dagC + 3, "H", 
@@ -261,7 +355,7 @@ server <- function(input, output) {
     )
   })
   
-  #########################################
+  ## TAG ----
   
   tagfml <- reactive({
     paste0("C", input$tagC + 3, "H", 
