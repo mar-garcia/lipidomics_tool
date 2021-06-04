@@ -26,9 +26,53 @@ for(i in seq(nrow(sn))){
   names(sn.list)[[i]] <- sn$sn[i]
 }
 
+mzdif.pos <- data.frame(rbind(
+  c(MonoisotopicMass(formula = ListFormula("C12H22O11")) - 0.984, 
+    "loss 2 galactoses (NH4 ion) - DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("C12H22O11")) + 
+      MonoisotopicMass(formula = ListFormula("NH3")), 
+    "loss NH4 & 2 galactoses - DGDG")
+))
+colnames(mzdif.pos) <- c("dif", "add")
+mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
+
+mzdif.neg <- data.frame(rbind(
+  c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH"),
+  cbind(sn$mass + MonoisotopicMass(formula = ListFormula("HCOOH")), 
+        paste("loss HCOOH &", sn$sn))
+))
+colnames(mzdif.neg) <- c("dif", "add")
+mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
+
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
   "Lipidomics",
+  
+  tabPanel(
+    "MS2",
+    column(5, h2("ESI+"),
+           numericInput("posprec", "Precursor", value = 0),
+           fluidRow(
+             column(6, numericInput("posfrag1", "Fragment 1", value = 0)),
+             column(6, verbatimTextOutput("posfrag1add"))
+           ),
+           fluidRow(
+             column(6, numericInput("posfrag2", "Fragment 2", value = 0)),
+             column(6, verbatimTextOutput("posfrag2add"))
+           )),
+    column(1),
+    column(5, h2("ESI-"),
+           numericInput("negprec", "Precursor", value = 0),
+           fluidRow(
+             column(6, numericInput("negfrag1", "Fragment 1", value = 0)),
+             column(6, verbatimTextOutput("negfrag1add"))
+           ),
+           fluidRow(
+             column(6, numericInput("negfrag2", "Fragment 2", value = 0)),
+             column(6, verbatimTextOutput("negfrag2add"))
+           )
+           ),
+    ), # close "MS2" tab
   
   ## GP ----
   navbarMenu(
@@ -206,7 +250,7 @@ ui <- navbarPage(
                       column(3, numericInput("dgdgion1", "ion1", value = 0)),
                       column(3, verbatimTextOutput("dgdgsn1"))
              )
-             ),
+      ),
       fluidRow(),
       hr(),
       h3("Commonly occuring product ions for DGDGs:"),
@@ -225,6 +269,26 @@ ui <- navbarPage(
 
 # SERVER ---------------------------------------------------------------------
 server <- function(input, output) {
+  
+  output$posfrag1add <- renderPrint({
+    idx <- which(abs((input$posprec - input$posfrag1) - mzdif.pos$dif) < 0.01)
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag2add <- renderPrint({
+    idx <- which(abs((input$posprec - input$posfrag2) - mzdif.pos$dif) < 0.01)
+    mzdif.pos$add[idx]
+  })
+  
+  output$negfrag1add <- renderPrint({
+    idx <- which(abs((input$negprec - input$negfrag1) - mzdif.neg$dif) < 0.01)
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag2add <- renderPrint({
+    idx <- which(abs((input$negprec - input$negfrag2) - mzdif.neg$dif) < 0.01)
+    mzdif.neg$add[idx]
+  })
   
   ## PA ----
   pafml <- reactive({
@@ -521,11 +585,11 @@ server <- function(input, output) {
       round(as.numeric(mass2mz(dgdgmass(), "[M+NH4]+")) - 
               MonoisotopicMass(formula = ListFormula("C12H22O11")) + 0.984, 5), "-",
       round(as.numeric(mass2mz(dgdgmass(), "[M+H]+")) - 
-        MonoisotopicMass(formula = ListFormula("C12H22O11")), 5))
+              MonoisotopicMass(formula = ListFormula("C12H22O11")), 5))
   })
   
   output$dgdgfragneg <- renderPrint({
-      round(mass2mz(dgdgmass(), "[M-H]-"), 5)
+    round(mass2mz(dgdgmass(), "[M-H]-"), 5)
   })
   
   output$dgdgsn1 <- renderPrint({
@@ -533,7 +597,7 @@ server <- function(input, output) {
       unlist(mass2mz(dgdgmass(), adduct = c("[M-H]-"))) - input$dgdgion1, 
       sn$mass, ppm = 10))
     paste0(sn$sn[idx], "-",
-          input$dgdgC - sn$C[idx], ":", input$dgdgdb - sn$db[idx])
+           input$dgdgC - sn$C[idx], ":", input$dgdgdb - sn$db[idx])
   })
   
   
