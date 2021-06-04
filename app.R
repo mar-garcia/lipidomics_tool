@@ -27,6 +27,11 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
+  c(MonoisotopicMass(formula = ListFormula("C6H12O6")) - 0.984, 
+    "loss 1 galactose (NH4 ion) - MGDG"),
+  c(MonoisotopicMass(formula = ListFormula("C6H12O6")) + 
+      MonoisotopicMass(formula = ListFormula("NH3")), 
+    "loss NH4 & 1 galactose - MGDG"),
   c(MonoisotopicMass(formula = ListFormula("C12H22O11")) - 0.984, 
     "loss 2 galactoses (NH4 ion) - DGDG"),
   c(MonoisotopicMass(formula = ListFormula("C12H22O11")) + 
@@ -39,7 +44,11 @@ mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 mzdif.neg <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH"),
   cbind(sn$mass + MonoisotopicMass(formula = ListFormula("HCOOH")), 
-        paste("loss HCOOH &", sn$sn))
+        paste("loss HCOOH &", sn$sn, "- DGDG")),
+  cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))
+          + MonoisotopicMass(formula = ListFormula("HCOOH")), 
+        paste("loss HCOOH &", sn$sn, "- MGDG")),
+  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]-"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
@@ -70,6 +79,10 @@ ui <- navbarPage(
            fluidRow(
              column(6, numericInput("negfrag2", "Fragment 2", value = 0)),
              column(6, verbatimTextOutput("negfrag2add"))
+           ),
+           fluidRow(
+             column(6, numericInput("negfrag3", "Fragment 3", value = 0)),
+             column(6, verbatimTextOutput("negfrag3add"))
            )
            ),
     ), # close "MS2" tab
@@ -230,18 +243,56 @@ ui <- navbarPage(
     ) # close tab TAG
   ), # close GL-glycerols
   navbarMenu(
-    "Glycerolipids (GL) - Glycosylglycerols",
+    "Glycerolipids (GL) - Galactosyldiacylglycerols (GDG)",
+    
+    ### MGDG ----
+    tabPanel(
+      "Monogalactosyldiacylglycerols (MGDG)",
+      column(2, h3("Formula"),
+             fluidRow(
+               column(6, numericInput("mgdgC", "C", value = 36)),
+               column(6, numericInput("mgdgdb", "db", value = 0))
+             ),
+             fluidRow(verbatimTextOutput("mgdgformula")),
+             fluidRow(h3("m/z values"), verbatimTextOutput("mgdgmzvals1")),
+             fluidRow(verbatimTextOutput("mgdgmzvals2"))
+      ),
+      column(1),
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("mgdgfragpos")),
+             fluidRow(h4("ESI-"), 
+                      column(4, verbatimTextOutput("mgdgfragneg")),
+                      column(2, numericInput("mgdgion1", "ion1", value = 0)),
+                      column(6, verbatimTextOutput("mgdgsn1"))
+             )
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for mgdgs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + NH4 - galactose]+ + 0.984"),
+             tags$li("[M + H - galactose]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H]-"),
+             tags$li("[M - H - (sn1 - H2O)]-"),
+             tags$li("[sn1 - H]-")
+      )
+    ), # close MGDG
     
     ### DGDG ----
     tabPanel(
-      "Glycosyldiacylglycerols (DGDG)",
+      "Digalactosyldiacylglycerol (DGDG)",
       column(2, h3("Formula"),
              fluidRow(
                column(6, numericInput("dgdgC", "C", value = 36)),
-               column(6, numericInput("dgdgdb", "db", value = 6))
+               column(6, numericInput("dgdgdb", "db", value = 0))
              ),
              fluidRow(verbatimTextOutput("dgdgformula")),
-             fluidRow(h3("m/z values"), verbatimTextOutput("dgdgmzvals"))),
+             fluidRow(h3("m/z values"), verbatimTextOutput("dgdgmzvals1")),
+             fluidRow(verbatimTextOutput("dgdgmzvals2"))
+             ),
       column(1),
       column(6, h3("MS2"),
              fluidRow(h4("ESI+"), verbatimTextOutput("dgdgfragpos")),
@@ -281,12 +332,20 @@ server <- function(input, output) {
   })
   
   output$negfrag1add <- renderPrint({
-    idx <- which(abs((input$negprec - input$negfrag1) - mzdif.neg$dif) < 0.01)
+    idx <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag1, mzdif.neg$dif, ppm = 10)))
     mzdif.neg$add[idx]
   })
   
   output$negfrag2add <- renderPrint({
-    idx <- which(abs((input$negprec - input$negfrag2) - mzdif.neg$dif) < 0.01)
+    idx <- c(which(abs((input$negprec - input$negfrag2) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag2, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag3add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag3, mzdif.neg$dif, ppm = 10)))
     mzdif.neg$add[idx]
   })
   
@@ -563,6 +622,51 @@ server <- function(input, output) {
     )
   })
   
+  ## MGDG -----
+  
+  mgdgfml <- reactive({
+    paste0("C", input$mgdgC + 9, "H", 
+           input$mgdgC*2 - (2 + 2*input$mgdgdb) + 16, "O10")
+  })
+  
+  mgdgmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(mgdgfml()))
+  })
+  
+  output$mgdgformula <- renderPrint({mgdgfml()})
+  
+  output$mgdgmzvals1 <- renderPrint({
+    unlist(mass2mz(mgdgmass(), adduct = c("[M+NH4]+", "[M+CHO2]-")))
+  })
+  
+  #output$mgdgmzvals2 <- renderPrint({
+  #  unlist(mass2mz(mgdgmass(), adduct = c("[M+Na]+", "[M-H]-")))
+  #})
+  
+  output$mgdgfragpos <- renderPrint({
+    paste(
+      round(as.numeric(mass2mz(mgdgmass(), "[M+NH4]+")) - 
+              MonoisotopicMass(formula = ListFormula("C6H12O6")) + 0.984, 5), "-",
+      round(as.numeric(mass2mz(mgdgmass(), "[M+H]+")) - 
+              MonoisotopicMass(formula = ListFormula("C6H12O6")), 5))
+  })
+  
+  output$mgdgfragneg <- renderPrint({
+    round(mass2mz(mgdgmass(), "[M-H]-"), 5)
+  })
+  
+  output$mgdgsn1 <- renderPrint({
+    idx <- unlist(matchWithPpm(
+      unlist(mass2mz(mgdgmass(), adduct = c("[M-H]-"))) - input$mgdgion1, 
+      sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))
+    paste0(sn$sn[idx], " (", round(mass2mz(sn$mass[idx], "[M-H]-"), 5), ") - ",
+           input$mgdgC - sn$C[idx], ":", input$mgdgdb - sn$db[idx],
+           " (",
+           round(mass2mz(sn$mass[sn$sn == paste0(input$mgdgC - sn$C[idx], ":", 
+                                                 input$mgdgdb - sn$db[idx])], "[M-H]-"), 5)
+           , ")")
+  })
+  
   ## DGDG -----
   
   dgdgfml <- reactive({
@@ -576,8 +680,12 @@ server <- function(input, output) {
   
   output$dgdgformula <- renderPrint({dgdgfml()})
   
-  output$dgdgmzvals <- renderPrint({
+  output$dgdgmzvals1 <- renderPrint({
     unlist(mass2mz(dgdgmass(), adduct = c("[M+NH4]+", "[M+CHO2]-")))
+  })
+  
+  output$dgdgmzvals2 <- renderPrint({
+    unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+", "[M-H]-")))
   })
   
   output$dgdgfragpos <- renderPrint({
