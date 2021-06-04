@@ -100,7 +100,8 @@ ui <- navbarPage(
              ),
              column(4, fluidRow(verbatimTextOutput("paformula"))),
              fluidRow(),
-             fluidRow(h3("m/z values"), verbatimTextOutput("pamzvals"))
+             fluidRow(h3("m/z values"), verbatimTextOutput("pamzvals1")),
+             fluidRow(verbatimTextOutput("pamzvals2"))
       ),
       column(1), 
       column(6, h3("MS2 (-)"),
@@ -361,10 +362,14 @@ server <- function(input, output) {
   
   output$paformula <- renderPrint({pafml()})
   
-  output$pamzvals <- renderPrint({
+  output$pamzvals1 <- renderPrint({
+    mass2mz(pamass(), adduct = c("[M+NH4]+", "[M-H]-"))
+  })
+  
+  output$pamzvals2 <- renderPrint({
     tmp <- unlist(mass2mz(
       pamass(), 
-      adduct = c("[M+H]+", "[M+NH4]+", "[2M+H]+", "[2M+NH4]+", "[M-H]-")))
+      adduct = c("[M+H]+", "[2M+H]+", "[2M+NH4]+")))
     tmp2 <- colnames(tmp)
     tmp <- c(as.numeric(unlist(mass2mz(pamass(), "[M+H]+"))) - 
                MonoisotopicMass(formula = ListFormula("H3PO4")), tmp)
@@ -639,9 +644,16 @@ server <- function(input, output) {
     unlist(mass2mz(mgdgmass(), adduct = c("[M+NH4]+", "[M+CHO2]-")))
   })
   
-  #output$mgdgmzvals2 <- renderPrint({
-  #  unlist(mass2mz(mgdgmass(), adduct = c("[M+Na]+", "[M-H]-")))
-  #})
+  output$mgdgmzvals2 <- renderPrint({
+    tmp <- unlist(mass2mz(
+      mgdgmass(), 
+      adduct = c("[2M+NH4]+", "[2M+Na]+")))
+    tmp2 <- colnames(tmp)
+    tmp <- c(as.numeric(unlist(mass2mz(mgdgmass(), "[M+H]+"))) + 
+      MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
+    names(tmp) <- c("[M+C2H8N]+", tmp2)
+    tmp
+  })
   
   output$mgdgfragpos <- renderPrint({
     paste(
