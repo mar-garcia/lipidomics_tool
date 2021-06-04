@@ -30,136 +30,197 @@ for(i in seq(nrow(sn))){
 ui <- navbarPage(
   "Lipidomics",
   
-  ## PA ----
-  tabPanel(
-    "Phosphatidic acids (PAs)",
-    column(4, h3("Formula"),
-           fluidRow(
-             column(2, numericInput("paC", "C", value = 32)),
-             column(2, numericInput("padb", "db", value = 0))
-           ),
-           column(4, fluidRow(verbatimTextOutput("paformula"))),
-           fluidRow(),
-           fluidRow(h3("m/z values"), verbatimTextOutput("pamzvals"))
-    ),
-    column(1), 
-    column(6, h3("MS2 (-)"),
-           fluidRow(
-             column(3, numericInput("paion1", "ion1", value = 0)),
-             column(3, numericInput("paion2", "ion2", value = 0))
-           ),
-           fluidRow(
-             column(3, verbatimTextOutput("pasn1")),
-             column(3, verbatimTextOutput("pasn2")),
-             column(3, verbatimTextOutput("pasum"))
-           ),
-           hr(),
-           fluidRow(
-             column(4, selectInput("paion1x", "sn1", choices = sn.list)),
-             column(4, selectInput("paion2x", "sn2", choices = sn.list))
-           ),
-           fluidRow(
-             column(4, verbatimTextOutput("pasn1x")),
-             column(4, verbatimTextOutput("pasn2x"))
-           )
-    )
-  ), # close tab PAs
-  
-  
-  ## PA methylated ----
-  tabPanel(
-    "Methylated phosphatidic acids (mPAs)",
-    column(4, h3("Formula"),
-           fluidRow(
-             column(2, numericInput("mpaC", "C", value = 32)),
-             column(2, numericInput("mpadb", "db", value = 0))
-           ),
-           column(4, fluidRow(verbatimTextOutput("mpaformula"))),
-           fluidRow(),
-           fluidRow(h3("m/z values"), verbatimTextOutput("mpamzvals"))
-    ),
-    column(1), 
-    column(6, h3("MS2 (-)"),
-           fluidRow(
-             column(3, numericInput("mpaion1", "ion1", value = 0)),
-             column(3, numericInput("mpaion2", "ion2", value = 0))
-           ),
-           fluidRow(
-             column(3, verbatimTextOutput("mpasn1")),
-             column(3, verbatimTextOutput("mpasn2"))
-           )),
-    fluidRow(),
-    hr(),
-    h3("Commonly occuring product ions for mPAs:"),
-    column(3,
-           strong("Positive [M+NH4]+:"),
-           tags$li("[M + H]+"),
-           tags$li("[M + H - methyl-phosphate]+")),
-    column(3, 
-           strong("Negative [M-H]-:"),
-           tags$li("[sn1 - H]-"),
-           tags$li("[sn2 - H]-"),
-           tags$li("[M - H - (sn1-H2O)]-"))
-  ), # close mPA
-  
-  
-  ## DAG ----
-  tabPanel(
-    "Diacylglycerols (DAGs)",
-    column(4, h3("Formula"),
-           fluidRow(
-             column(2, numericInput("dagC", "C", value = 39)),
-             column(2, numericInput("dagdb", "db", value = 0))
-           ),
-           column(4, fluidRow(verbatimTextOutput("dagformula"))),
-           fluidRow(),
-           fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvalspos")),
-           fluidRow("", verbatimTextOutput("dagmzvalsneg"))), 
-    column(1), 
-    column(6, h3("MS2 (+)"),
-           fluidRow(
-             column(3, numericInput("dagion1", "ion1", value = 0)),
-             column(3, numericInput("dagion2", "ion2", value = 0))
-           ),
-           fluidRow(
-             column(3, verbatimTextOutput("dagsn1")),
-             column(3, verbatimTextOutput("dagsn2")),
-             column(3, verbatimTextOutput("dagsum"))
-           ))), # close tab DAG
-  
-  ## TAG ----
-  tabPanel(
-    "Triacylglycerols (TAGs)",
-    column(2, h3("Formula"),
-           fluidRow(
-             column(6, numericInput("tagC", "C", value = 54)),
-             column(6, numericInput("tagdb", "db", value = 0))
-           ),
-           fluidRow(verbatimTextOutput("tagformula")),
-           fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals"))),
-    column(1),
-    column(6, h3("MS2 (+)"),
-           fluidRow(
-             column(3, numericInput("tagion1", "ion1", value = 0)),
-             column(3, numericInput("tagion2", "ion2", value = 0)),
-             column(3, numericInput("tagion3", "ion3", value = 0))
-           ),
-           fluidRow(
-             column(3, verbatimTextOutput("tagsn1")),
-             column(3, verbatimTextOutput("tagsn2")),
-             column(3, verbatimTextOutput("tagsn3")),
-             column(3, verbatimTextOutput("tagsum"))
-           ),
-           hr(),
-           fluidRow(
-             column(4, selectInput("tagsn1", "sn1", choices = sn.list)),
-             column(4, selectInput("tagsn2", "sn2", choices = sn.list)),
-             column(4, selectInput("tagsn3", "sn3", choices = sn.list))
-           ),
-           fluidRow(fluidRow(verbatimTextOutput("tagms2")))
-    )
+  ## GP ----
+  navbarMenu(
+    "Glycerophospholipids (GPs)",
+    ### PA ----
+    tabPanel(
+      "Phosphatidic acids (PAs)",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("paC", "C", value = 32)),
+               column(2, numericInput("padb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("paformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("pamzvals"))
+      ),
+      column(1), 
+      column(6, h3("MS2 (-)"),
+             fluidRow(
+               column(3, numericInput("paion1", "ion1", value = 0)),
+               column(3, numericInput("paion2", "ion2", value = 0))
+             ),
+             fluidRow(
+               column(3, verbatimTextOutput("pasn1")),
+               column(3, verbatimTextOutput("pasn2")),
+               column(3, verbatimTextOutput("pasum"))
+             ),
+             hr(),
+             fluidRow(
+               column(4, selectInput("paion1x", "sn1", choices = sn.list)),
+               column(4, selectInput("paion2x", "sn2", choices = sn.list))
+             ),
+             fluidRow(
+               column(4, verbatimTextOutput("pasn1x")),
+               column(4, verbatimTextOutput("pasn2x"))
+             )
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for PAs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H]+"),
+             tags$li("[M + H - phosphate]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H - sn1]-"),
+             tags$li("[M - H - (sn1-H2O)]-"),
+             tags$li("[sn1 - H]-"),
+             tags$li("[M - H - sn2"),
+             tags$li("[M - H - (sn2-H2O)]-"),
+             tags$li("[sn2 - H]-")
+             
+      )
+    ), # close tab PAs
     
-  ) # close tab TAG
+    
+    ### PA methylated ----
+    tabPanel(
+      "Methylated phosphatidic acids (mPAs)",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("mpaC", "C", value = 32)),
+               column(2, numericInput("mpadb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("mpaformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("mpamzvals"))
+      ),
+      column(1), 
+      column(6, h3("MS2 (-)"),
+             fluidRow(
+               column(3, numericInput("mpaion1", "ion1", value = 0)),
+               column(3, numericInput("mpaion2", "ion2", value = 0))
+             ),
+             fluidRow(
+               column(3, verbatimTextOutput("mpasn1")),
+               column(3, verbatimTextOutput("mpasn2")),
+               column(3, verbatimTextOutput("mpasum"))
+             )),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for mPAs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H]+"),
+             tags$li("[M + H - methyl-phosphate]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[sn1 - H]-"),
+             tags$li("[sn2 - H]-"),
+             tags$li("[M - H - (sn1-H2O)]-"))
+    ) # close mPA
+  ), # close Glycerophospholipids [GP]
+  
+  ## GL ----
+  navbarMenu(
+    "Glycerolipids (GL) - Glycerols",
+    ### DAG ----
+    tabPanel(
+      "Diacylglycerols (DAGs)",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("dagC", "C", value = 39)),
+               column(2, numericInput("dagdb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("dagformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvalspos")),
+             fluidRow("", verbatimTextOutput("dagmzvalsneg"))), 
+      column(1), 
+      column(6, h3("MS2 (+)"),
+             fluidRow(
+               column(3, numericInput("dagion1", "ion1", value = 0)),
+               column(3, numericInput("dagion2", "ion2", value = 0))
+             ),
+             fluidRow(
+               column(3, verbatimTextOutput("dagsn1")),
+               column(3, verbatimTextOutput("dagsn2")),
+               column(3, verbatimTextOutput("dagsum"))
+             ))), # close tab DAG
+    
+    ### TAG ----
+    tabPanel(
+      "Triacylglycerols (TAGs)",
+      column(2, h3("Formula"),
+             fluidRow(
+               column(6, numericInput("tagC", "C", value = 54)),
+               column(6, numericInput("tagdb", "db", value = 0))
+             ),
+             fluidRow(verbatimTextOutput("tagformula")),
+             fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals"))),
+      column(1),
+      column(6, h3("MS2 (+)"),
+             fluidRow(
+               column(3, numericInput("tagion1", "ion1", value = 0)),
+               column(3, numericInput("tagion2", "ion2", value = 0)),
+               column(3, numericInput("tagion3", "ion3", value = 0))
+             ),
+             fluidRow(
+               column(3, verbatimTextOutput("tagsn1")),
+               column(3, verbatimTextOutput("tagsn2")),
+               column(3, verbatimTextOutput("tagsn3")),
+               column(3, verbatimTextOutput("tagsum"))
+             ),
+             hr(),
+             fluidRow(
+               column(4, selectInput("tagsn1", "sn1", choices = sn.list)),
+               column(4, selectInput("tagsn2", "sn2", choices = sn.list)),
+               column(4, selectInput("tagsn3", "sn3", choices = sn.list))
+             ),
+             fluidRow(fluidRow(verbatimTextOutput("tagms2")))
+      )
+      
+    ) # close tab TAG
+  ), # close GL-glycerols
+  navbarMenu(
+    "Glycerolipids (GL) - Glycosylglycerols",
+    
+    ### DGDG ----
+    tabPanel(
+      "Glycosyldiacylglycerols (DGDG)",
+      column(2, h3("Formula"),
+             fluidRow(
+               column(6, numericInput("dgdgC", "C", value = 36)),
+               column(6, numericInput("dgdgdb", "db", value = 6))
+             ),
+             fluidRow(verbatimTextOutput("dgdgformula")),
+             fluidRow(h3("m/z values"), verbatimTextOutput("dgdgmzvals"))),
+      column(1),
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("dgdgfragpos")),
+             fluidRow(h4("ESI-"), 
+                      column(6, verbatimTextOutput("dgdgfragneg")),
+                      column(3, numericInput("dgdgion1", "ion1", value = 0)),
+                      column(3, verbatimTextOutput("dgdgsn1"))
+             )
+             ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for DGDGs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + NH4 - 2(galactose)]+ + 0.984"),
+             tags$li("[M + H - 2(galactose)]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H]-"),
+             tags$li("[M - H - sn1]-")
+      )
+    ) # close DGDG
+  ) #  close Glycosylglycerols
 )# close ui
 
 # SERVER ---------------------------------------------------------------------
@@ -286,6 +347,16 @@ server <- function(input, output) {
             sn$formula[unlist(matchWithPpm(input$mpaion2 + 1.007276, 
                                            sn$mass, ppm = 10))], "H2O"))), 
         4), ")"
+    )
+  })
+  
+  output$mpasum <- renderPrint({
+    paste0(
+      sn$C[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))] +
+        sn$C[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))],
+      ":",
+      sn$db[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))] +
+        sn$db[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))]
     )
   })
   
@@ -427,6 +498,44 @@ server <- function(input, output) {
           sn$mass, ppm = 10))]
     )
   })
+  
+  ## DGDG -----
+  
+  dgdgfml <- reactive({
+    paste0("C", input$dgdgC + 15, "H", 
+           input$dgdgC*2 - (2 + 2*input$dgdgdb) + 26, "O15")
+  })
+  
+  dgdgmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(dgdgfml()))
+  })
+  
+  output$dgdgformula <- renderPrint({dgdgfml()})
+  
+  output$dgdgmzvals <- renderPrint({
+    unlist(mass2mz(dgdgmass(), adduct = c("[M+NH4]+", "[M+CHO2]-")))
+  })
+  
+  output$dgdgfragpos <- renderPrint({
+    paste(
+      round(as.numeric(mass2mz(dgdgmass(), "[M+NH4]+")) - 
+              MonoisotopicMass(formula = ListFormula("C12H22O11")) + 0.984, 5), "-",
+      round(as.numeric(mass2mz(dgdgmass(), "[M+H]+")) - 
+        MonoisotopicMass(formula = ListFormula("C12H22O11")), 5))
+  })
+  
+  output$dgdgfragneg <- renderPrint({
+      round(mass2mz(dgdgmass(), "[M-H]-"), 5)
+  })
+  
+  output$dgdgsn1 <- renderPrint({
+    idx <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M-H]-"))) - input$dgdgion1, 
+      sn$mass, ppm = 10))
+    paste0(sn$sn[idx], "-",
+          input$dgdgC - sn$C[idx], ":", input$dgdgdb - sn$db[idx])
+  })
+  
   
 } # close server
 
