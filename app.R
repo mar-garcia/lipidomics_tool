@@ -28,6 +28,7 @@ for(i in seq(nrow(sn))){
 
 mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH4 -> PI / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH4 & phosphate -> PA"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
@@ -44,13 +45,14 @@ mzdif.pos <- data.frame(rbind(
     "loss 2 galactoses (NH4 ion) -> DGDG"),
   c(MonoisotopicMass(formula = ListFormula("C12H22O11")) + 
       MonoisotopicMass(formula = ListFormula("NH3")), 
-    "loss NH4 & 2 galactoses -> DGDG")
+    "loss NH4 & 2 galactoses -> DGDG"),
+  cbind(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), "[Phosphocholine]+ -> Lyso PC")
 ))
 colnames(mzdif.pos) <- c("dif", "add")
 mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 
 mzdif.neg <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH - MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH -> MGDG / DGDG"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> PA / PG / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
         paste0("loss '", sn$sn, "-H2O' -> PA / PG / PE")),
@@ -62,7 +64,9 @@ mzdif.neg <- data.frame(rbind(
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))
         + MonoisotopicMass(formula = ListFormula("HCOOH")), 
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
-  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PG / PE / PI / MGDG"))
+  cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
+        "loss HCOOH & CH2 -> Lyso PC"),
+  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PG / PE / Lyso PC / PI / MGDG"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
@@ -287,6 +291,41 @@ ui <- navbarPage(
       )
     ), # close tab PEs
     
+    ### Lyso-PC ----
+    tabPanel(
+      "Lyso-Phosphatidylcholines (Lyso-PCs)",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("lpcC", "C", value = 16)),
+               column(2, numericInput("lpcdb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("lpcformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("lpcmzvals1")),
+             fluidRow(verbatimTextOutput("lpcmzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("lpcfragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("lpcfragneg"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Lyso-PCs:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - H2O]+"),
+             tags$li("[Phosphocholine]+")),
+      column(3, 
+             strong("Negative [M-H+HCOOH]-:"),
+             tags$li("[M - H - CH3]-"),
+             br(),
+             strong("[M - H - CH3]-"),
+             tags$li("[sn - H]-")
+             
+      )
+    ), # close tab Lyso-PCs
+    
     ### PI ----
     tabPanel(
       "Phosphatidylinositols (PIs)",
@@ -497,12 +536,14 @@ ui <- navbarPage(
 server <- function(input, output) {
   
   output$posfrag1add <- renderPrint({
-    idx <- which(abs((input$posprec - input$posfrag1) - mzdif.pos$dif) < 0.01)
+    idx <- c(which(abs((input$posprec - input$posfrag1) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag1, mzdif.pos$dif, ppm = 10)))
     mzdif.pos$add[idx]
   })
   
   output$posfrag2add <- renderPrint({
-    idx <- which(abs((input$posprec - input$posfrag2) - mzdif.pos$dif) < 0.01)
+    idx <- c(which(abs((input$posprec - input$posfrag2) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag2, mzdif.pos$dif, ppm = 10)))
     mzdif.pos$add[idx]
   })
   
@@ -820,6 +861,46 @@ server <- function(input, output) {
     )
   })
   
+  ## Lyso-PC ----
+  lpcfml <- reactive({
+    paste0("C", input$lpcC + 8, "H", 
+           input$lpcC*2 - (2 + 2*input$lpcdb) + 20, "NO7P")
+  })
+  
+  lpcmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(lpcfml()))
+  })
+  
+  output$lpcformula <- renderPrint({lpcfml()})
+  
+  output$lpcmzvals1 <- renderPrint({
+    mass2mz(lpcmass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  #output$lpcmzvals2 <- renderPrint({
+  #  tmp <- unlist(mass2mz(
+  #    lpcmass(), 
+  #    adduct = c("[M+NH4]+", "[2M+NH4]+"#, ""[2M-H]-"
+  #    )))
+  #  tmp2 <- colnames(tmp)
+  #  tmp <- c(as.numeric(unlist(mass2mz(lpcmass(), "[M+NH4]+"))) - 
+  #             MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
+  #           as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
+  #             MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
+  #  names(tmp) <- c("[M+H-lpc]+", "[M+C2H8N]+", tmp2)
+  #  tmp <- tmp[1, 3, 2, 4]
+  #  tmp
+  #})
+  
+  output$lpcfragpos <- renderPrint({
+    c(round(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), 5),
+    round(mass2mz(lpcmass(), "[M+H-H2O]+"), 5))
+  })
+  
+  output$lpcfragneg <- renderPrint({
+    c(round(mass2mz(lpcmass(), "[M-H]-") - MonoisotopicMass(formula = ListFormula("CH2")), 5),
+      mass2mz(sn$mass[sn$sn == paste0(input$lpcC, ":", input$lpcdb)], "[M-H]-"))
+  })
   
   ## PI ----
   pifml <- reactive({
