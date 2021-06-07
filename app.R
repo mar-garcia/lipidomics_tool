@@ -31,6 +31,8 @@ mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH4 & phosphate -> PA"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
+  c(MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 
+    "loss phosphoethanolamine -> PE"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> MGDG [M+Na]+")),
   
   c(MonoisotopicMass(formula = ListFormula("C6H12O6")) - 0.984, 
@@ -51,13 +53,13 @@ mzdif.neg <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH - MGDG / DGDG"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> PA / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
-        paste0("loss '", sn$sn, "-H2O' -> PA")),
+        paste0("loss '", sn$sn, "-H2O' -> PA / PE")),
   cbind(sn$mass + MonoisotopicMass(formula = ListFormula("HCOOH")), 
         paste("loss HCOOH &", sn$sn, "-> DGDG")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))
           + MonoisotopicMass(formula = ListFormula("HCOOH")), 
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
-  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PI / MGDG"))
+  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PE / PI / MGDG"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
@@ -189,6 +191,50 @@ ui <- navbarPage(
              tags$li("[sn2 - H]-"),
              tags$li("[M - H - (sn1-H2O)]-"))
     ), # close mPA
+    
+    ### PE ----
+    tabPanel(
+      "Phosphatidylethanolamines (PEs)",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("peC", "C", value = 32)),
+               column(2, numericInput("pedb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("peformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("pemzvals1")),
+             fluidRow(verbatimTextOutput("pemzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("pefragpos")),
+             fluidRow(h4("ESI-"), 
+                      fluidRow(
+                        column(3, numericInput("peion1", "ion1", value = 0)),
+                        column(3, numericInput("peion2", "ion2", value = 0))
+                      ),
+                      fluidRow(
+                        column(3, verbatimTextOutput("pesn1")),
+                        column(3, verbatimTextOutput("pesn2")),
+                        column(3, verbatimTextOutput("pesum"))
+                      )
+             )
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for PEs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H - phosphoethanolamina]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H - (sn1-H2O)]-"),
+             tags$li("[sn1 - H]-"),
+             tags$li("[M - H - (sn2-H2O)]-"),
+             tags$li("[sn2 - H]-")
+             
+      )
+    ), # close tab PEs
     
     ### PI ----
     tabPanel(
@@ -341,7 +387,7 @@ ui <- navbarPage(
       ),
       fluidRow(),
       hr(),
-      h3("Commonly occuring product ions for mgdgs:"),
+      h3("Commonly occuring product ions for MGDGs:"),
       column(3,
              strong("Positive [M+NH4]+:"),
              tags$li("[M + NH4 - galactose]+ + 0.984"),
@@ -564,6 +610,91 @@ server <- function(input, output) {
         sn$db[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))]
     )
   })
+  
+  ## PE ----
+  pefml <- reactive({
+    paste0("C", input$peC + 5, "H", 
+           input$peC*2 - (2 + 2*input$pedb) + 12, "NO8P")
+  })
+  
+  pemass <- reactive({
+    MonoisotopicMass(formula = ListFormula(pefml()))
+  })
+  
+  output$peformula <- renderPrint({pefml()})
+  
+  output$pemzvals1 <- renderPrint({
+    mass2mz(pemass(), adduct = c("[M+H]+", "[M-H]-"))
+  })
+  
+  #output$pemzvals2 <- renderPrint({
+  #  tmp <- unlist(mass2mz(
+  #    pemass(), 
+  #    adduct = c("[M+NH4]+", "[2M+NH4]+"#, ""[2M-H]-"
+  #    )))
+  #  tmp2 <- colnames(tmp)
+  #  tmp <- c(as.numeric(unlist(mass2mz(pemass(), "[M+NH4]+"))) - 
+  #             MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
+  #           as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
+  #             MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
+  #  names(tmp) <- c("[M+H-pe]+", "[M+C2H8N]+", tmp2)
+  #  tmp <- tmp[1, 3, 2, 4]
+  #  tmp
+  #})
+  
+  output$pefragpos <- renderPrint({
+    round(as.numeric(mass2mz(pemass(), "[M+H]+")) - 
+            MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 5)
+  })
+  
+  output$pesn1 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], " (",
+      round(mass2mz(sn$mass[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], "[M-H]-"), 5), ")"
+    )
+  })
+  
+  output$pesn2 <- renderPrint({
+    paste0(
+      sn$sn[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], " (",
+      round(mass2mz(sn$mass[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], "[M-H]-"), 5), ")"
+    )
+  })
+  
+  output$pesum <- renderPrint({
+    paste0(
+      sn$C[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))] +
+        sn$C[unlist(matchWithPpm(
+          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
+          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))],
+      ":",
+      sn$db[unlist(matchWithPpm(
+        unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
+        sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))] +
+        sn$db[unlist(matchWithPpm(
+          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
+          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))]
+    )
+  })
+  
+  output$pesn1x <- reactive({
+    round(unlist(mass2mz(sn$mass[sn$sn == input$peion1x], "[M-H]-")), 5)
+  })
+  
+  output$pesn2x <- reactive({
+    round(unlist(mass2mz(sn$mass[sn$sn == input$peion2x], "[M-H]-")), 5)
+  })
+  
   
   ## PI ----
   pifml <- reactive({
