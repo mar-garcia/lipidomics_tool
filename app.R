@@ -27,7 +27,7 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PI / TAG / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / PI / TAG / MGDG / DGDG"),
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
@@ -88,6 +88,14 @@ ui <- navbarPage(
            fluidRow(
              column(5, numericInput("posfrag2", "Fragment 2", value = 0)),
              column(7, verbatimTextOutput("posfrag2add"))
+           ),
+           fluidRow(
+             column(5, numericInput("posfrag3", "Fragment 3", value = 0)),
+             column(7, verbatimTextOutput("posfrag3add"))
+           ),
+           fluidRow(
+             column(5, numericInput("posfrag4", "Fragment 4", value = 0)),
+             column(7, verbatimTextOutput("posfrag4add"))
            )),
     column(1),
     column(5, h2("ESI-"),
@@ -103,6 +111,18 @@ ui <- navbarPage(
            fluidRow(
              column(5, numericInput("negfrag3", "Fragment 3", value = 0)),
              column(7, verbatimTextOutput("negfrag3add"))
+           ),
+           fluidRow(
+             column(5, numericInput("negfrag4", "Fragment 4", value = 0)),
+             column(7, verbatimTextOutput("negfrag4add"))
+           ),
+           fluidRow(
+             column(5, numericInput("negfrag5", "Fragment 5", value = 0)),
+             column(7, verbatimTextOutput("negfrag5add"))
+           ),
+           fluidRow(
+             column(5, numericInput("negfrag6", "Fragment 6", value = 0)),
+             column(7, verbatimTextOutput("negfrag6add"))
            )
     ),
   ), # close "MS2" tab
@@ -124,14 +144,16 @@ ui <- navbarPage(
              fluidRow(verbatimTextOutput("pamzvals2"))
       ),
       column(1), 
-      column(6, h3("MS2 (-)"),
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("pafragpos")),
+             fluidRow(h4("ESI-"), 
              fluidRow(
                column(3, numericInput("paion1", "ion1", value = 0)),
                column(3, numericInput("paion2", "ion2", value = 0))
              ),
              fluidRow(
-               column(3, verbatimTextOutput("pasn1")),
-               column(3, verbatimTextOutput("pasn2")),
+               column(3, htmlOutput("pasn1")),
+               column(3, htmlOutput("pasn2")),
                column(3, verbatimTextOutput("pasum"))
              ),
              hr(),
@@ -143,7 +165,7 @@ ui <- navbarPage(
                column(4, verbatimTextOutput("pasn1x")),
                column(4, verbatimTextOutput("pasn2x"))
              )
-      ),
+      )),
       fluidRow(),
       hr(),
       h3("Commonly occuring product ions for PAs:"),
@@ -560,6 +582,18 @@ server <- function(input, output) {
     mzdif.pos$add[idx]
   })
   
+  output$posfrag3add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag3) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag3, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag4add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag4) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag4, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
   output$negfrag1add <- renderPrint({
     idx <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg$dif) < 0.01),
              unlist(matchWithPpm(input$negfrag1, mzdif.neg$dif, ppm = 10)))
@@ -575,6 +609,24 @@ server <- function(input, output) {
   output$negfrag3add <- renderPrint({
     idx <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg$dif) < 0.01),
              unlist(matchWithPpm(input$negfrag3, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag4add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag4) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag4, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag5add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag5) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag5, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag6add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag6, mzdif.neg$dif, ppm = 10)))
     mzdif.neg$add[idx]
   })
   
@@ -595,9 +647,13 @@ server <- function(input, output) {
   })
   
   output$pamzvals2 <- renderPrint({
-    tmp <- unlist(mass2mz(
+    mass2mz(
       pamass(), 
-      adduct = c("[M+H]+", "[2M+H]+", "[2M+NH4]+", "[2M-H]-")))
+      adduct = c("[2M+H]+", "[2M+NH4]+", "[2M-H]-"))
+  })
+  
+  output$pafragpos <- renderPrint({
+    tmp <- mass2mz(pamass(),  adduct = c("[M+H]+"))
     tmp2 <- colnames(tmp)
     tmp <- c(as.numeric(unlist(mass2mz(pamass(), "[M+H]+"))) - 
                MonoisotopicMass(formula = ListFormula("H3PO4")), tmp)
@@ -606,29 +662,29 @@ server <- function(input, output) {
   })
   
   output$pasn1 <- renderPrint({
-    paste0(
-      sn$sn[unlist(matchWithPpm(
-        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
-        sn$mass, ppm = 10))], " (",
-      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - 
-              sn$mass[unlist(matchWithPpm(
-                unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
-                sn$mass, ppm = 10))] + 
-              MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
-    )
+    idx <- unlist(matchWithPpm(
+      unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
+      sn$mass, ppm = 10))
+    HTML(paste(
+      sn$sn[idx], 
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx] + MonoisotopicMass(formula = ListFormula("H2O")), 4), 
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx], 4), 
+      round(mass2mz(sn$mass[idx], "[M-H]-"), 4),
+      sep = '<br/>'
+    ))
   })
   
   output$pasn2 <- renderPrint({
-    paste0(
-      sn$sn[unlist(matchWithPpm(
-        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
-        sn$mass, ppm = 10))], " (",
-      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - 
-              sn$mass[unlist(matchWithPpm(
-                unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
-                sn$mass, ppm = 10))] + 
-              MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
-    )
+    idx <- unlist(matchWithPpm(
+      unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
+      sn$mass, ppm = 10))
+    HTML(paste(
+      sn$sn[idx], 
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx] + MonoisotopicMass(formula = ListFormula("H2O")), 4), 
+      round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx], 4), 
+      round(mass2mz(sn$mass[idx], "[M-H]-"), 4),
+      sep = '<br/>'
+    ))
   })
   
   output$pasum <- renderPrint({
