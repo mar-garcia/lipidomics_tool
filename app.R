@@ -27,14 +27,16 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH4 -> PI / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PI / TAG / MGDG / DGDG"),
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
-  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH4 & phosphate -> PA"),
+  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
   c(MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 
     "loss phosphoethanolamine -> PE"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> MGDG [M+Na]+")),
+  cbind(sn$mass + MonoisotopicMass(formula = ListFormula("NH3")), 
+        paste("loss NH3 &", sn$sn, "-> TAG")),
   
   c(MonoisotopicMass(formula = ListFormula("C6H12O6")) - 0.984, 
     "loss 1 galactose (NH4 ion) -> MGDG"),
@@ -418,7 +420,9 @@ ui <- navbarPage(
                column(6, numericInput("tagdb", "db", value = 0))
              ),
              fluidRow(verbatimTextOutput("tagformula")),
-             fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals"))),
+             fluidRow(h3("m/z values"), verbatimTextOutput("tagmzvals1")),
+             fluidRow(verbatimTextOutput("tagmzvals2"))
+      ),
       column(1),
       column(6, h3("MS2 (+)"),
              fluidRow(
@@ -439,8 +443,17 @@ ui <- navbarPage(
                column(4, selectInput("tagsn3", "sn3", choices = sn.list))
              ),
              fluidRow(fluidRow(verbatimTextOutput("tagms2")))
-      )
-      
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for TAGs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H]+"),
+             tags$li("[M + H - sn1]+"),
+             tags$li("[M + H - sn2]+"),
+             tags$li("[M + H - sn3]+")
+             )
     ) # close tab TAG
   ), # close GL-glycerols
   navbarMenu(
@@ -1074,8 +1087,12 @@ server <- function(input, output) {
   
   output$tagformula <- renderPrint({tagfml()})
   
-  output$tagmzvals <- renderPrint({
-    unlist(mass2mz(tagmass(), adduct = c("[M+H]+", "[M+NH4]+")))
+  output$tagmzvals1 <- renderPrint({
+    mass2mz(tagmass(), "[M+NH4]+")
+  })
+  
+  output$tagmzvals2 <- renderPrint({
+    mass2mz(tagmass(), "[M+H]+")
   })
   
   output$tagms2 <- renderPrint({
