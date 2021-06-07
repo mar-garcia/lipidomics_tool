@@ -133,6 +133,7 @@ ui <- navbarPage(
     ### PA ----
     tabPanel(
       "Phosphatidic acids (PAs)",
+      h1("Phosphatidic acids (PAs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("paC", "C", value = 32)),
@@ -189,6 +190,7 @@ ui <- navbarPage(
     ### PA methylated ----
     tabPanel(
       "Methylated phosphatidic acids (mPAs)",
+      h1("Methylated phosphatidic acids (mPAs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("mpaC", "C", value = 32)),
@@ -226,6 +228,7 @@ ui <- navbarPage(
     ### PG ----
     tabPanel(
       "Phosphatidylglycerols (PGs)",
+      h1("Phosphatidylglycerols (PGs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("pgC", "C", value = 32)),
@@ -274,6 +277,7 @@ ui <- navbarPage(
     ### PE ----
     tabPanel(
       "Phosphatidylethanolamines (PEs)",
+      h1("Phosphatidylethanolamines (PEs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("peC", "C", value = 32)),
@@ -318,6 +322,7 @@ ui <- navbarPage(
     ### Lyso-PC ----
     tabPanel(
       "Lyso-Phosphatidylcholines (Lyso-PCs)",
+      h1("Lyso-Phosphatidylcholines (Lyso-PCs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("lpcC", "C", value = 16)),
@@ -353,6 +358,7 @@ ui <- navbarPage(
     ### PI ----
     tabPanel(
       "Phosphatidylinositols (PIs)",
+      h1("Phosphatidylinositols (PIs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("piC", "C", value = 32)),
@@ -412,6 +418,7 @@ ui <- navbarPage(
     ### DAG ----
     tabPanel(
       "Diacylglycerols (DAGs)",
+      h1("Diacylglycerols (DAGs)"),
       column(4, h3("Formula"),
              fluidRow(
                column(2, numericInput("dagC", "C", value = 39)),
@@ -436,6 +443,7 @@ ui <- navbarPage(
     ### TAG ----
     tabPanel(
       "Triacylglycerols (TAGs)",
+      h1("Triacylglycerols (TAGs)"),
       column(2, h3("Formula"),
              fluidRow(
                column(6, numericInput("tagC", "C", value = 54)),
@@ -484,6 +492,7 @@ ui <- navbarPage(
     ### MGDG ----
     tabPanel(
       "Monogalactosyldiacylglycerols (MGDG)",
+      h1("Monogalactosyldiacylglycerols (MGDG)"),
       column(3, h3("Formula"),
              fluidRow(
                column(6, numericInput("mgdgC", "C", value = 36)),
@@ -532,6 +541,7 @@ ui <- navbarPage(
     ### DGDG ----
     tabPanel(
       "Digalactosyldiacylglycerol (DGDG)",
+      h1("Digalactosyldiacylglycerol (DGDG)"),
       column(2, h3("Formula"),
              fluidRow(
                column(6, numericInput("dgdgC", "C", value = 36)),
