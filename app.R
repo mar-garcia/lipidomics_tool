@@ -27,8 +27,9 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / PI / TAG / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / PI / DAG / TAG / MGDG / DGDG"),
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
+  c(MonoisotopicMass(formula = ListFormula("NH3H2O")), "loss NH3 & H2O -> DAG"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
   c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> Carnitine"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
@@ -428,10 +429,11 @@ ui <- navbarPage(
              ),
              column(4, fluidRow(verbatimTextOutput("dagformula"))),
              fluidRow(),
-             fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvalspos")),
-             fluidRow("", verbatimTextOutput("dagmzvalsneg"))), 
+             fluidRow(h3("m/z values"), verbatimTextOutput("dagmzvals1")),
+             fluidRow("", verbatimTextOutput("dagmzvals2"))), 
       column(1), 
       column(6, h3("MS2 (+)"),
+             fluidRow(verbatimTextOutput("dagfragpos")),
              fluidRow(
                column(3, numericInput("dagion1", "ion1", value = 0)),
                column(3, numericInput("dagion2", "ion2", value = 0))
@@ -440,7 +442,16 @@ ui <- navbarPage(
                column(3, verbatimTextOutput("dagsn1")),
                column(3, verbatimTextOutput("dagsn2")),
                column(3, verbatimTextOutput("dagsum"))
-             ))), # close tab DAG
+             )),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for DAGs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H]+"),
+             tags$li("[M + H - H2O]+"),
+             tags$li("[M + H - sn1]+"))
+      ), # close tab DAG
     
     ### TAG ----
     tabPanel(
@@ -457,6 +468,7 @@ ui <- navbarPage(
       ),
       column(1),
       column(6, h3("MS2 (+)"),
+             
              fluidRow(
                column(3, numericInput("tagion1", "ion1", value = 0)),
                column(3, numericInput("tagion2", "ion2", value = 0)),
@@ -1116,26 +1128,28 @@ server <- function(input, output) {
   
   output$dagformula <- renderPrint({dagfml()})
   
-  output$dagmzvalspos <- renderPrint({
+  output$dagmzvals1 <- renderPrint({
+    unlist(mass2mz(
+      dagmass(), 
+      adduct = c("[M+NH4]+", "[M+CHO2]-")))
+  })
+  
+  output$dagmzvals2 <- renderPrint({
     tmp <- unlist(mass2mz(
       dagmass(), 
-      adduct = c("[M+H-H2O]+", "[M+H]+", "[M+NH4]+", "[M+Na]+", "[2M+NH4]+", "[2M+Na]+")))
+      adduct = c("[M+Na]+", "[2M+NH4]+", "[2M+Na]+", "[2M+CHO2]-")))
     tmp2 <- colnames(tmp)
     tmp <- c(tmp, as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
                MonoisotopicMass(formula = ListFormula("C2H7N")))
     names(tmp) <- c(tmp2, "[M+C2H8N]+")
-    tmp <- tmp[c(1:4, 7, 5:6)]
+    tmp <- tmp[c(1:3, 7, 4:6)]
     tmp
   })
   
-  output$dagmzvalsneg <- renderPrint({
-    unlist(mass2mz(
+  output$dagfragpos <- renderPrint({
+    mass2mz(
       dagmass(), 
-      adduct = c("[M+CHO2]-", "[2M+CHO2]-")))
-  })
-  
-  output$dagms2 <- renderPrint({
-    ms2()
+      adduct = c("[M+H-H2O]+", "[M+H]+"))
   })
   
   output$dagsn1 <- renderPrint({
