@@ -30,6 +30,7 @@ mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / PI / TAG / MGDG / DGDG"),
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
+  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> Carnitine"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
   c(MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 
@@ -68,6 +69,7 @@ mzdif.neg <- data.frame(rbind(
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
   cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
         "loss HCOOH & CH2 -> Lyso PC"),
+  c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & C7H13NO2 -> Carnitine"),
   cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PG / PE / Lyso PC / PI / MGDG"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
@@ -574,7 +576,43 @@ ui <- navbarPage(
              tags$li("[M - H - sn1]-")
       )
     ) # close DGDG
-  ) #  close Glycosylglycerols
+  ), #  close Glycosylglycerols
+  
+  ## Carnitines ----
+  tabPanel(
+    "Carnitines",
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("carC", "C", value = 24)),
+             column(2, numericInput("cardb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("carformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("carmzvals1")),
+           fluidRow(verbatimTextOutput("carmzvals2"))
+    ),
+    column(1), 
+    column(6, h3("MS2"),
+           fluidRow(h4("ESI+"), verbatimTextOutput("carfragpos")),
+           fluidRow(h4("ESI-"), verbatimTextOutput("carfragneg"))
+    ),
+    fluidRow(),
+    hr(),
+    h3("Commonly occuring product ions for Carnitines:"),
+    column(3,
+           strong("Positive [M+H]+:"),
+           tags$li("[M + H - H2O]+"),
+           tags$li("[Phosphocholine]+")),
+    column(3, 
+           strong("Negative [M-H+HCOOH]-:"),
+           tags$li("[M - H - CH3]-"),
+           br(),
+           strong("[M - H - CH3]-"),
+           tags$li("[sn - H]-")
+           
+    )
+  ) # close tab Carnitines
+  
 )# close ui
 
 # SERVER ---------------------------------------------------------------------
@@ -1331,6 +1369,29 @@ server <- function(input, output) {
            input$dgdgC - sn$C[idx], ":", input$dgdgdb - sn$db[idx])
   })
   
+  ## Carnitines ----
+  carfml <- reactive({
+    paste0("C", input$carC + 7, "H", 
+           input$carC*2 - (2 + 2*input$cardb) + 15, "NO4")
+  })
+  
+  carmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(carfml()))
+  })
+  
+  output$carformula <- renderPrint({carfml()})
+  
+  output$carmzvals1 <- renderPrint({
+    mass2mz(carmass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$carfragpos <- renderPrint({
+      round(as.numeric(mass2mz(carmass(), "[M+H]+")) - MonoisotopicMass(formula = ListFormula("C3H9N")), 5)
+  })
+  
+  output$carfragneg <- renderPrint({
+    round(as.numeric(mass2mz(carmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("C7H13NO2")), 5)
+  })
   
 } # close server
 
