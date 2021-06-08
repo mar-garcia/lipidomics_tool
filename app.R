@@ -1092,7 +1092,7 @@ ui <- navbarPage(
     })
     
     output$pcmzvals2 <- renderPrint({
-      mass2mz(pcmass(), adduct = c("[M+Na]+"))
+      mass2mz(pcmass(), adduct = c("[M+Na]+", "[2M+H]+", "[2M+CHO2]-"))
     })
     
     output$pcfragpos <- renderPrint({
