@@ -31,14 +31,15 @@ mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
   c(MonoisotopicMass(formula = ListFormula("NH3H2O")), "loss NH3 & H2O -> DAG"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
-  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> PC / Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("C5H14NO4P")), "loss C5H14NO4P -> PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
   c(MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 
     "loss phosphoethanolamine -> PE"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> MGDG [M+Na]+")),
   cbind(sn$mass + MonoisotopicMass(formula = ListFormula("NH3")), 
-        paste("loss NH3 &", sn$sn, "-> TAG")),
+        paste("loss NH3 &", sn$sn, "-> DAG / TAG")),
   
   c(MonoisotopicMass(formula = ListFormula("C6H12O6")) - 0.984, 
     "loss 1 galactose (NH4 ion) -> MGDG"),
@@ -69,7 +70,7 @@ mzdif.neg <- data.frame(rbind(
         + MonoisotopicMass(formula = ListFormula("HCOOH")), 
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
   cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
-        "loss HCOOH & CH2 -> Lyso PC"),
+        "loss HCOOH & CH2 -> Lyso PC / PC"),
   c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & C7H13NO2 -> Carnitine"),
   cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / PG / PE / Lyso PC / PI / MGDG"))
 ))
@@ -357,6 +358,39 @@ ui <- navbarPage(
              
       )
     ), # close tab Lyso-PCs
+    
+    ### PC ----
+    tabPanel(
+      "Phosphatidylcholines (PCs)",
+      h1("Phosphatidylcholines (PCs)"),
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("pcC", "C", value = 32)),
+               column(2, numericInput("pcdb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("pcformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("pcmzvals1")),
+             fluidRow(verbatimTextOutput("pcmzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("pcfragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("pcfragneg"))
+             ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for PCs:"),
+      column(3,
+             strong("Positive [M+Na]+:"),
+             tags$li("[M + Na - C3H9N]+"),
+             tags$li("[M + Na - phosphocholine]+")
+             ),
+      column(3, 
+             strong("Negative [M-H+HCOOH]-:"),
+             tags$li("[M - H - CH2]-")
+      )
+    ), # close tab PCs
     
     ### PI ----
     tabPanel(
@@ -1029,6 +1063,35 @@ server <- function(input, output) {
   output$lpcfragneg <- renderPrint({
     c(round(mass2mz(lpcmass(), "[M-H]-") - MonoisotopicMass(formula = ListFormula("CH2")), 5),
       mass2mz(sn$mass[sn$sn == paste0(input$lpcC, ":", input$lpcdb)], "[M-H]-"))
+  })
+  
+  ## PC ----
+  pcfml <- reactive({
+    paste0("C", input$pcC + 8, "H", 
+           input$pcC*2 - (2 + 2*input$pcdb) + 18, "NO8P")
+  })
+  
+  pcmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(pcfml()))
+  })
+  
+  output$pcformula <- renderPrint({pcfml()})
+  
+  output$pcmzvals1 <- renderPrint({
+    mass2mz(pcmass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$pcmzvals2 <- renderPrint({
+    mass2mz(pcmass(), adduct = c("[M+Na]+"))
+  })
+  
+  output$pcfragpos <- renderPrint({
+    c(as.numeric(mass2mz(pcmass(), "[M+Na]+")) - MonoisotopicMass(formula = ListFormula("C3H9N")),
+      as.numeric(mass2mz(pcmass(), "[M+Na]+")) - MonoisotopicMass(formula = ListFormula("C5H14NO4P")))
+  })
+  
+  output$pcfragneg <- renderPrint({
+    as.numeric(mass2mz(pcmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("CH2"))
   })
   
   ## PI ----
