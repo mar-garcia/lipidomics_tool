@@ -12,8 +12,8 @@ matchWithPpm <- function(x, y, ppm = 0) {
 }
 
 sn <- data.frame(
-  "C" = rep(seq(14, 22), each = 4),
-  "db" = rep(seq(0, 3), 9)
+  "C" = rep(seq(14, 24), each = 4),
+  "db" = rep(seq(0, 3), 11)
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn$sn <- paste0(sn$C, ":", sn$db)
@@ -27,11 +27,12 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / mPA / PI / DAG / TAG / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / mPA / dmPA / PI / DAG / TAG / MGDG / DGDG"),
   c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
   c(MonoisotopicMass(formula = ListFormula("NH3H2O")), "loss NH3 & H2O -> DAG"),
-  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA"),
+  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA / dmPA"),
   c(MonoisotopicMass(formula = ListFormula("NH3H3PO4CH2")), "loss NH3 & mPA -> mPA"),
+  c(MonoisotopicMass(formula = ListFormula("NH3H3PO4C2H4")), "loss NH3 & dmPA -> dmPA"),
   c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> PC / Carnitine"),
   c(MonoisotopicMass(formula = ListFormula("C5H14NO4P")), "loss C5H14NO4P -> PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
@@ -61,7 +62,7 @@ mzdif.neg <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH -> MGDG / DGDG"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> PA / PG / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
-        paste0("loss '", sn$sn, "-H2O' -> PA / mPA / PG / PE")),
+        paste0("loss '", sn$sn, "-H2O' -> PA / mPA / dmPA / PG / PE")),
   cbind((sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))) + 
           MonoisotopicMass(formula = ListFormula("C3H8O3")), 
         paste0("loss '", sn$sn, "-H2O' & glycerol -> PA / PG / PE")),
@@ -73,7 +74,7 @@ mzdif.neg <- data.frame(rbind(
   cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
         "loss HCOOH & CH2 -> Lyso PC / PC"),
   c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & C7H13NO2 -> Carnitine"),
-  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / mPA / PG / PE / Lyso PC / PI / MGDG"))
+  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> PA / mPA / dmPA / PG / PE / Lyso PC / PI / MGDG"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
@@ -161,15 +162,6 @@ ui <- navbarPage(
                         column(3, htmlOutput("pasn1")),
                         column(3, htmlOutput("pasn2")),
                         column(3, verbatimTextOutput("pasum"))
-                      ),
-                      hr(),
-                      fluidRow(
-                        column(4, selectInput("paion1x", "sn1", choices = sn.list)),
-                        column(4, selectInput("paion2x", "sn2", choices = sn.list))
-                      ),
-                      fluidRow(
-                        column(4, verbatimTextOutput("pasn1x")),
-                        column(4, verbatimTextOutput("pasn2x"))
                       )
              )),
       fluidRow(),
@@ -184,6 +176,7 @@ ui <- navbarPage(
              tags$li("[M - H - sn1]-"),
              tags$li("[M - H - (sn1-H2O)]-"),
              tags$li("[sn1 - H]-"),
+             br(),
              tags$li("[M - H - sn2]-"),
              tags$li("[M - H - (sn2-H2O)]-"),
              tags$li("[sn2 - H]-")
@@ -215,25 +208,70 @@ ui <- navbarPage(
                         column(3, numericInput("mpaion2", "ion2", value = 0))
                       ),
                       fluidRow(
-                        column(3, verbatimTextOutput("mpasn1")),
-                        column(3, verbatimTextOutput("mpasn2")),
+                        column(3, htmlOutput("mpasn1")),
+                        column(3, htmlOutput("mpasn2")),
                         column(3, verbatimTextOutput("mpasum"))
                       ))),
-             fluidRow(),
-             hr(),
-             h3("Commonly occuring product ions for mPAs:"),
-             column(3,
-                    strong("Positive [M+NH4]+:"),
-                    tags$li("[M + H]+"),
-                    tags$li("[M + H - methyl-phosphate]+")),
-             column(3, 
-                    strong("Negative [M-H]-:"),
-                    tags$li("[sn1 - H]-"),
-                    tags$li("[sn2 - H]-"),
-                    tags$li("[M - H - (sn1-H2O)]-"))
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for mPAs:"),
+      column(3,
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + H]+"),
+             tags$li("[M + H - methyl-phosphate]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H - (sn1-H2O)]-"),
+             tags$li("[sn1 - H]-"),
+             br(),
+             tags$li("[M - H - (sn2-H2O)]-"),
+             tags$li("[sn2 - H]-"))
       ), # close mPA
       
-      ### PG ----
+    ### PA dimethylated ----
+    tabPanel(
+      "Dimethylated phosphatidic acids (dmPAs)",
+      h1("Methylated phosphatidic acids (dmPAs)"),
+      column(4, h3("Formula"),
+             fluidRow(
+             column(2, numericInput("dmpaC", "C", value = 32)),
+             column(2, numericInput("dmpadb", "db", value = 0))
+      ),
+      column(4, fluidRow(verbatimTextOutput("dmpaformula"))),
+      fluidRow(),
+      fluidRow(h3("m/z values"), verbatimTextOutput("dmpamzvals1")),
+      fluidRow(verbatimTextOutput("dmpamzvals2"))
+    ),
+    column(1), 
+    column(6, h3("MS2"),
+           fluidRow(h4("ESI+"), verbatimTextOutput("dmpafragpos")),
+           fluidRow(h4("ESI-"), 
+                    fluidRow(
+                      column(3, numericInput("dmpaion1", "ion1", value = 0)),
+                      column(3, numericInput("dmpaion2", "ion2", value = 0))
+                    ),
+                    fluidRow(
+                      column(3, htmlOutput("dmpasn1")),
+                      column(3, htmlOutput("dmpasn2")),
+                      column(3, verbatimTextOutput("dmpasum"))
+                    ))),
+    fluidRow(),
+    hr(),
+    h3("Commonly occuring product ions for dmpas:"),
+    column(3,
+           strong("Positive [M+NH4]+:"),
+           tags$li("[M + H]+"),
+           tags$li("[M + H - methyl-phosphate]+")),
+    column(3, 
+           strong("Negative [M-H]-:"),
+           tags$li("[M - H - (sn1-H2O)]-"),
+           tags$li("[sn1 - H]-"),
+           br(),
+           tags$li("[M - H - (sn2-H2O)]-"),
+           tags$li("[sn2 - H]-"))
+  ), # close dmPA
+  
+  ### PG ----
       tabPanel(
         "Phosphatidylglycerols (PGs)",
         h1("Phosphatidylglycerols (PGs)"),
@@ -305,8 +343,8 @@ ui <- navbarPage(
                           column(3, numericInput("peion2", "ion2", value = 0))
                         ),
                         fluidRow(
-                          column(3, verbatimTextOutput("pesn1")),
-                          column(3, verbatimTextOutput("pesn2")),
+                          column(3, htmlOutput("pesn1")),
+                          column(3, htmlOutput("pesn2")),
                           column(3, verbatimTextOutput("pesum"))
                         )
                )
@@ -411,26 +449,19 @@ ui <- navbarPage(
                fluidRow(verbatimTextOutput("pimzvals2"))
         ),
         column(1), 
-        column(6, h3("MS2 (-)"),
-               fluidRow(
-                 column(3, numericInput("piion1", "ion1", value = 0)),
-                 column(3, numericInput("piion2", "ion2", value = 0))
-               ),
-               fluidRow(
-                 column(3, verbatimTextOutput("pisn1")),
-                 column(3, verbatimTextOutput("pisn2")),
-                 column(3, verbatimTextOutput("pisum"))
-               ),
-               hr(),
-               fluidRow(
-                 column(4, selectInput("piion1x", "sn1", choices = sn.list)),
-                 column(4, selectInput("piion2x", "sn2", choices = sn.list))
-               ),
-               fluidRow(
-                 column(4, verbatimTextOutput("pisn1x")),
-                 column(4, verbatimTextOutput("pisn2x"))
-               )
-        ),
+        column(6, h3("MS2"),
+               fluidRow(h4("ESI+"), verbatimTextOutput("pifragpos")),
+               fluidRow(h4("ESI-"), 
+                        fluidRow(
+                          column(3, numericInput("piion1", "ion1", value = 0)),
+                          column(3, numericInput("piion2", "ion2", value = 0))
+                        ),
+                        fluidRow(
+                          column(3, htmlOutput("pisn1")),
+                          column(3, htmlOutput("pisn2")),
+                          column(3, verbatimTextOutput("pisum"))
+                        )
+               )),
         fluidRow(),
         hr(),
         h3("Commonly occuring product ions for PIs:"),
@@ -443,6 +474,7 @@ ui <- navbarPage(
                tags$li("[M - H - sn1]-"),
                tags$li("[M - H - (sn1-H2O)]-"),
                tags$li("[sn1 - H]-"),
+               br(),
                tags$li("[M - H - sn2]-"),
                tags$li("[M - H - (sn2-H2O)]-"),
                tags$li("[sn2 - H]-")
@@ -760,55 +792,47 @@ ui <- navbarPage(
     })
     
     output$pasn1 <- renderPrint({
-      idx <- unlist(matchWithPpm(
-        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
-        sn$mass, ppm = 10))
-      HTML(paste(
-        sn$sn[idx], 
-        round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx] + MonoisotopicMass(formula = ListFormula("H2O")), 4), 
-        round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx], 4), 
-        round(mass2mz(sn$mass[idx], "[M-H]-"), 4),
-        sep = '<br/>'
-      ))
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pamass(), "[M-H]-") - input$paion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pamass(), "[M-H]-") - input$paion1, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$paion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2, idx3)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(pamass(), "[M-H]-") - sn$mass[idx]),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pasn2 <- renderPrint({
-      idx <- unlist(matchWithPpm(
-        unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
-        sn$mass, ppm = 10))
-      HTML(paste(
-        sn$sn[idx], 
-        round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx] + MonoisotopicMass(formula = ListFormula("H2O")), 4), 
-        round(unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - sn$mass[idx], 4), 
-        round(mass2mz(sn$mass[idx], "[M-H]-"), 4),
-        sep = '<br/>'
-      ))
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pamass(), "[M-H]-") - input$paion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pamass(), "[M-H]-") - input$paion2, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$paion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2, idx3)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(pamass(), "[M-H]-") - sn$mass[idx]),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pasum <- renderPrint({
-      paste0(
-        sn$C[unlist(matchWithPpm(
-          unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
-          sn$mass, ppm = 10))] +
-          sn$C[unlist(matchWithPpm(
-            unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
-            sn$mass, ppm = 10))],
-        ":",
-        sn$db[unlist(matchWithPpm(
-          unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion1, 
-          sn$mass, ppm = 10))] +
-          sn$db[unlist(matchWithPpm(
-            unlist(mass2mz(pamass(), adduct = c("[M-H]-"))) - input$paion2, 
-            sn$mass, ppm = 10))]
-      )
-    })
-    
-    output$pasn1x <- reactive({
-      round(unlist(mass2mz(sn$mass[sn$sn == input$paion1x], "[M-H]-")), 5)
-    })
-    
-    output$pasn2x <- reactive({
-      round(unlist(mass2mz(sn$mass[sn$sn == input$paion2x], "[M-H]-")), 5)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pamass(), "[M-H]-") - input$paion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pamass(), "[M-H]-") - input$paion1, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$paion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxa <- c(idx1, idx2, idx3)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pamass(), "[M-H]-") - input$paion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pamass(), "[M-H]-") - input$paion2, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$paion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxb <- c(idx1, idx2, idx3)
+      paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
     })
     
     
@@ -843,37 +867,111 @@ ui <- navbarPage(
     })
     
     output$mpasn1 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))], " (",
-        round(
-          unlist(mass2mz(mpamass(), adduct = c("[M-H]-"))) - 
-            MonoisotopicMass(formula = ListFormula(subtractElements(
-              sn$formula[unlist(matchWithPpm(input$mpaion1 + 1.007276, 
-                                             sn$mass, ppm = 10))], "H2O"))), 
-          4), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(mpamass(), "[M-H]-") - input$mpaion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$mpaion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(mpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$mpasn2 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))], " (",
-        round(
-          unlist(mass2mz(mpamass(), adduct = c("[M-H]-"))) - 
-            MonoisotopicMass(formula = ListFormula(subtractElements(
-              sn$formula[unlist(matchWithPpm(input$mpaion2 + 1.007276, 
-                                             sn$mass, ppm = 10))], "H2O"))), 
-          4), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(mpamass(), "[M-H]-") - input$mpaion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$mpaion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(mpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$mpasum <- renderPrint({
-      paste0(
-        sn$C[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))] +
-          sn$C[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))],
-        ":",
-        sn$db[unlist(matchWithPpm(input$mpaion1 + 1.007276, sn$mass, ppm = 10))] +
-          sn$db[unlist(matchWithPpm(input$mpaion2 + 1.007276, sn$mass, ppm = 10))]
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(mpamass(), "[M-H]-") - input$mpaion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$mpaion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxa <- c(idx1, idx2)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(mpamass(), "[M-H]-") - input$mpaion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$mpaion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxb <- c(idx1, idx2)
+      paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
+    })
+    
+    ## PA dimethylated -----
+    
+    dmpafml <- reactive({
+      paste0("C", input$dmpaC + 5, "H", 
+             input$dmpaC*2 - (2 + 2*input$dmpadb) + 11, "O8P")
+    })
+    
+    dmpamass <- reactive({
+      MonoisotopicMass(formula = ListFormula(dmpafml()))
+    })
+    
+    output$dmpaformula <- renderPrint({dmpafml()})
+    
+    output$dmpamzvals1 <- renderPrint({
+      mass2mz(dmpamass(), adduct = c("[M+NH4]+", "[M-H]-"))
+    })
+    
+    output$dmpamzvals2 <- renderPrint({
+      mass2mz(dmpamass(), adduct = c("[2M+H]+", "[2M+NH4]+", "[2M-H]-"))
+    })
+    
+    output$dmpafragpos <- renderPrint({
+      tmp <- mass2mz(dmpamass(), "[M+H]+")
+      tmp2 <- colnames(tmp)
+      tmp <- c(as.numeric(unlist(mass2mz(dmpamass(), "[M+H]+"))) - 
+                 MonoisotopicMass(formula = ListFormula("H3PO4C2H4")),
+               as.numeric(unlist(mass2mz(dmpamass(), "[M+H]+"))) - 
+                 MonoisotopicMass(formula = ListFormula("H3PO4")), tmp)
+      names(tmp) <- c("[M+H-dmPA]+", "[M+H-PA]+", tmp2)
+      tmp
+    })
+    
+    output$dmpasn1 <- renderPrint({
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(dmpamass(), "[M-H]-") - input$dmpaion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$dmpaion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
+    })
+    
+    output$dmpasn2 <- renderPrint({
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(dmpamass(), "[M-H]-") - input$dmpaion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$dmpaion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
+    })
+    
+    output$dmpasum <- renderPrint({
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(dmpamass(), "[M-H]-") - input$dmpaion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$dmpaion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxa <- c(idx1, idx2)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(dmpamass(), "[M-H]-") - input$dmpaion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$dmpaion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxb <- c(idx1, idx2)
+      paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
     })
     
     ## PG ----
@@ -891,26 +989,6 @@ ui <- navbarPage(
     output$pgmzvals1 <- renderPrint({
       mass2mz(pgmass(), adduct = c("[M+NH4]+", "[M-H]-"))
     })
-    
-    #output$pgmzvals2 <- renderPrint({
-    #  tmp <- unlist(mass2mz(
-    #    pgmass(), 
-    #    adduct = c("[M+NH4]+", "[2M+NH4]+"#, ""[2M-H]-"
-    #    )))
-    #  tmp2 <- colnames(tmp)
-    #  tmp <- c(as.numeric(unlist(mass2mz(pgmass(), "[M+NH4]+"))) - 
-    #             MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
-    #           as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
-    #             MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
-    #  names(tmp) <- c("[M+H-pg]+", "[M+C2H8N]+", tmp2)
-    #  tmp <- tmp[1, 3, 2, 4]
-    #  tmp
-    #})
-    
-    #output$pgfragpos <- renderPrint({
-    #  round(as.numeric(mass2mz(pgmass(), "[M+H]+")) - 
-    #          MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 5)
-    #})
     
     output$pgsn1 <- renderPrint({
       idx1 <- unlist(matchWithPpm(
@@ -974,20 +1052,9 @@ ui <- navbarPage(
       mass2mz(pemass(), adduct = c("[M+H]+", "[M-H]-"))
     })
     
-    #output$pemzvals2 <- renderPrint({
-    #  tmp <- unlist(mass2mz(
-    #    pemass(), 
-    #    adduct = c("[M+NH4]+", "[2M+NH4]+"#, ""[2M-H]-"
-    #    )))
-    #  tmp2 <- colnames(tmp)
-    #  tmp <- c(as.numeric(unlist(mass2mz(pemass(), "[M+NH4]+"))) - 
-    #             MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
-    #           as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
-    #             MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
-    #  names(tmp) <- c("[M+H-pe]+", "[M+C2H8N]+", tmp2)
-    #  tmp <- tmp[1, 3, 2, 4]
-    #  tmp
-    #})
+    output$pemzvals2 <- renderPrint({
+      mass2mz(pemass(), "[2M-H]-")
+    })
     
     output$pefragpos <- renderPrint({
       round(as.numeric(mass2mz(pemass(), "[M+H]+")) - 
@@ -995,43 +1062,41 @@ ui <- navbarPage(
     })
     
     output$pesn1 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], " (",
-        round(mass2mz(sn$mass[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], "[M-H]-"), 5), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pemass(), "[M-H]-") - input$peion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pesn2 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], " (",
-        round(mass2mz(sn$mass[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))], "[M-H]-"), 5), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pemass(), "[M-H]-") - input$peion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pesum <- renderPrint({
-      paste0(
-        sn$C[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))] +
-          sn$C[unlist(matchWithPpm(
-            unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
-            sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))],
-        ":",
-        sn$db[unlist(matchWithPpm(
-          unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion1, 
-          sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))] +
-          sn$db[unlist(matchWithPpm(
-            unlist(mass2mz(pemass(), adduct = c("[M-H]-"))) - input$peion2, 
-            sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))]
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pemass(), "[M-H]-") - input$peion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxa <- c(idx1, idx2)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pemass(), "[M-H]-") - input$peion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxb <- c(idx1, idx2)
+      paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
     })
     
     ## Lyso-PC ----
@@ -1123,68 +1188,69 @@ ui <- navbarPage(
     output$pimzvals2 <- renderPrint({
       tmp <- unlist(mass2mz(
         pimass(), 
-        adduct = c("[M+H]+", "[2M+NH4]+"#, ""[2M-H]-"
-        )))
+        adduct = c("[2M+NH4]+", "[2M-H]-")))
+      tmp2 <- colnames(tmp)
+      tmp <- c(as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
+                 MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
+      names(tmp) <- c("[M+C2H8N]+", tmp2)
+      #tmp <- tmp[1, 3, 2, 4]
+      tmp
+    })
+    
+    output$pifragpos <- renderPrint({
+      tmp <- unlist(mass2mz(
+        pimass(), 
+        adduct = c("[M+H]+")))
       tmp2 <- colnames(tmp)
       tmp <- c(as.numeric(unlist(mass2mz(pimass(), "[M+NH4]+"))) - 
-                 MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
-               as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
-                 MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
-      names(tmp) <- c("[M+H-PI]+", "[M+C2H8N]+", tmp2)
-      tmp <- tmp[1, 3, 2, 4]
+                 MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984, tmp)
+      names(tmp) <- c("[M+NH4-PI]+", tmp2)
+      tmp <- tmp[c(2, 1)]
       tmp
     })
     
     output$pisn1 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(
-          unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion1, 
-          sn$mass, ppm = 10))], " (",
-        round(unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - 
-                sn$mass[unlist(matchWithPpm(
-                  unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion1, 
-                  sn$mass, ppm = 10))] + 
-                MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pimass(), "[M-H]-") - input$piion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion1, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$piion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2, idx3)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - sn$mass[idx]),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pisn2 <- renderPrint({
-      paste0(
-        sn$sn[unlist(matchWithPpm(
-          unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion2, 
-          sn$mass, ppm = 10))], " (",
-        round(unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - 
-                sn$mass[unlist(matchWithPpm(
-                  unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion2, 
-                  sn$mass, ppm = 10))] + 
-                MonoisotopicMass(formula = ListFormula("H2O")), 4), ")"
-      )
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pimass(), "[M-H]-") - input$piion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion2, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$piion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idx <- c(idx1, idx2, idx3)
+      HTML(paste(sn$sn[idx], 
+                 sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+                 sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - sn$mass[idx]),
+                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+                 sep = '<br/>'))
     })
     
     output$pisum <- renderPrint({
-      paste0(
-        sn$C[unlist(matchWithPpm(
-          unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion1, 
-          sn$mass, ppm = 10))] +
-          sn$C[unlist(matchWithPpm(
-            unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion2, 
-            sn$mass, ppm = 10))],
-        ":",
-        sn$db[unlist(matchWithPpm(
-          unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion1, 
-          sn$mass, ppm = 10))] +
-          sn$db[unlist(matchWithPpm(
-            unlist(mass2mz(pimass(), adduct = c("[M-H]-"))) - input$piion2, 
-            sn$mass, ppm = 10))]
-      )
-    })
-    
-    output$pisn1x <- reactive({
-      round(unlist(mass2mz(sn$mass[sn$sn == input$piion1x], "[M-H]-")), 5)
-    })
-    
-    output$pisn2x <- reactive({
-      round(unlist(mass2mz(sn$mass[sn$sn == input$piion2x], "[M-H]-")), 5)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pimass(), "[M-H]-") - input$piion1, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion1, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$piion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxa <- c(idx1, idx2, idx3)
+      idx1 <- unlist(matchWithPpm(
+        mass2mz(pimass(), "[M-H]-") - input$piion2, 
+        c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+      idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion2, sn$mass, ppm = 10))
+      idx3 <- unlist(matchWithPpm(input$piion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+      idxb <- c(idx1, idx2, idx3)
+      paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
     })
     
     
@@ -1283,7 +1349,7 @@ ui <- navbarPage(
     })
     
     output$tagmzvals2 <- renderPrint({
-      mass2mz(tagmass(), "[M+H]+")
+      mass2mz(tagmass(), adduct = c("[M+H]+", "[2M+NH4]+"))
     })
     
     output$tagms2 <- renderPrint({
