@@ -28,7 +28,7 @@ for(i in seq(nrow(sn))){
 
 mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / mPA / dmPA / PI / DAG / TAG / MGDG / DGDG"),
-  c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC"),
+  c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> Lyso PC / Lyso PS"),
   c(MonoisotopicMass(formula = ListFormula("NH3H2O")), "loss NH3 & H2O -> DAG"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA / dmPA"),
   c(MonoisotopicMass(formula = ListFormula("NH3H3PO4CH2")), "loss NH3 & mPA -> mPA"),
@@ -60,6 +60,7 @@ mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 
 mzdif.neg <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH -> MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("C3H5NO2")), "loss C3H5NO2 -> LysoPS"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> PA / PG / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
         paste0("loss '", sn$sn, "-H2O' -> PA / mPA / dmPA / PG / PE")),
@@ -434,7 +435,39 @@ ui <- navbarPage(
         )
       ), # close tab PCs
       
-      ### PI ----
+  ### Lyso-PS ----
+  tabPanel(
+    "Lyso-Phosphatidylserines (Lyso-PSs)",
+    h1("Lyso-Phosphatidylserines (Lyso-PSs)"),
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("lpsC", "C", value = 16)),
+             column(2, numericInput("lpsdb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("lpsformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("lpsmzvals1")),
+           fluidRow(verbatimTextOutput("lpsmzvals2"))
+    ),
+    column(1), 
+    column(6, h3("MS2"),
+           fluidRow(h4("ESI+"), verbatimTextOutput("lpsfragpos")),
+           fluidRow(h4("ESI-"), verbatimTextOutput("lpsfragneg"))
+    ),
+    fluidRow(),
+    hr(),
+    h3("Commonly occuring product ions for Lyso-PCs:"),
+    column(3,
+           strong("Positive [M+H]+:"),
+           tags$li("[M + H - H2O]+")),
+    column(3, 
+           strong("Negative [M-H]-:"),
+           tags$li("[M - H - C3H5NO2]-")
+           
+    )
+  ), # close tab Lyso-PSs
+  
+  ### PI ----
       tabPanel(
         "Phosphatidylinositols (PIs)",
         h1("Phosphatidylinositols (PIs)"),
@@ -1115,21 +1148,6 @@ ui <- navbarPage(
       mass2mz(lpcmass(), adduct = c("[M+H]+", "[M+CHO2]-"))
     })
     
-    #output$lpcmzvals2 <- renderPrint({
-    #  tmp <- unlist(mass2mz(
-    #    lpcmass(), 
-    #    adduct = c("[M+NH4]+", "[2M+NH4]+"#, ""[2M-H]-"
-    #    )))
-    #  tmp2 <- colnames(tmp)
-    #  tmp <- c(as.numeric(unlist(mass2mz(lpcmass(), "[M+NH4]+"))) - 
-    #             MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984,
-    #           as.numeric(unlist(mass2mz(dagmass(), "[M+H]+"))) + 
-    #             MonoisotopicMass(formula = ListFormula("C2H7N")), tmp)
-    #  names(tmp) <- c("[M+H-lpc]+", "[M+C2H8N]+", tmp2)
-    #  tmp <- tmp[1, 3, 2, 4]
-    #  tmp
-    #})
-    
     output$lpcfragpos <- renderPrint({
       c(round(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), 5),
         round(mass2mz(lpcmass(), "[M+H-H2O]+"), 5))
@@ -1167,6 +1185,31 @@ ui <- navbarPage(
     
     output$pcfragneg <- renderPrint({
       as.numeric(mass2mz(pcmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("CH2"))
+    })
+    
+    ## Lyso-PS ----
+    lpsfml <- reactive({
+      paste0("C", input$lpsC + 6, "H", 
+             input$lpsC*2 - (2 + 2*input$lpsdb) + 14, "NO9P")
+    })
+    
+    lpsmass <- reactive({
+      MonoisotopicMass(formula = ListFormula(lpsfml()))
+    })
+    
+    output$lpsformula <- renderPrint({lpsfml()})
+    
+    output$lpsmzvals1 <- renderPrint({
+      mass2mz(lpsmass(), adduct = c("[M+H]+", "[M-H]-"))
+    })
+    
+    output$lpsfragpos <- renderPrint({
+        round(mass2mz(lpsmass(), "[M+H-H2O]+"), 5)
+    })
+    
+    output$lpsfragneg <- renderPrint({
+      as.numeric(round(mass2mz(lpsmass(), "[M-H]-") - 
+                         MonoisotopicMass(formula = ListFormula("C3H5NO2")), 5))
     })
     
     ## PI ----
