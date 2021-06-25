@@ -1,6 +1,7 @@
 library(shiny)
 library(MetaboCoreUtils)
 library(OrgMassSpecR)
+library(DT)
 
 .ppm <- function(x, ppm = 10) {
   ppm * x / 1e6
@@ -9,6 +10,12 @@ matchWithPpm <- function(x, y, ppm = 0) {
   lapply(x, function(z, ppm) {
     which(abs(z - y) <= (.ppm(z, ppm)) + 1e-9)
   }, ppm = force(ppm))
+}
+label_fun <- function(x) {
+  ints <- unlist(intensity(x))
+  mzs <- format(unlist(mz(x)), digits = 4)
+  mzs[ints < 5] <- ""
+  mzs
 }
 
 sn <- data.frame(
@@ -83,6 +90,9 @@ mzdif.neg <- data.frame(rbind(
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
+
+load("MS2_spectra.RData")
+sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
 
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
@@ -552,7 +562,7 @@ ui <- navbarPage(
       h1("Diacylglycerols (DAGs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("dagC", "C", value = 39)),
+               column(2, numericInput("dagC", "C", value = 36)),
                column(2, numericInput("dagdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("dagformula"))),
@@ -751,7 +761,28 @@ ui <- navbarPage(
            tags$li("[sn - H]-")
            
     )
-  ) # close tab Carnitines
+  ), # close tab Carnitines
+  
+  ## MS2 library ----
+  navbarMenu("MS2 in-house library",
+    tabPanel("MS/MS spectras",
+           fluidRow(DT::dataTableOutput("table")),
+           fluidRow(
+             column(6, plotOutput("plot_MS2")),
+             column(6, plotOutput("plot_NL"))
+             )
+           ),
+    tabPanel("Correlations",
+             sidebarLayout(
+               sidebarPanel(
+                 fluidRow(fileInput("file1", "Choose TXT file")),
+                 fluidRow(plotOutput("ms2_x"))),
+               mainPanel(
+                 column(6, DT::dataTableOutput("spectra")),
+                 column(6, plotOutput("ms2_spectra")),
+                 )
+               ))
+  )
   
 )# close ui
 
@@ -1213,12 +1244,10 @@ server <- function(input, output) {
       mass2mz(pcmass(), "[M+H]+") - input$pcion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pcmass(), "[M+H]+") - input$pcion1, sn$mass, ppm = 10))
-    idx3 <- unlist(matchWithPpm(input$pcion1, mass2mz(sn$mass, "[M+H]+"), ppm = 10))
-    idx <- c(idx1, idx2, idx3)
+    idx <- c(idx1, idx2)
     HTML(paste(sn$sn[idx], 
                sprintf("%.5f", mass2mz(pcmass(), "[M+H]+") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pcmass(), "[M+H]+") - sn$mass[idx]),
-               sprintf("%.5f", mass2mz(sn$mass[idx], "[M+H]+")), 
                sep = '<br/>'))
   })
   
@@ -1227,12 +1256,10 @@ server <- function(input, output) {
       mass2mz(pcmass(), "[M+H]+") - input$pcion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pcmass(), "[M+H]+") - input$pcion2, sn$mass, ppm = 10))
-    idx3 <- unlist(matchWithPpm(input$pcion2, mass2mz(sn$mass, "[M+H]+"), ppm = 10))
-    idx <- c(idx1, idx2, idx3)
+    idx <- c(idx1, idx2)
     HTML(paste(sn$sn[idx], 
                sprintf("%.5f", mass2mz(pcmass(), "[M+H]+") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pcmass(), "[M+H]+") - sn$mass[idx]),
-               sprintf("%.5f", mass2mz(sn$mass[idx], "[M+H]+")), 
                sep = '<br/>'))
   })
   
@@ -1241,14 +1268,12 @@ server <- function(input, output) {
       mass2mz(pcmass(), "[M+H]+") - input$pcion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pcmass(), "[M+H]+") - input$pcion1, sn$mass, ppm = 10))
-    idx3 <- unlist(matchWithPpm(input$pcion1, mass2mz(sn$mass, "[M+H]+"), ppm = 10))
-    idxa <- c(idx1, idx2, idx3)
+    idxa <- c(idx1, idx2)
     idx1 <- unlist(matchWithPpm(
       mass2mz(pcmass(), "[M+H]+") - input$pcion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pcmass(), "[M+H]+") - input$pcion2, sn$mass, ppm = 10))
-    idx3 <- unlist(matchWithPpm(input$pcion2, mass2mz(sn$mass, "[M+H]+"), ppm = 10))
-    idxb <- c(idx1, idx2, idx3)
+    idxb <- c(idx1, idx2)
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
@@ -1656,6 +1681,92 @@ server <- function(input, output) {
   
   output$carfragneg <- renderPrint({
     round(as.numeric(mass2mz(carmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("C7H13NO2")), 5)
+  })
+  
+  # MS2 library ----
+  dbx <- reactive({
+    db <- data.frame(cbind(compound = sps_ms2$name, 
+                             adduct = sps_ms2$adduct))
+    db <- db[order(db$compound, db$adduct),]
+    db$precursor <- as.numeric(sprintf("%.5f", precursorMz(sps_ms2)))
+    db
+  })
+  
+   output$table <- DT::renderDataTable(DT::datatable({
+     dbx()
+   }, rownames = FALSE))
+  
+  output$plot_MS2 <- renderPlot({
+    i <- input$table_rows_selected
+    if(length(i) == 1){
+      j <- which(sps_ms2$name == db$compound[i] & 
+                   sps_ms2$adduct == db$adduct[i])
+      plot(unlist(mz(sps_ms2[j])),
+           unlist(intensity(sps_ms2[j])), type = "h", 
+           xlab = "m/z", ylab = "relative intensity", 
+           xlim = c(min(unlist(mz(sps_ms2[j])))-10, 
+                    max(unlist(mz(sps_ms2[j])))+10), ylim = c(0, 110),
+           main = paste("MS2 for m/z", 
+                        sprintf("%.5f", precursorMz(sps_ms2[j])), "@", 
+                        sprintf("%.2f", rtime(sps_ms2[j])/60), "min"))
+      text(unlist(mz(sps_ms2[j])),
+           unlist(intensity(sps_ms2[j])), 
+           sprintf("%.5f", unlist(mz(sps_ms2[j]))), 
+           offset = -1, pos = 2, srt = -30)
+    }
+  })
+  
+  output$plot_NL <- renderPlot({
+    i <- input$table_rows_selected
+    if(length(i) == 1){
+      j <- which(sps_ms2$name == db$compound[i] & 
+                   sps_ms2$adduct == db$adduct[i])
+      mzvals <- as.numeric(unlist(mz(sps_ms2[j]))) - precursorMz(sps_ms2[j])
+      plot(mzvals, unlist(intensity(sps_ms2[j])), type = "h", 
+           xlab = "m/z", ylab = "relative intensity", main = "Neutral Loss",
+           xlim = c(min(mzvals) - 10, max(mzvals) + 10), ylim = c(0, 110))
+      text(mzvals, unlist(intensity(sps_ms2[j])), 
+           sprintf("%.5f", mzvals), offset = -1, pos = 2, srt = -30)
+    }
+  })
+  
+  output$spectra <- DT::renderDataTable(DT::datatable({
+    req(input$file1)
+    df <- read.table(input$file1$datapath)
+    df <- df[order(df[,1]),]
+    x_spd <- DataFrame(
+      msLevel = 2L,
+      polarity = 1L,
+      id = "x",
+      name = "x")
+    x_spd$mz <- list(df[,1])
+    x_spd$intensity <- list(df[,2])
+    x_spd <- Spectra(x_spd)
+    #spdx <- filterPolarity(
+    #  sps_ms2, 
+    #  which(factor(c(1,2), labels = c("NEG", "POS")) == "NEG"#input$polarity
+    #          ))
+    c_spd <- c(x_spd, sps_ms2)
+    tb <- cbind(c_spd$name, Spectra::compareSpectra(c_spd, ppm = 50)[,1],
+                c_spd$adduct, c_spd$polarity)
+    tb <- tb[-1,]
+    colnames(tb) <- c("name", "corr", "adduct", "polarity")
+    tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
+    #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
+    return(tb)
+  }))
+  
+  output$ms2_spectra <- renderPlot({
+    i <- input$spectra_rows_selected
+    if(length(i) == 1){
+      j <- which(sps_ms2$name == tb[i, "name"] & 
+                   sps_ms2$adduct == tb[i, "adduct"] &
+                   sps_ms2$polarity == tb[i, "polarity"])
+      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.2,
+                        labels = label_fun, labelPos = 2, labelOffset = 0.2,
+                        labelSrt = -30)
+      grid()
+    }
   })
   
 } # close server
