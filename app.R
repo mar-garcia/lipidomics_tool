@@ -788,7 +788,13 @@ ui <- navbarPage(
                           column(6, plotOutput("ms2_spectra")),
                         )
                       ))
-  )
+  ),
+  
+  tabPanel("Compound prediction from RT",
+           numericInput("rt", "RT", value = 15),
+           hr(),
+           verbatimTextOutput("cmps_rts")
+           )
   
   
 )# close ui
@@ -1793,7 +1799,55 @@ server <- function(input, output) {
     }
   })
   
-  
+  output$cmps_rts <- renderPrint({
+    rts <- as.data.frame(rbind(
+      c("PA", 5.910, 0.310, -0.580),
+      c("PC", 1.050, 0.398, -0.648),
+      c("DAG", 7.458, 0.315, -0.545),
+      c("TAG", 13.257, 0.165, -0.280)))
+    colnames(rts) <- c("class", "intrs", "Cx", "dbx")
+    rts$intrs <- as.numeric(rts$intrs)
+    rts$Cx <- as.numeric(rts$Cx)
+    rts$dbx <- as.numeric(rts$dbx)
+    
+    rt <- input$rt
+    tb <- data.frame(matrix(nrow = 0, ncol = nrow(rts)))
+    for(i in 0:10){
+      tb <- rbind(tb, round((rt - rts$intrs - i*rts$dbx)/rts$Cx, 1))
+    }
+    colnames(tb) <- rts$class
+    rownames(tb) <- 0:10
+    tb[(tb %% 1)*10 > 8] <- round(tb[(tb %% 1)*10 > 8] )
+    tb[(tb %% 1)*10 > 0] <- NA
+    tb <- tb[rowSums(is.na(tb)) != ncol(tb), ]
+    for(i in seq(ncol(tb))){
+      idx <- which(!is.na(tb[,i]))
+      for(j in idx){
+        if(colnames(tb)[i] == "PA"){
+          i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 7, "O8P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("PA", (tb[j,i] - 3), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
+          
+        } else if(colnames(tb)[i] == "PC"){
+          i.fml <- paste0("C", (tb[j,i] - 8), "H", (tb[j,i] - 8)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 18, "NO8P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("PC", (tb[j,i] - 8), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+H]+", "[M+CHO2]-"))))
+          
+        } else if(colnames(tb)[i] == "DAG"){
+          i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 6, "O5")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("DAG", (tb[j,i] - 3), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M+CHO2]-"))))
+          
+        } else if(colnames(tb)[i] == "TAG"){
+          i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 5, "O6")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("TAG", (tb[j,i] - 3), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M+CHO2]-"))))
+          
+        }
+      }
+    }
+    
+  })
   
 } # close server
 
