@@ -1,7 +1,11 @@
+options(repos = BiocManager::repositories())
+
+
 library(shiny)
 library(MetaboCoreUtils)
 library(OrgMassSpecR)
 library(DT)
+library(Spectra)
 
 .ppm <- function(x, ppm = 10) {
   ppm * x / 1e6
@@ -91,8 +95,10 @@ mzdif.neg <- data.frame(rbind(
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
+
 load("MS2_spectra.RData")
 sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
+
 
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
@@ -765,24 +771,25 @@ ui <- navbarPage(
   
   ## MS2 library ----
   navbarMenu("MS2 in-house library",
-    tabPanel("MS/MS spectras",
-           fluidRow(DT::dataTableOutput("table")),
-           fluidRow(
-             column(6, plotOutput("plot_MS2")),
-             column(6, plotOutput("plot_NL"))
-             )
-           ),
-    tabPanel("Correlations",
-             sidebarLayout(
-               sidebarPanel(
-                 fluidRow(fileInput("file1", "Choose TXT file")),
-                 fluidRow(plotOutput("ms2_x"))),
-               mainPanel(
-                 column(6, DT::dataTableOutput("spectra")),
-                 column(6, plotOutput("ms2_spectra")),
-                 )
-               ))
+             tabPanel("MS/MS spectras",
+                      fluidRow(DT::dataTableOutput("table")),
+                      fluidRow(
+                        column(6, plotOutput("plot_MS2")),
+                        column(6, plotOutput("plot_NL"))
+                      )
+             ),
+             tabPanel("Correlations",
+                      sidebarLayout(
+                        sidebarPanel(
+                          fluidRow(fileInput("file1", "Choose TXT file")),
+                          fluidRow(plotOutput("ms2_x"))),
+                        mainPanel(
+                          column(6, DT::dataTableOutput("spectra")),
+                          column(6, plotOutput("ms2_spectra")),
+                        )
+                      ))
   )
+  
   
 )# close ui
 
@@ -1686,17 +1693,18 @@ server <- function(input, output) {
   # MS2 library ----
   dbx <- reactive({
     db <- data.frame(cbind(compound = sps_ms2$name, 
-                             adduct = sps_ms2$adduct))
-    db <- db[order(db$compound, db$adduct),]
+                           adduct = sps_ms2$adduct))
     db$precursor <- as.numeric(sprintf("%.5f", precursorMz(sps_ms2)))
+    db <- db[order(db$compound, db$adduct),]
     db
   })
   
-   output$table <- DT::renderDataTable(DT::datatable({
-     dbx()
-   }, rownames = FALSE))
+  output$table <- DT::renderDataTable(DT::datatable({
+    dbx()
+  }, rownames = FALSE))
   
   output$plot_MS2 <- renderPlot({
+    db <- dbx()
     i <- input$table_rows_selected
     if(length(i) == 1){
       j <- which(sps_ms2$name == db$compound[i] & 
@@ -1704,8 +1712,9 @@ server <- function(input, output) {
       plot(unlist(mz(sps_ms2[j])),
            unlist(intensity(sps_ms2[j])), type = "h", 
            xlab = "m/z", ylab = "relative intensity", 
-           xlim = c(min(unlist(mz(sps_ms2[j])))-10, 
-                    max(unlist(mz(sps_ms2[j])))+10), ylim = c(0, 110),
+           xlim = c(50,#min(unlist(mz(sps_ms2[j])))-10, 
+                    precursorMz(sps_ms2[j])), #max(unlist(mz(sps_ms2[j])))+10), 
+           ylim = c(0, 110),
            main = paste("MS2 for m/z", 
                         sprintf("%.5f", precursorMz(sps_ms2[j])), "@", 
                         sprintf("%.2f", rtime(sps_ms2[j])/60), "min"))
@@ -1717,6 +1726,7 @@ server <- function(input, output) {
   })
   
   output$plot_NL <- renderPlot({
+    db <- dbx()
     i <- input$table_rows_selected
     if(length(i) == 1){
       j <- which(sps_ms2$name == db$compound[i] & 
@@ -1724,13 +1734,15 @@ server <- function(input, output) {
       mzvals <- as.numeric(unlist(mz(sps_ms2[j]))) - precursorMz(sps_ms2[j])
       plot(mzvals, unlist(intensity(sps_ms2[j])), type = "h", 
            xlab = "m/z", ylab = "relative intensity", main = "Neutral Loss",
-           xlim = c(min(mzvals) - 10, max(mzvals) + 10), ylim = c(0, 110))
+           xlim = c(50 - precursorMz(sps_ms2[j]), 
+                    0),#min(mzvals) - 10, max(mzvals) + 10), 
+           ylim = c(0, 110))
       text(mzvals, unlist(intensity(sps_ms2[j])), 
            sprintf("%.5f", mzvals), offset = -1, pos = 2, srt = -30)
     }
   })
   
-  output$spectra <- DT::renderDataTable(DT::datatable({
+  x_spdx <- reactive({
     req(input$file1)
     df <- read.table(input$file1$datapath)
     df <- df[order(df[,1]),]
@@ -1742,21 +1754,33 @@ server <- function(input, output) {
     x_spd$mz <- list(df[,1])
     x_spd$intensity <- list(df[,2])
     x_spd <- Spectra(x_spd)
+  })
+  
+  tbx <- reactive({
+    x_spd <- x_spdx()
     #spdx <- filterPolarity(
     #  sps_ms2, 
     #  which(factor(c(1,2), labels = c("NEG", "POS")) == "NEG"#input$polarity
     #          ))
     c_spd <- c(x_spd, sps_ms2)
-    tb <- cbind(c_spd$name, Spectra::compareSpectra(c_spd, ppm = 50)[,1],
+    tb <- cbind(c_spd$name, compareSpectra(c_spd, ppm = 50)[,1],
                 c_spd$adduct, c_spd$polarity)
     tb <- tb[-1,]
     colnames(tb) <- c("name", "corr", "adduct", "polarity")
     tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
+    return(tb)
+  })
+  
+  output$spectra <- DT::renderDataTable(DT::datatable({
+    tb <- tbx()
     #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
     return(tb)
   }))
   
   output$ms2_spectra <- renderPlot({
+    x_spd <- x_spdx()
+    tb <- tbx()
+    
     i <- input$spectra_rows_selected
     if(length(i) == 1){
       j <- which(sps_ms2$name == tb[i, "name"] & 
@@ -1768,6 +1792,8 @@ server <- function(input, output) {
       grid()
     }
   })
+  
+  
   
 } # close server
 
