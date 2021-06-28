@@ -1,5 +1,5 @@
 options(repos = BiocManager::repositories())
-
+options("repos")
 
 library(shiny)
 library(MetaboCoreUtils)
@@ -772,12 +772,18 @@ ui <- navbarPage(
   ## MS2 library ----
   navbarMenu("MS2 in-house library",
              tabPanel("MS/MS spectras",
-                      fluidRow(DT::dataTableOutput("table")),
-                      fluidRow(
-                        column(6, plotOutput("plot_MS2")),
-                        column(6, plotOutput("plot_NL"))
-                      )
-             ),
+                      sidebarLayout(
+                        sidebarPanel(
+                          sliderInput("mz", "m/z zoom:", min = 50, max = 1000, 
+                                      value = c(50, 1000), step = 10)
+                        ),
+                        mainPanel(
+                          fluidRow(DT::dataTableOutput("table")),
+                          fluidRow(
+                            column(6, plotOutput("plot_MS2")),
+                            column(6, plotOutput("plot_NL"))
+                          ))
+                      )),
              tabPanel("Correlations",
                       sidebarLayout(
                         sidebarPanel(
@@ -794,7 +800,7 @@ ui <- navbarPage(
            numericInput("rt", "RT", value = 15),
            hr(),
            verbatimTextOutput("cmps_rts")
-           )
+  )
   
   
 )# close ui
@@ -1718,8 +1724,8 @@ server <- function(input, output) {
       plot(unlist(mz(sps_ms2[j])),
            unlist(intensity(sps_ms2[j])), type = "h", 
            xlab = "m/z", ylab = "relative intensity", 
-           xlim = c(50,#min(unlist(mz(sps_ms2[j])))-10, 
-                    precursorMz(sps_ms2[j])), #max(unlist(mz(sps_ms2[j])))+10), 
+           xlim = c(input$mz[1],#min(unlist(mz(sps_ms2[j])))-10, 
+                    input$mz[2]), #max(unlist(mz(sps_ms2[j])))+10), 
            ylim = c(0, 110),
            main = paste("MS2 for m/z", 
                         sprintf("%.5f", precursorMz(sps_ms2[j])), "@", 
@@ -1799,12 +1805,13 @@ server <- function(input, output) {
     }
   })
   
+  ## RT ----
   output$cmps_rts <- renderPrint({
     rts <- as.data.frame(rbind(
-      c("PA", 5.910, 0.310, -0.580),
-      c("PC", 1.050, 0.398, -0.648),
+      c("PA", 5.705, 0.315, -0.585),
+      c("PC", 1.265, 0.393, -0.651),
       c("DAG", 7.458, 0.315, -0.545),
-      c("TAG", 13.257, 0.165, -0.280)))
+      c("TAG", 13.434, 0.161, -0.278)))
     colnames(rts) <- c("class", "intrs", "Cx", "dbx")
     rts$intrs <- as.numeric(rts$intrs)
     rts$Cx <- as.numeric(rts$Cx)
@@ -1817,7 +1824,8 @@ server <- function(input, output) {
     }
     colnames(tb) <- rts$class
     rownames(tb) <- 0:10
-    tb[(tb %% 1)*10 > 8] <- round(tb[(tb %% 1)*10 > 8] )
+    tb[round((tb %% 1)*10) < 3] <- round(tb[round((tb %% 1)*10) < 3] )
+    tb[round((tb %% 1)*10) > 7] <- round(tb[round((tb %% 1)*10) > 7] )
     tb[(tb %% 1)*10 > 0] <- NA
     tb <- tb[rowSums(is.na(tb)) != ncol(tb), ]
     for(i in seq(ncol(tb))){
