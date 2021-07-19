@@ -74,6 +74,7 @@ mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 
 mzdif.neg <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH -> MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("CO2")), "loss of CO2 (HCOOH ion) -> FFA"),
   c(MonoisotopicMass(formula = ListFormula("C3H5NO2")), "loss C3H5NO2 -> LysoPS"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> Lyso PA / PA / PG / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
@@ -154,6 +155,35 @@ ui <- navbarPage(
            )
     ),
   ), # close "MS2" tab
+  
+  ## FFA ----
+  tabPanel(
+    "FFAs",
+    column(4, h3("Formula"),
+           fluidRow(
+             column(2, numericInput("ffaC", "C", value = 32)),
+             column(2, numericInput("ffadb", "db", value = 0))
+           ),
+           column(4, fluidRow(verbatimTextOutput("ffaformula"))),
+           fluidRow(),
+           fluidRow(h3("m/z values"), verbatimTextOutput("ffamzvals1")),
+           fluidRow(verbatimTextOutput("ffamzvals2"))
+    ),
+    column(1), 
+    column(6, h3("MS2"),
+           fluidRow(h4("ESI+"), verbatimTextOutput("ffafragpos")),
+           fluidRow(h4("ESI-"), verbatimTextOutput("ffafragneg"))
+    ),
+    fluidRow(),
+    hr(),
+    h3("Commonly occuring product ions for Free Fatty Acids:"),
+    column(3,
+           strong("Positive [M+H]+:")),
+    column(3, 
+           strong("Negative [M-H+HCOOH]-:"),
+           tags$li("[M - H - CO2]-")
+    )
+  ), # close tab FFA
   
   ## GP ----
   navbarMenu(
@@ -880,6 +910,26 @@ server <- function(input, output) {
     idx <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg$dif) < 0.01),
              unlist(matchWithPpm(input$negfrag6, mzdif.neg$dif, ppm = 10)))
     mzdif.neg$add[idx]
+  })
+  
+  ## FFA ----
+  ffafml <- reactive({
+    paste0("C", input$ffaC, "H", 
+           input$ffaC*2 - (2*input$ffadb), "O2")
+  })
+  
+  ffamass <- reactive({
+    MonoisotopicMass(formula = ListFormula(ffafml()))
+  })
+  
+  output$ffaformula <- renderPrint({ffafml()})
+  
+  output$ffamzvals1 <- renderPrint({
+    mass2mz(ffamass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$ffafragneg <- renderPrint({
+    round(as.numeric(mass2mz(ffamass(), "[M+CHO2]-")) - MonoisotopicMass(formula = ListFormula("CO2")), 5)
   })
   
   ## PA ----
