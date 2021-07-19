@@ -44,7 +44,7 @@ mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA / dmPA"),
   c(MonoisotopicMass(formula = ListFormula("NH3H3PO4CH2")), "loss NH3 & mPA -> mPA"),
   c(MonoisotopicMass(formula = ListFormula("NH3H3PO4C2H4")), "loss NH3 & dmPA -> dmPA"),
-  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss C3H9N -> PC / Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss trimethylamine -> PC / Carnitine"),
   c(MonoisotopicMass(formula = ListFormula("C5H14NO4P")), "loss C5H14NO4P -> PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
@@ -89,7 +89,7 @@ mzdif.neg <- data.frame(rbind(
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
   cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
         "loss HCOOH & CH2 -> Lyso PC / PC"),
-  c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & C7H13NO2 -> Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & carnitine -> Carnitine"),
   cbind(mass2mz(sn$mass, "[M-H]-"), 
         paste0("[", sn$sn, "-H]- -> PA / mPA / dmPA / PG / Lyso PG / PE / Lyso PC / PI / MGDG"))
 ))
@@ -793,15 +793,10 @@ ui <- navbarPage(
     h3("Commonly occuring product ions for Carnitines:"),
     column(3,
            strong("Positive [M+H]+:"),
-           tags$li("[M + H - H2O]+"),
-           tags$li("[Phosphocholine]+")),
+           tags$li("[M + H - trimethylamine]+")),
     column(3, 
            strong("Negative [M-H+HCOOH]-:"),
-           tags$li("[M - H - CH3]-"),
-           br(),
-           strong("[M - H - CH3]-"),
-           tags$li("[sn - H]-")
-           
+           tags$li("[M - H - carnitine]-")
     )
   ), # close tab Carnitines
   
