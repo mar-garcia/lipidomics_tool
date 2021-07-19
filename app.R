@@ -97,7 +97,8 @@ mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
 
 load("MS2_spectra.RData")
-sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
+sps_ms2 <- c(#sps_ms2_POS, 
+  sps_ms2_NEG)
 
 
 # UI ------------------------------------------------------------------------
@@ -163,7 +164,7 @@ ui <- navbarPage(
       h1("Phosphatidic acids (PAs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("paC", "C", value = 32)),
+               column(2, numericInput("paC", "C", value = 36)),
                column(2, numericInput("padb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("paformula"))),
@@ -328,13 +329,13 @@ ui <- navbarPage(
              strong("Positive:")),
       column(3, 
              strong("Negative [M-H]-:"),
-             tags$li("[M - H - (sn1-H2O)]-"),
              tags$li("[M - H - sn1]-"),
+             tags$li("[M - H - (sn1-H2O)]-"),
              tags$li("[M - H - (sn1-H2O) - glycerol]-"),
              tags$li("[sn1 - H]-"),
              br(),
-             tags$li("[M - H - (sn2-H2O)]-"),
              tags$li("[M - H - sn2]-"),
+             tags$li("[M - H - (sn2-H2O)]-"),
              tags$li("[M - H - (sn2-H2O) - glycerol]-"),
              tags$li("[sn2 - H]-")
              
@@ -378,8 +379,11 @@ ui <- navbarPage(
              tags$li("[M + H - phosphoethanolamina]+")),
       column(3, 
              strong("Negative [M-H]-:"),
+             tags$li("[M - H - sn1]-"),
              tags$li("[M - H - (sn1-H2O)]-"),
              tags$li("[sn1 - H]-"),
+             br(),
+             tags$li("[M - H - sn2]-"),
              tags$li("[M - H - (sn2-H2O)]-"),
              tags$li("[sn2 - H]-")
              
@@ -472,7 +476,7 @@ ui <- navbarPage(
       ),
       column(3, 
              strong("Negative [M-H+HCOOH]-:"),
-             tags$li("[M - H - CH2]-")
+             tags$li("[M - CH3]-")
       )
     ), # close tab PCs
     
@@ -514,7 +518,7 @@ ui <- navbarPage(
       h1("Phosphatidylinositols (PIs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("piC", "C", value = 32)),
+               column(2, numericInput("piC", "C", value = 36)),
                column(2, numericInput("pidb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("piformula"))),
@@ -547,10 +551,12 @@ ui <- navbarPage(
              strong("Negative [M-H]-:"),
              tags$li("[M - H - sn1]-"),
              tags$li("[M - H - (sn1-H2O)]-"),
+             tags$li("[M - H - (sn1-H2O) - inositol]-"),
              tags$li("[sn1 - H]-"),
              br(),
              tags$li("[M - H - sn2]-"),
              tags$li("[M - H - (sn2-H2O)]-"),
+             tags$li("[M - H - (sn2-H2O) - inositol]-"),
              tags$li("[sn2 - H]-")
              
       )
@@ -788,10 +794,18 @@ ui <- navbarPage(
                       sidebarLayout(
                         sidebarPanel(
                           fluidRow(fileInput("file1", "Choose TXT file")),
+                          fluidRow(numericInput("precursor", "Precursor m/z", 
+                                                value = 517.42540)),
                           fluidRow(plotOutput("ms2_x"))),
                         mainPanel(
-                          column(6, DT::dataTableOutput("spectra")),
-                          column(6, plotOutput("ms2_spectra")),
+                          fluidRow(
+                            column(6, DT::dataTableOutput("spectra")),
+                            column(6, plotOutput("ms2_spectra"))
+                          ),
+                          fluidRow(
+                            column(6, DT::dataTableOutput("spectra_nl")),
+                            column(6, plotOutput("nl_spectra"))
+                          )
                         )
                       ))
   ),
@@ -1103,13 +1117,15 @@ server <- function(input, output) {
       mass2mz(pgmass(), "[M-H]-") - input$pgion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pgmass(), "[M-H]-") - input$pgion1, sn$mass, ppm = 10))
-    idx <- c(idx1, idx2)
+    idx3 <- unlist(matchWithPpm(input$pgion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pgmass(), "[M-H]-") - input$pgion1 - MonoisotopicMass(formula = ListFormula("C3H8O3")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx <- c(idx1, idx2, idx3, idx4)
     HTML(paste(sn$sn[idx], 
-               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - sn$mass[idx]),
-               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (
-                 (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) +
-                   MonoisotopicMass(formula = ListFormula("C3H8O3")))),
+               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) - MonoisotopicMass(formula = ListFormula("C3H8O3"))),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1119,13 +1135,15 @@ server <- function(input, output) {
       mass2mz(pgmass(), "[M-H]-") - input$pgion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pgmass(), "[M-H]-") - input$pgion2, sn$mass, ppm = 10))
-    idx <- c(idx1, idx2)
+    idx3 <- unlist(matchWithPpm(input$pgion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pgmass(), "[M-H]-") - input$pgion2 - MonoisotopicMass(formula = ListFormula("C3H8O3")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx <- c(idx1, idx2, idx3, idx4)
     HTML(paste(sn$sn[idx], 
-               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - sn$mass[idx]),
-               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (
-                 (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) +
-                   MonoisotopicMass(formula = ListFormula("C3H8O3")))),
+               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) - MonoisotopicMass(formula = ListFormula("C3H8O3"))),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1135,12 +1153,20 @@ server <- function(input, output) {
       mass2mz(pgmass(), "[M-H]-") - input$pgion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pgmass(), "[M-H]-") - input$pgion1, sn$mass, ppm = 10))
-    idxa <- c(idx1, idx2)
+    idx3 <- unlist(matchWithPpm(input$pgion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pgmass(), "[M-H]-") - input$pgion1 - MonoisotopicMass(formula = ListFormula("C3H8O3")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idxa <- c(idx1, idx2, idx3, idx4)
     idx1 <- unlist(matchWithPpm(
       mass2mz(pgmass(), "[M-H]-") - input$pgion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pgmass(), "[M-H]-") - input$pgion2, sn$mass, ppm = 10))
-    idxb <- c(idx1, idx2)
+    idx3 <- unlist(matchWithPpm(input$pgion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pgmass(), "[M-H]-") - input$pgion2 - MonoisotopicMass(formula = ListFormula("C3H8O3")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idxb <- c(idx1, idx2, idx3, idx4)
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
@@ -1173,10 +1199,12 @@ server <- function(input, output) {
     idx1 <- unlist(matchWithPpm(
       mass2mz(pemass(), "[M-H]-") - input$peion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
-    idx2 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idx <- c(idx1, idx2)
+    idx2 <- unlist(matchWithPpm(mass2mz(pemass(), "[M-H]-") - input$peion1, sn$mass, ppm = 10))
+    idx3 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx <- c(idx1, idx2, idx3)
     HTML(paste(sn$sn[idx], 
                sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - sn$mass[idx]),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1185,10 +1213,12 @@ server <- function(input, output) {
     idx1 <- unlist(matchWithPpm(
       mass2mz(pemass(), "[M-H]-") - input$peion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
-    idx2 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idx <- c(idx1, idx2)
+    idx2 <- unlist(matchWithPpm(mass2mz(pemass(), "[M-H]-") - input$peion2, sn$mass, ppm = 10))
+    idx3 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx <- c(idx1, idx2, idx3)
     HTML(paste(sn$sn[idx], 
                sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pemass(), "[M-H]-") - sn$mass[idx]),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1197,13 +1227,15 @@ server <- function(input, output) {
     idx1 <- unlist(matchWithPpm(
       mass2mz(pemass(), "[M-H]-") - input$peion1, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
-    idx2 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idxa <- c(idx1, idx2)
+    idx2 <- unlist(matchWithPpm(mass2mz(pemass(), "[M-H]-") - input$peion1, sn$mass, ppm = 10))
+    idx3 <- unlist(matchWithPpm(input$peion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idxa <- c(idx1, idx2, idx3)
     idx1 <- unlist(matchWithPpm(
       mass2mz(pemass(), "[M-H]-") - input$peion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
-    idx2 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idxb <- c(idx1, idx2)
+    idx2 <- unlist(matchWithPpm(mass2mz(pemass(), "[M-H]-") - input$peion2, sn$mass, ppm = 10))
+    idx3 <- unlist(matchWithPpm(input$peion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idxb <- c(idx1, idx2, idx3)
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
@@ -1371,10 +1403,14 @@ server <- function(input, output) {
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion1, sn$mass, ppm = 10))
     idx3 <- unlist(matchWithPpm(input$piion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idx <- c(idx1, idx2, idx3)
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pimass(), "[M-H]-") - input$piion1 - MonoisotopicMass(formula = ListFormula("C6H12O6")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx <- c(idx1, idx2, idx3, idx4)
     HTML(paste(sn$sn[idx], 
-               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - sn$mass[idx]),
+               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) - MonoisotopicMass(formula = ListFormula("C6H12O6"))),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1385,10 +1421,14 @@ server <- function(input, output) {
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion2, sn$mass, ppm = 10))
     idx3 <- unlist(matchWithPpm(input$piion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idx <- c(idx1, idx2, idx3)
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pimass(), "[M-H]-") - input$piion2 - MonoisotopicMass(formula = ListFormula("C6H12O6")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx <- c(idx1, idx2, idx3, idx4)
     HTML(paste(sn$sn[idx], 
-               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
                sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - sn$mass[idx]),
+               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(pimass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O"))) - MonoisotopicMass(formula = ListFormula("C6H12O6"))),
                sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
                sep = '<br/>'))
   })
@@ -1399,13 +1439,19 @@ server <- function(input, output) {
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion1, sn$mass, ppm = 10))
     idx3 <- unlist(matchWithPpm(input$piion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idxa <- c(idx1, idx2, idx3)
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pimass(), "[M-H]-") - input$piion1 - MonoisotopicMass(formula = ListFormula("C6H12O6")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idxa <- c(idx1, idx2, idx3, idx4)
     idx1 <- unlist(matchWithPpm(
       mass2mz(pimass(), "[M-H]-") - input$piion2, 
       c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
     idx2 <- unlist(matchWithPpm(mass2mz(pimass(), "[M-H]-") - input$piion2, sn$mass, ppm = 10))
     idx3 <- unlist(matchWithPpm(input$piion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    idxb <- c(idx1, idx2, idx3)
+    idx4 <-  unlist(matchWithPpm(
+      mass2mz(pimass(), "[M-H]-") - input$piion2 - MonoisotopicMass(formula = ListFormula("C6H12O6")), 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idxb <- c(idx1, idx2, idx3, idx4)
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
@@ -1726,14 +1772,15 @@ server <- function(input, output) {
            xlab = "m/z", ylab = "relative intensity", 
            xlim = c(input$mz[1],#min(unlist(mz(sps_ms2[j])))-10, 
                     input$mz[2]), #max(unlist(mz(sps_ms2[j])))+10), 
-           ylim = c(0, 110),
+           ylim = c(0, 105),
            main = paste("MS2 for m/z", 
                         sprintf("%.5f", precursorMz(sps_ms2[j])), "@", 
                         sprintf("%.2f", rtime(sps_ms2[j])/60), "min"))
       text(unlist(mz(sps_ms2[j])),
            unlist(intensity(sps_ms2[j])), 
-           sprintf("%.5f", unlist(mz(sps_ms2[j]))), 
-           offset = -1, pos = 2, srt = -30)
+           sprintf("%.5f", unlist(mz(sps_ms2[j]))), pos = 3 
+           #offset = -1, pos = 2, srt = -30
+      )
     }
   })
   
@@ -1748,9 +1795,9 @@ server <- function(input, output) {
            xlab = "m/z", ylab = "relative intensity", main = "Neutral Loss",
            xlim = c(50 - precursorMz(sps_ms2[j]), 
                     0),#min(mzvals) - 10, max(mzvals) + 10), 
-           ylim = c(0, 110))
+           ylim = c(0, 105))
       text(mzvals, unlist(intensity(sps_ms2[j])), 
-           sprintf("%.5f", mzvals), offset = -1, pos = 2, srt = -30)
+           sprintf("%.5f", mzvals), pos = 3)
     }
   })
   
@@ -1761,6 +1808,7 @@ server <- function(input, output) {
     x_spd <- DataFrame(
       msLevel = 2L,
       polarity = 1L,
+      precursorMz = input$precursor,
       id = "x",
       name = "x")
     x_spd$mz <- list(df[,1])
@@ -1783,8 +1831,31 @@ server <- function(input, output) {
     return(tb)
   })
   
+  tby <- reactive({
+    x_spd <- x_spdx()
+    #spdx <- filterPolarity(
+    #  sps_ms2, 
+    #  which(factor(c(1,2), labels = c("NEG", "POS")) == "NEG"#input$polarity
+    #          ))
+    c_spd <- c(x_spd, sps_ms2)
+    c_spd <- applyProcessing(c_spd)
+    mz(c_spd@backend) <- mz(c_spd) - precursorMz(c_spd)
+    tb <- cbind(c_spd$name, compareSpectra(c_spd, tolerance = 0.005)[,1],
+                c_spd$adduct, c_spd$polarity)
+    tb <- tb[-1,]
+    colnames(tb) <- c("name", "corr", "adduct", "polarity")
+    tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
+    return(tb)
+  })
+  
   output$spectra <- DT::renderDataTable(DT::datatable({
     tb <- tbx()
+    #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
+    return(tb)
+  }))
+  
+  output$spectra_nl <- DT::renderDataTable(DT::datatable({
+    tb <- tby()
     #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
     return(tb)
   }))
@@ -1794,6 +1865,26 @@ server <- function(input, output) {
     tb <- tbx()
     
     i <- input$spectra_rows_selected
+    if(length(i) == 1){
+      j <- which(sps_ms2$name == tb[i, "name"] & 
+                   sps_ms2$adduct == tb[i, "adduct"] &
+                   sps_ms2$polarity == tb[i, "polarity"])
+      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.2,
+                        labels = label_fun, labelPos = 2, labelOffset = 0.2,
+                        labelSrt = -30)
+      grid()
+    }
+  })
+  
+  output$nl_spectra <- renderPlot({
+    x_spd <- x_spdx()
+    tb <- tby()
+    x_spd <- applyProcessing(x_spd)
+    mz(x_spd@backend) <- mz(x_spd) - precursorMz(x_spd)
+    sps_ms2 <- applyProcessing(sps_ms2)
+    mz(sps_ms2@backend) <- mz(sps_ms2) - precursorMz(sps_ms2)
+    
+    i <- input$spectra_nl_rows_selected
     if(length(i) == 1){
       j <- which(sps_ms2$name == tb[i, "name"] & 
                    sps_ms2$adduct == tb[i, "adduct"] &
