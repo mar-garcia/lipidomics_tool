@@ -98,8 +98,7 @@ mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
 
 load("MS2_spectra.RData")
-sps_ms2 <- c(#sps_ms2_POS, 
-  sps_ms2_NEG)
+sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
 
 
 # UI ------------------------------------------------------------------------
@@ -806,7 +805,9 @@ ui <- navbarPage(
                       sidebarLayout(
                         sidebarPanel(
                           sliderInput("mz", "m/z zoom:", min = 50, max = 1000, 
-                                      value = c(50, 1000), step = 10)
+                                      value = c(50, 1000), step = 10),
+                          sliderInput("int", "intensity threshold:", min = 0, max = 100, 
+                                      value = 10, step = 1)
                         ),
                         mainPanel(
                           fluidRow(DT::dataTableOutput("table")),
@@ -1821,9 +1822,10 @@ server <- function(input, output) {
            main = paste("MS2 for m/z", 
                         sprintf("%.5f", precursorMz(sps_ms2[j])), "@", 
                         sprintf("%.2f", rtime(sps_ms2[j])/60), "min"))
-      text(unlist(mz(sps_ms2[j])),
-           unlist(intensity(sps_ms2[j])), 
-           sprintf("%.5f", unlist(mz(sps_ms2[j]))), pos = 3 
+      idx <- unlist(intensity(sps_ms2[j])) > input$int
+      text(unlist(mz(sps_ms2[j]))[idx],
+           unlist(intensity(sps_ms2[j]))[idx], 
+           sprintf("%.5f", unlist(mz(sps_ms2[j])))[idx], pos = 3 
            #offset = -1, pos = 2, srt = -30
       )
     }
@@ -1841,8 +1843,9 @@ server <- function(input, output) {
            xlim = c(50 - precursorMz(sps_ms2[j]), 
                     0),#min(mzvals) - 10, max(mzvals) + 10), 
            ylim = c(0, 105))
-      text(mzvals, unlist(intensity(sps_ms2[j])), 
-           sprintf("%.5f", mzvals), pos = 3)
+      idx <- unlist(intensity(sps_ms2[j])) > input$int
+      text(mzvals[idx], unlist(intensity(sps_ms2[j]))[idx], 
+           sprintf("%.5f", mzvals)[idx], pos = 3)
     }
   })
   
