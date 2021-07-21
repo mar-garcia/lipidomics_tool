@@ -312,7 +312,8 @@ ui <- navbarPage(
       column(3,
              strong("Positive [M+NH4]+:"),
              tags$li("[M + H]+"),
-             tags$li("[M + H - methyl-phosphate]+")),
+             tags$li("[M + H - phosphate]+"),
+             tags$li("[M + H - dimethyl-phosphate]+")),
       column(3, 
              strong("Negative [M-H]-:"),
              tags$li("[M - H - sn1]-"),
@@ -321,7 +322,7 @@ ui <- navbarPage(
              br(),
              tags$li("[M - H - sn2]-"),
              tags$li("[M - H - (sn2-H2O)]-"),
-             tags$li("[sn2 - H]-")
+             tags$li("[sn2 - H]-"))
     ), # close dmPA
     
     ### PG ----
@@ -449,9 +450,9 @@ ui <- navbarPage(
              tags$li("[Phosphocholine]+")),
       column(3, 
              strong("Negative [M-H+HCOOH]-:"),
-             tags$li("[M - H - CH3]-"),
+             tags$li("[M - CH3]-"),
              br(),
-             strong("[M - H - CH3]-"),
+             strong("[M - CH3]-"),
              tags$li("[sn - H]-")
              
       )
@@ -1114,10 +1115,10 @@ server <- function(input, output) {
     idx3 <- unlist(matchWithPpm(input$dmpaion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
     idx <- c(idx1, idx2, idx3)
     HTML(paste(sn$sn[idx], 
-                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
-                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - sn$mass[idx]),
-                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
-                 sep = '<br/>'))
+               sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - sn$mass[idx]),
+               sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+               sep = '<br/>'))
   })
   
   output$dmpasn2 <- renderPrint({
@@ -1128,10 +1129,10 @@ server <- function(input, output) {
     idx3 <- unlist(matchWithPpm(input$dmpaion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
     idx <- c(idx1, idx2, idx3)
     HTML(paste(sn$sn[idx], 
-                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
-                 sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - sn$mass[idx]),
-                 sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
-                 sep = '<br/>'))
+               sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(dmpamass(), "[M-H]-") - sn$mass[idx]),
+               sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+               sep = '<br/>'))
   })
   
   output$dmpasum <- renderPrint({
