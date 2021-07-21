@@ -476,10 +476,13 @@ ui <- navbarPage(
       column(6, h3("MS2"),
              fluidRow(h4("ESI+"), 
                       fluidRow(strong("[M+Na]+:"), 
-                               verbatimTextOutput("pcfragpos"))),
+                               verbatimTextOutput("pcfragposna"))),
              br(),
              fluidRow(
                strong("[M+H]+:"),
+               fluidRow(
+                 verbatimTextOutput("pcfragposh")
+               ),
                fluidRow(
                  column(3, numericInput("pcion1", "ion1", value = 0)),
                  column(3, numericInput("pcion2", "ion2", value = 0))
@@ -497,10 +500,11 @@ ui <- navbarPage(
       h3("Commonly occuring product ions for PCs:"),
       column(3,
              strong("Positive [M+Na]+:"),
-             tags$li("[M + Na - C3H9N]+"),
+             tags$li("[M + Na - trimethylamine]+"),
              tags$li("[M + Na - phosphocholine]+"),
              br(),
              strong("[M+H]+:"),
+             tags$li("[M + H - 157.05]+"),
              tags$li("[M + H - sn1]+"),
              tags$li("[M + H - (sn1 - H2O)]+"),
              tags$li("[M + H - sn2]+"),
@@ -1340,10 +1344,13 @@ server <- function(input, output) {
     mass2mz(pcmass(), adduct = c("[M+Na]+", "[2M+H]+", "[2M+CHO2]-"))
   })
   
-  output$pcfragpos <- renderPrint({
+  output$pcfragposna <- renderPrint({
     c(as.numeric(mass2mz(pcmass(), "[M+Na]+")) - MonoisotopicMass(formula = ListFormula("C3H9N")),
       as.numeric(mass2mz(pcmass(), "[M+Na]+")) - MonoisotopicMass(formula = ListFormula("C5H14NO4P")))
   })
+  
+  output$pcfragposh <- renderPrint({
+    as.numeric(mass2mz(pcmass(), "[M+H]+") - 157.05)})
   
   output$pcsn1 <- renderPrint({
     idx1 <- unlist(matchWithPpm(
