@@ -833,11 +833,26 @@ ui <- navbarPage(
       ),
       column(1),
       column(6, h3("MS2"),
-             fluidRow(h4("ESI+"), verbatimTextOutput("dgdgfragpos")),
-             fluidRow(h4("ESI-"), 
-                      column(6, verbatimTextOutput("dgdgfragneg")),
-                      column(3, numericInput("dgdgion1", "ion1", value = 0)),
-                      column(3, verbatimTextOutput("dgdgsn1"))
+             fluidRow(h4("ESI+"), 
+                      column(2, strong("[M+NH4]+")),
+                      column(6, verbatimTextOutput("dgdgfragpos"))),
+             fluidRow(column(2, strong("[M+Na]+")), 
+                      column(3, numericInput("dgdgion1pos", "ion1", value = 0)),
+                      column(3, numericInput("dgdgion2pos", "ion2", value = 0))),
+             fluidRow(
+               column(2, ""),
+               column(3, verbatimTextOutput("dgdgsn1pos")),
+               column(3, verbatimTextOutput("dgdgsn2pos")),
+               column(3, verbatimTextOutput("dgdgsumpos"))
+             ),
+             fluidRow(h4("ESI-"), verbatimTextOutput("dgdgfragneg")),
+             fluidRow(
+               column(2, numericInput("dgdgion1", "ion1", value = 0)),
+               column(2, numericInput("dgdgion2", "ion2", value = 0))),
+             fluidRow(
+               column(3, htmlOutput("dgdgsn1")),
+               column(3, htmlOutput("dgdgsn2")),
+               column(3, verbatimTextOutput("dgdgsum"))
              )
       ),
       fluidRow(),
@@ -846,10 +861,14 @@ ui <- navbarPage(
       column(3,
              strong("Positive [M+NH4]+:"),
              tags$li("[M + NH4 - 2(galactose)]+ + 0.984"),
-             tags$li("[M + H - 2(galactose)]+")
+             tags$li("[M + H - 2(galactose)]+"),
+             br(),
+             strong("Positive [M+Na]+:"),
+             tags$li("[M + Na - sn1]+"),
+             tags$li("[M + Na - galactose - sn1]+")
       ),
       column(3, 
-             strong("Negative [M-H]-:"),
+             strong("Negative [M-H+HCOOH]-:"),
              tags$li("[M - H]-"),
              tags$li("[M - H - sn1]-")
       )
@@ -1949,16 +1968,72 @@ server <- function(input, output) {
               MonoisotopicMass(formula = ListFormula("C12H22O11")), 5))
   })
   
+  output$dgdgsn1pos <- renderPrint({
+    idx1 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - input$dgdgion1pos, 
+      sn$mass, ppm = 10))
+    idx2 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - 
+        MonoisotopicMass(formula = ListFormula("C6H10O5")) - input$dgdgion1pos, 
+      sn$mass, ppm = 10))
+    idx <- c(idx1, idx2)
+    HTML(sn$sn[idx])
+  })
+  
+  output$dgdgsn2pos <- renderPrint({
+    idx1 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - input$dgdgion2pos, 
+      sn$mass, ppm = 10))
+    idx2 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - 
+        MonoisotopicMass(formula = ListFormula("C6H10O5")) - input$dgdgion2pos, 
+      sn$mass, ppm = 10))
+    idx <- c(idx1, idx2)
+    HTML(sn$sn[idx])
+  })
+  
+  output$dgdgsumpos <- renderPrint({
+    idx1 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - input$dgdgion1pos, 
+      sn$mass, ppm = 10))
+    idx2 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - 
+        MonoisotopicMass(formula = ListFormula("C6H10O5")) - input$dgdgion1pos, 
+      sn$mass, ppm = 10))
+    idxa <- c(idx1, idx2)
+    idx1 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - input$dgdgion2pos, 
+      sn$mass, ppm = 10))
+    idx2 <- unlist(matchWithPpm(
+      unlist(mass2mz(dgdgmass(), adduct = c("[M+Na]+"))) - 
+        MonoisotopicMass(formula = ListFormula("C6H10O5")) - input$dgdgion2pos, 
+      sn$mass, ppm = 10))
+    idxb <- c(idx1, idx2)
+    paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
+  })
+  
   output$dgdgfragneg <- renderPrint({
     round(mass2mz(dgdgmass(), "[M-H]-"), 5)
   })
   
   output$dgdgsn1 <- renderPrint({
     idx <- unlist(matchWithPpm(
-      unlist(mass2mz(dgdgmass(), adduct = c("[M-H]-"))) - input$dgdgion1, 
-      sn$mass, ppm = 10))
-    paste0(sn$sn[idx], "-",
-           input$dgdgC - sn$C[idx], ":", input$dgdgdb - sn$db[idx])
+      mass2mz(dgdgmass(), "[M-H]-") - input$dgdgion1, sn$mass, ppm = 10))
+    HTML(sn$sn[idx])
+  })
+  
+  output$dgdgsn2 <- renderPrint({
+    idx <- unlist(matchWithPpm(
+      mass2mz(dgdgmass(), "[M-H]-") - input$dgdgion2, sn$mass, ppm = 10))
+    HTML(sn$sn[idx])
+  })
+  
+  output$dgdgsum <- renderPrint({
+    idxa <- unlist(matchWithPpm(
+      mass2mz(dgdgmass(), "[M-H]-") - input$dgdgion1, sn$mass, ppm = 10))
+    idxb <- unlist(matchWithPpm(
+      mass2mz(dgdgmass(), "[M-H]-") - input$dgdgion2, sn$mass, ppm = 10))
+    paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
   ## Carnitines ----
