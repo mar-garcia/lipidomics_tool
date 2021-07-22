@@ -669,7 +669,7 @@ ui <- navbarPage(
     
   ), # close Glycerophospholipids [GP]
   
-  ## GL ----
+  ## GL1 ----
   navbarMenu(
     "Glycerolipids (GL) - Glycerols",
     ### DAG ----
@@ -757,6 +757,7 @@ ui <- navbarPage(
   navbarMenu(
     "Glycerolipids (GL) - Galactosyldiacylglycerols (GDG)",
     
+    ## GL2 ----
     ### MGDG ----
     tabPanel(
       "Monogalactosyldiacylglycerols (MGDG)",
@@ -772,8 +773,11 @@ ui <- navbarPage(
       ),
       column(1),
       column(6, h3("MS2"),
-             fluidRow(h4("ESI+"), verbatimTextOutput("mgdgfragpos")),
-             fluidRow(column(2, strong("[M+Na]+")), column(3, numericInput("mgdgion1pos", "ion1", value = 0)),
+             fluidRow(h4("ESI+"), 
+                      column(2, strong("[M+NH4]+")),
+                      column(6, verbatimTextOutput("mgdgfragpos"))),
+             fluidRow(column(2, strong("[M+Na]+")), 
+                      column(3, numericInput("mgdgion1pos", "ion1", value = 0)),
                       column(3, numericInput("mgdgion2pos", "ion2", value = 0))),
              fluidRow(
                column(2, ""),
@@ -781,10 +785,14 @@ ui <- navbarPage(
                column(3, verbatimTextOutput("mgdgsn2pos")),
                column(3, verbatimTextOutput("mgdgsumpos"))
              ),
-             fluidRow(h4("ESI-"), 
-                      column(4, verbatimTextOutput("mgdgfragneg")),
-                      column(2, numericInput("mgdgion1", "ion1", value = 0)),
-                      column(6, verbatimTextOutput("mgdgsn1"))
+             fluidRow(h4("ESI-"), verbatimTextOutput("mgdgfragneg")),
+             fluidRow(
+               column(2, numericInput("mgdgion1", "ion1", value = 0)),
+               column(2, numericInput("mgdgion2", "ion2", value = 0))),
+             fluidRow(
+               column(3, htmlOutput("mgdgsn1")),
+               column(3, htmlOutput("mgdgsn2")),
+               column(3, verbatimTextOutput("mgdgsum"))
              )
       ),
       fluidRow(),
@@ -797,12 +805,16 @@ ui <- navbarPage(
              br(),
              strong("[M+Na]+:"),
              tags$li("[M + Na - sn1]+"),
-             tags$li("[M + NA - sn2]+")),
+             tags$li("[M + Na - sn2]+")),
       column(3, 
              strong("Negative [M-H]-:"),
              tags$li("[M - H]-"),
+             br(),
              tags$li("[M - H - (sn1 - H2O)]-"),
-             tags$li("[sn1 - H]-")
+             tags$li("[sn1 - H]-"),
+             br(),
+             tags$li("[M - H - (sn2 - H2O)]-"),
+             tags$li("[sn2 - H]-")
       )
     ), # close MGDG
     
@@ -1871,15 +1883,41 @@ server <- function(input, output) {
   })
   
   output$mgdgsn1 <- renderPrint({
-    idx <- unlist(matchWithPpm(
-      unlist(mass2mz(mgdgmass(), adduct = c("[M-H]-"))) - input$mgdgion1, 
-      sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), ppm = 10))
-    paste0(sn$sn[idx], " (", round(mass2mz(sn$mass[idx], "[M-H]-"), 5), ") - ",
-           input$mgdgC - sn$C[idx], ":", input$mgdgdb - sn$db[idx],
-           " (",
-           round(mass2mz(sn$mass[sn$sn == paste0(input$mgdgC - sn$C[idx], ":", 
-                                                 input$mgdgdb - sn$db[idx])], "[M-H]-"), 5)
-           , ")")
+    idx1 <- unlist(matchWithPpm(
+      mass2mz(mgdgmass(), "[M-H]-") - input$mgdgion1, 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx2 <- unlist(matchWithPpm(input$mgdgion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx <- c(idx1, idx2)
+    HTML(paste(sn$sn[idx], 
+               sprintf("%.5f", mass2mz(mgdgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+               sep = '<br/>'))
+  })
+  
+  output$mgdgsn2 <- renderPrint({
+    idx1 <- unlist(matchWithPpm(
+      mass2mz(mgdgmass(), "[M-H]-") - input$mgdgion2, 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx2 <- unlist(matchWithPpm(input$mgdgion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idx <- c(idx1, idx2)
+    HTML(paste(sn$sn[idx], 
+               sprintf("%.5f", mass2mz(mgdgmass(), "[M-H]-") - (sn$mass[idx] - MonoisotopicMass(formula = ListFormula("H2O")))),
+               sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")), 
+               sep = '<br/>'))
+  })
+  
+  output$mgdgsum <- renderPrint({
+    idx1 <- unlist(matchWithPpm(
+      mass2mz(mgdgmass(), "[M-H]-") - input$mgdgion1, 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx2 <- unlist(matchWithPpm(input$mgdgion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idxa <- c(idx1, idx2)
+    idx1 <- unlist(matchWithPpm(
+      mass2mz(mgdgmass(), "[M-H]-") - input$mgdgion2, 
+      c(sn$mass - MonoisotopicMass(formula = ListFormula("H2O"))), ppm = 10))
+    idx2 <- unlist(matchWithPpm(input$mgdgion2, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    idxb <- c(idx1, idx2)
+    paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
   ## DGDG -----
