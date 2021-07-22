@@ -358,7 +358,8 @@ ui <- navbarPage(
       hr(),
       h3("Commonly occuring product ions for PGs:"),
       column(3,
-             strong("Positive:")),
+             strong("Positive [M+NH4]+:"),
+             tags$li("[M + NH4 - 141.04]+")),
       column(3, 
              strong("Negative [M-H]-:"),
              tags$li("[M - H - sn1]-"),
@@ -1199,6 +1200,10 @@ server <- function(input, output) {
   
   output$pgmzvals1 <- renderPrint({
     mass2mz(pgmass(), adduct = c("[M+NH4]+", "[M-H]-"))
+  })
+  
+  output$pgfragpos <- renderPrint({
+    sprintf("%.5f", as.numeric(mass2mz(pgmass(),  adduct = c("[M+NH4]+"))) - 141.04)
   })
   
   output$pgsn1 <- renderPrint({
