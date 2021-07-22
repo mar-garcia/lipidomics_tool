@@ -160,7 +160,7 @@ ui <- navbarPage(
     "FFAs",
     column(4, h3("Formula"),
            fluidRow(
-             column(2, numericInput("ffaC", "C", value = 32)),
+             column(2, numericInput("ffaC", "C", value = 18)),
              column(2, numericInput("ffadb", "db", value = 0))
            ),
            column(4, fluidRow(verbatimTextOutput("ffaformula"))),
@@ -193,7 +193,7 @@ ui <- navbarPage(
       h1("Phosphatidic acids (PAs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("paC", "C", value = 32)),
+               column(2, numericInput("paC", "C", value = 36)),
                column(2, numericInput("padb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("paformula"))),
@@ -242,7 +242,7 @@ ui <- navbarPage(
       h1("Methylated phosphatidic acids (mPAs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("mpaC", "C", value = 32)),
+               column(2, numericInput("mpaC", "C", value = 36)),
                column(2, numericInput("mpadb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("mpaformula"))),
@@ -285,7 +285,7 @@ ui <- navbarPage(
       h1("Methylated phosphatidic acids (dmPAs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("dmpaC", "C", value = 32)),
+               column(2, numericInput("dmpaC", "C", value = 36)),
                column(2, numericInput("dmpadb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("dmpaformula"))),
@@ -331,7 +331,7 @@ ui <- navbarPage(
       h1("Phosphatidylglycerols (PGs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("pgC", "C", value = 32)),
+               column(2, numericInput("pgC", "C", value = 36)),
                column(2, numericInput("pgdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("pgformula"))),
@@ -374,13 +374,45 @@ ui <- navbarPage(
       )
     ), # close tab PGs
     
+    ### Lyso-PE ----
+    tabPanel(
+      "Lyso-Phosphatidylethanolamines (Lyso-PEs)",
+      h1("Lyso-Phosphatidylethanolamines (Lyso-PEs)"),
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("lpeC", "C", value = 18)),
+               column(2, numericInput("lpedb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("lpeformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("lpemzvals"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("lpefragpos")),
+             fluidRow(h4("ESI-"), 
+                      fluidRow(numericInput("lpeion", "ion", value = 0)))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Lyso-PEs:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - H2O]+"),
+             tags$li("[M + H - phosphoethanolamina]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[sn - H]-")
+      )
+    ), # close tab Lyso-PE
+    
     ### PE ----
     tabPanel(
       "Phosphatidylethanolamines (PEs)",
       h1("Phosphatidylethanolamines (PEs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("peC", "C", value = 32)),
+               column(2, numericInput("peC", "C", value = 36)),
                column(2, numericInput("pedb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("peformula"))),
@@ -428,7 +460,7 @@ ui <- navbarPage(
       h1("Lyso-Phosphatidylcholines (Lyso-PCs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("lpcC", "C", value = 16)),
+               column(2, numericInput("lpcC", "C", value = 18)),
                column(2, numericInput("lpcdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("lpcformula"))),
@@ -464,7 +496,7 @@ ui <- navbarPage(
       h1("Phosphatidylcholines (PCs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("pcC", "C", value = 32)),
+               column(2, numericInput("pcC", "C", value = 36)),
                column(2, numericInput("pcdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("pcformula"))),
@@ -522,7 +554,7 @@ ui <- navbarPage(
       h1("Lyso-Phosphatidylserines (Lyso-PSs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("lpsC", "C", value = 16)),
+               column(2, numericInput("lpsC", "C", value = 18)),
                column(2, numericInput("lpsdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("lpsformula"))),
@@ -554,7 +586,7 @@ ui <- navbarPage(
       h1("Phosphatidylinositols (PIs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("piC", "C", value = 32)),
+               column(2, numericInput("piC", "C", value = 36)),
                column(2, numericInput("pidb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("piformula"))),
@@ -645,7 +677,7 @@ ui <- navbarPage(
       h1("Triacylglycerols (TAGs)"),
       column(2, h3("Formula"),
              fluidRow(
-               column(6, numericInput("tagC", "C", value = 48)),
+               column(6, numericInput("tagC", "C", value = 54)),
                column(6, numericInput("tagdb", "db", value = 0))
              ),
              fluidRow(verbatimTextOutput("tagformula")),
@@ -1229,7 +1261,34 @@ server <- function(input, output) {
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
-  ## PE ----
+  ## Lyso-PE ----
+  lpefml <- reactive({
+    paste0("C", input$lpeC + 5, "H", 
+           input$lpeC*2 - (2 + 2*input$lpedb) + 14, "NO7P")
+  })
+  
+  lpemass <- reactive({
+    MonoisotopicMass(formula = ListFormula(lpefml()))
+  })
+  
+  output$lpeformula <- renderPrint({lpefml()})
+  
+  output$lpemzvals <- renderPrint({
+    mass2mz(lpemass(), adduct = c("[M+H]+", "[M-H]-"))
+  })
+  
+  output$lpefragpos <- renderPrint({
+    c(sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H-H2O]+"))), 
+      sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H]+")) - 
+                MonoisotopicMass(formula = ListFormula("C2H8NO4P"))))
+  })
+  
+  output$lpesn <- renderPrint({
+    idx <- unlist(matchWithPpm(input$lpeion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
+    HTML(sn$sn[idx])
+  })
+    
+    ## PE ----
   pefml <- reactive({
     paste0("C", input$peC + 5, "H", 
            input$peC*2 - (2 + 2*input$pedb) + 12, "NO8P")
