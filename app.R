@@ -579,6 +579,43 @@ ui <- navbarPage(
       )
     ), # close tab Lyso-PSs
     
+    ### PS ----
+    tabPanel(
+      "Phosphatidylserines (PSs)",
+      h1("Phosphatidylserines (PSs)"),
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("psC", "C", value = 40)),
+               column(2, numericInput("psdb", "db", value = 2))
+             ),
+             column(4, fluidRow(verbatimTextOutput("psformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("psmzvals"))),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("psfragpos")),
+             fluidRow(h4("ESI-"),
+                      fluidRow(verbatimTextOutput("psfragneg")), 
+                      fluidRow(
+                        column(3, numericInput("psion1", "ion1", value = 0))),
+                      fluidRow(
+                        column(3, htmlOutput("pssn1")),
+                        column(3, htmlOutput("pssn2"))
+                      )
+             )),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for PSs:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - phosphoserine]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[M - H - serine]-"),
+             tags$li("[M - H - serine - sn1]-")
+      )
+    ), # close tab PSs
+    
     ### PI ----
     tabPanel(
       "Phosphatidylinositols (PIs)",
@@ -1290,8 +1327,8 @@ server <- function(input, output) {
     idx <- unlist(matchWithPpm(input$lpeion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
     HTML(sn$sn[idx])
   })
-    
-    ## PE ----
+  
+  ## PE ----
   pefml <- reactive({
     paste0("C", input$peC + 5, "H", 
            input$peC*2 - (2 + 2*input$pedb) + 12, "NO8P")
@@ -1473,6 +1510,50 @@ server <- function(input, output) {
   output$lpsfragneg <- renderPrint({
     as.numeric(round(mass2mz(lpsmass(), "[M-H]-") - 
                        MonoisotopicMass(formula = ListFormula("C3H5NO2")), 5))
+  })
+  
+  ## PS ----
+  psfml <- reactive({
+    paste0("C", input$psC + 6, "H", 
+           input$psC*2 - (2 + 2*input$psdb) + 12, "NO10P")
+  })
+  
+  psmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(psfml()))
+  })
+  
+  output$psformula <- renderPrint({psfml()})
+  
+  output$psmzvals <- renderPrint({
+    mass2mz(psmass(), adduct = c("[M+H]+", "[M-H]-"))
+  })
+  
+  output$psfragpos <- renderPrint({
+    as.numeric(unlist(mass2mz(psmass(), "[M+H]+"))) - 
+      MonoisotopicMass(formula = ListFormula("C3H8NO6P"))
+  })
+  
+  output$psfragneg <- renderPrint({
+    as.numeric(unlist(mass2mz(psmass(), "[M-H]-"))) - 
+      MonoisotopicMass(formula = ListFormula("C3H5NO2"))
+  })
+  
+  output$pssn1 <- renderPrint({
+    idx <- unlist(matchWithPpm(
+      input$psion1, 
+      as.numeric(mass2mz(psmass(), "[M-H]-") - 
+                   MonoisotopicMass(formula = ListFormula("C3H5NO2"))) - 
+        sn$mass, ppm = 10))
+    HTML(sn$sn[idx])
+  })
+  
+  output$pssn2 <- renderPrint({
+    idx <- unlist(matchWithPpm(
+      input$psion1, 
+      as.numeric(mass2mz(psmass(), "[M-H]-") - 
+                   MonoisotopicMass(formula = ListFormula("C3H5NO2"))) - 
+        sn$mass, ppm = 10))
+    paste0(input$psC - sn$C[idx], ":", input$psdb - sn$db[idx])
   })
   
   ## PI ----
