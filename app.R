@@ -155,35 +155,6 @@ ui <- navbarPage(
     ),
   ), # close "MS2" tab
   
-  ## FFA ----
-  tabPanel(
-    "FFAs",
-    column(4, h3("Formula"),
-           fluidRow(
-             column(2, numericInput("ffaC", "C", value = 18)),
-             column(2, numericInput("ffadb", "db", value = 0))
-           ),
-           column(4, fluidRow(verbatimTextOutput("ffaformula"))),
-           fluidRow(),
-           fluidRow(h3("m/z values"), verbatimTextOutput("ffamzvals1")),
-           fluidRow(verbatimTextOutput("ffamzvals2"))
-    ),
-    column(1), 
-    column(6, h3("MS2"),
-           fluidRow(h4("ESI+"), verbatimTextOutput("ffafragpos")),
-           fluidRow(h4("ESI-"), verbatimTextOutput("ffafragneg"))
-    ),
-    fluidRow(),
-    hr(),
-    h3("Commonly occuring product ions for Free Fatty Acids:"),
-    column(3,
-           strong("Positive [M+H]+:")),
-    column(3, 
-           strong("Negative [M-H+HCOOH]-:"),
-           tags$li("[M - H - CO2]-")
-    )
-  ), # close tab FFA
-  
   ## GP ----
   navbarMenu(
     "Glycerophospholipids (GPs)",
@@ -392,7 +363,8 @@ ui <- navbarPage(
       column(6, h3("MS2"),
              fluidRow(h4("ESI+"), verbatimTextOutput("lpefragpos")),
              fluidRow(h4("ESI-"), 
-                      fluidRow(numericInput("lpeion", "ion", value = 0)))
+                      fluidRow(numericInput("lpeion1", "ion", value = 0)),
+                      fluidRow(htmlOutput("lpesn")))
       ),
       fluidRow(),
       hr(),
@@ -440,7 +412,7 @@ ui <- navbarPage(
       hr(),
       h3("Commonly occuring product ions for PEs:"),
       column(3,
-             strong("Positive [M+NH4]+:"),
+             strong("Positive [M+H]+:"),
              tags$li("[M + H - phosphoethanolamina]+")),
       column(3, 
              strong("Negative [M-H]-:"),
@@ -535,7 +507,7 @@ ui <- navbarPage(
              tags$li("[M + Na - phosphocholine]+"),
              br(),
              strong("[M+H]+:"),
-             tags$li("[M + H - 157.05]+"),
+             tags$li("< C34 [M + H - 157.05]+ ; > C36 [M + H - 183.0684]"),
              tags$li("[M + H - sn1]+"),
              tags$li("[M + H - (sn1 - H2O)]+"),
              tags$li("[M + H - sn2]+"),
@@ -669,9 +641,9 @@ ui <- navbarPage(
     
   ), # close Glycerophospholipids [GP]
   
-  ## GL1 ----
+  ## GL ----
   navbarMenu(
-    "Glycerolipids (GL) - Glycerols",
+    "Glycerolipids (GL)",
     ### DAG ----
     tabPanel(
       "Diacylglycerols (DAGs)",
@@ -752,12 +724,8 @@ ui <- navbarPage(
              tags$li("[M + H - sn2]+"),
              tags$li("[M + H - sn3]+")
       )
-    ) # close tab TAG
-  ), # close GL-glycerols
-  navbarMenu(
-    "Glycerolipids (GL) - Galactosyldiacylglycerols (GDG)",
+    ), # close tab TAG
     
-    ## GL2 ----
     ### MGDG ----
     tabPanel(
       "Monogalactosyldiacylglycerols (MGDG)",
@@ -873,37 +841,71 @@ ui <- navbarPage(
              tags$li("[M - H - sn1]-")
       )
     ) # close DGDG
-  ), #  close Glycosylglycerols
+  ), #  close Glycerolypids
   
-  ## Carnitines ----
-  tabPanel(
-    "Carnitines",
-    column(4, h3("Formula"),
-           fluidRow(
-             column(2, numericInput("carC", "C", value = 24)),
-             column(2, numericInput("cardb", "db", value = 0))
-           ),
-           column(4, fluidRow(verbatimTextOutput("carformula"))),
-           fluidRow(),
-           fluidRow(h3("m/z values"), verbatimTextOutput("carmzvals1")),
-           fluidRow(verbatimTextOutput("carmzvals2"))
-    ),
-    column(1), 
-    column(6, h3("MS2"),
-           fluidRow(h4("ESI+"), verbatimTextOutput("carfragpos")),
-           fluidRow(h4("ESI-"), verbatimTextOutput("carfragneg"))
-    ),
-    fluidRow(),
-    hr(),
-    h3("Commonly occuring product ions for Carnitines:"),
-    column(3,
-           strong("Positive [M+H]+:"),
-           tags$li("[M + H - trimethylamine]+")),
-    column(3, 
-           strong("Negative [M-H+HCOOH]-:"),
-           tags$li("[M - H - carnitine]-")
-    )
-  ), # close tab Carnitines
+  ## Others ----
+  navbarMenu(
+    "Others",
+    ### FFA ----
+    tabPanel(
+      "FFAs",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("ffaC", "C", value = 18)),
+               column(2, numericInput("ffadb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("ffaformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("ffamzvals1")),
+             fluidRow(verbatimTextOutput("ffamzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("ffafragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("ffafragneg"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Free Fatty Acids:"),
+      column(3,
+             strong("Positive [M+H]+:")),
+      column(3, 
+             strong("Negative [M-H+HCOOH]-:"),
+             tags$li("[M - H - CO2]-")
+      )
+    ), # close tab FFA
+    
+    ### Carnitines ----
+    tabPanel(
+      "Carnitines",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("carC", "C", value = 24)),
+               column(2, numericInput("cardb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("carformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("carmzvals1")),
+             fluidRow(verbatimTextOutput("carmzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("carfragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("carfragneg"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Carnitines:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - trimethylamine]+")),
+      column(3, 
+             strong("Negative [M-H+HCOOH]-:"),
+             tags$li("[M - H - carnitine]-")
+      )
+    ) # close tab Carnitines
+  ), # close Others
+  
   
   ## MS2 library ----
   navbarMenu("MS2 in-house library",
@@ -928,6 +930,10 @@ ui <- navbarPage(
                           fluidRow(fileInput("file1", "Choose TXT file")),
                           fluidRow(numericInput("precursor", "Precursor m/z", 
                                                 value = 517.42540)),
+                          fluidRow(checkboxGroupInput(
+                            "pol", "Polarity",
+                            choices = list("POS" = 1, "NEG" = 0),
+                            selected = 0)),
                           fluidRow(plotOutput("ms2_x"))),
                         mainPanel(
                           fluidRow(
@@ -942,10 +948,47 @@ ui <- navbarPage(
                       ))
   ),
   
+  ## RT prediction ----
   tabPanel("Compound prediction from RT",
            numericInput("rt", "RT", value = 15),
            hr(),
            verbatimTextOutput("cmps_rts")
+  ),
+  
+  ## Theoretical MS2 ----
+  tabPanel("Theoretical MS2",
+           sidebarLayout(
+             sidebarPanel(
+               selectInput("class", "Lipid class:",
+                           choices = list("FFA" = "FFA",
+                                          "Lyso_PC" = "Lyso_PC",
+                                          "Lyso_PC_MS3" = "Lyso_PC_MS3",
+                                          "PC" = "PC",
+                                          "Lyso_PE" = "Lyso_PE",
+                                          "PE" = "PE"),
+                           selected = "PC"),
+               fluidRow(
+                 column(2, numericInput("C", "C", value = 36)),
+                 column(2, numericInput("db", "db", value = 1))
+               ),
+               fluidRow(
+                 column(6, selectInput("sn1", "sn1",
+                                       choices = sn$sn,
+                                       selected = "18:1")),
+                 column(6, selectInput("sn2", "sn2",
+                                       choices = sn$sn,
+                                       selected = "18:0"))
+               )
+             ),
+             mainPanel(
+               fluidRow(
+                 column(6, plotOutput("thr_MS2_N")),
+                 column(6, plotOutput("thr_MS2_P"))),
+               fluidRow(
+                 column(6, verbatimTextOutput("thr_MS2_tb_N")),
+                 column(6, verbatimTextOutput("thr_MS2_tb_P")))
+             )
+           )
   )
   
   
@@ -1349,14 +1392,18 @@ server <- function(input, output) {
   })
   
   output$lpefragpos <- renderPrint({
-    c(sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H-H2O]+"))), 
-      sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H]+")) - 
-                MonoisotopicMass(formula = ListFormula("C2H8NO4P"))))
+    tmp <- c(sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H-H2O]+"))), 
+             sprintf("%.5f", as.numeric(mass2mz(lpemass(), "[M+H]+")) - 
+                       MonoisotopicMass(formula = ListFormula("C2H8NO4P"))))
+    names(tmp) <- c("[M+H-H2O]+", "[M+H-PE]+")
+    tmp
   })
   
   output$lpesn <- renderPrint({
     idx <- unlist(matchWithPpm(input$lpeion1, mass2mz(sn$mass, "[M-H]-"), ppm = 10))
-    HTML(sn$sn[idx])
+    HTML(paste(sn$sn[idx],
+               sprintf("%.5f", mass2mz(sn$mass[idx], "[M-H]-")),
+               sep = '<br/>'))
   })
   
   ## PE ----
@@ -1439,13 +1486,17 @@ server <- function(input, output) {
   })
   
   output$lpcfragpos <- renderPrint({
-    c(round(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), 5),
-      round(mass2mz(lpcmass(), "[M+H-H2O]+"), 5))
+    tmp <- c(round(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), 5),
+             round(mass2mz(lpcmass(), "[M+H-H2O]+"), 5))
+    names(tmp) <- c("[Phosphocholine]+", "[M+H-H2O]+")
+    tmp
   })
   
   output$lpcfragneg <- renderPrint({
-    c(round(mass2mz(lpcmass(), "[M-H]-") - MonoisotopicMass(formula = ListFormula("CH2")), 5),
-      mass2mz(sn$mass[sn$sn == paste0(input$lpcC, ":", input$lpcdb)], "[M-H]-"))
+    tmp <- c(round(mass2mz(lpcmass(), "[M-H]-") - MonoisotopicMass(formula = ListFormula("CH2")), 5),
+             mass2mz(sn$mass[sn$sn == paste0(input$lpcC, ":", input$lpcdb)], "[M-H]-"))
+    names(tmp) <- c("[M-CH3]-", "[sn-H]-")
+    tmp
   })
   
   ## PC ----
@@ -1474,7 +1525,16 @@ server <- function(input, output) {
   })
   
   output$pcfragposh <- renderPrint({
-    as.numeric(mass2mz(pcmass(), "[M+H]+") - 157.05)})
+    if(input$pcC < 36){
+      tmp <- as.numeric(mass2mz(pcmass(), "[M+H]+") - 157.05)
+      names(tmp) <- "[M+H-157.05]+"
+      tmp
+    } else {
+      tmp <- as.numeric(mass2mz(pcmass(), "[M+H]+") - 183.0684)
+      names(tmp) <- "[M+H-183.0684]+"
+      tmp
+    }
+    })
   
   output$pcsn1 <- renderPrint({
     idx1 <- unlist(matchWithPpm(
@@ -1515,7 +1575,10 @@ server <- function(input, output) {
   })
   
   output$pcfragneg <- renderPrint({
-    as.numeric(mass2mz(pcmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("CH2"))
+    tmp <- as.numeric(mass2mz(pcmass(), "[M-H]-")) - MonoisotopicMass(
+      formula = ListFormula("CH2"))
+    names(tmp) <- "[M-CH3]-"
+    tmp
   })
   
   ## Lyso-PS ----
@@ -2132,46 +2195,40 @@ server <- function(input, output) {
   
   tbx <- reactive({
     x_spd <- x_spdx()
-    #spdx <- filterPolarity(
-    #  sps_ms2, 
-    #  which(factor(c(1,2), labels = c("NEG", "POS")) == "NEG"#input$polarity
-    #          ))
-    c_spd <- c(x_spd, sps_ms2)
+    spdx <- filterPolarity(sps_ms2, input$pol)
+    c_spd <- c(x_spd, spdx)
     tb <- cbind(c_spd$name, compareSpectra(c_spd, ppm = 50)[,1],
-                c_spd$adduct, c_spd$polarity)
+                c_spd$adduct)
     tb <- tb[-1,]
-    colnames(tb) <- c("name", "corr", "adduct", "polarity")
+    colnames(tb) <- c("name", "corr", "adduct")
     tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
     return(tb)
   })
   
   tby <- reactive({
     x_spd <- x_spdx()
-    #spdx <- filterPolarity(
-    #  sps_ms2, 
-    #  which(factor(c(1,2), labels = c("NEG", "POS")) == "NEG"#input$polarity
-    #          ))
-    c_spd <- c(x_spd, sps_ms2)
+    spdx <- filterPolarity(sps_ms2, input$pol)
+    c_spd <- c(x_spd, spdx)
     c_spd <- applyProcessing(c_spd)
     mz(c_spd@backend) <- mz(c_spd) - precursorMz(c_spd)
     tb <- cbind(c_spd$name, compareSpectra(c_spd, tolerance = 0.005)[,1],
-                c_spd$adduct, c_spd$polarity)
+                c_spd$adduct)
     tb <- tb[-1,]
-    colnames(tb) <- c("name", "corr", "adduct", "polarity")
+    colnames(tb) <- c("name", "corr", "adduct")
     tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
     return(tb)
   })
   
   output$spectra <- DT::renderDataTable(DT::datatable({
-    tb <- tbx()
+    tb1 <- tbx()
     #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
-    return(tb)
+    return(tb1)
   }))
   
   output$spectra_nl <- DT::renderDataTable(DT::datatable({
-    tb <- tby()
+    tb2 <- tby()
     #tb <- tb[order(tb[,"corr"], decreasing = TRUE), ]
-    return(tb)
+    return(tb2)
   }))
   
   output$ms2_spectra <- renderPlot({
@@ -2260,6 +2317,231 @@ server <- function(input, output) {
       }
     }
     
+  })
+  
+  ## Theoretical MS2 ----
+  thr_MS2_NEG <- reactive({
+    if(input$class == "FFA"){
+      fml <- paste0("C", input$C-1, "H", input$C*2 - (2*input$db), "HCOO")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      plot(dt$mz, dt$percent,
+           type = "h", xlim = c(50, i.mz), 
+           ylim = c(0, 105),
+           xlab = "m/z", ylab = "relative intensity", 
+           main = paste("MS2 [M-H+HCOOH]-", sprintf("%.5f", i.mz)))
+      idx <- dt$percent > 30
+      text(dt$mz[idx],
+           dt$percent[idx], 
+           dt$mz[idx], pos = 3 
+      )
+    } else if(input$class == "Lyso_PC"){
+      fml <- paste0("C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      plot(dt$mz, dt$percent,
+           type = "h", xlim = c(50, i.mz), 
+           ylim = c(0, 105),
+           xlab = "m/z", ylab = "relative intensity", 
+           main = paste("MS2 [M-H+HCOOH]-", sprintf("%.5f", i.mz)))
+      idx <- which(dt$percent > 15)
+      text(dt$mz[idx],
+           dt$percent[idx], 
+           dt$mz[idx], pos = 3)
+    } else if(input$class == "Lyso_PC_MS3"){
+      fml <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
+                    "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+                      (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+    } else if(input$class == "PC"){
+      fml <- paste0("C", input$C + 7, 
+                    "H", input$C*2 - (2 + 2*input$db) + 15, "NO8P")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+    } else if(input$class == "Lyso_PE"){
+      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
+                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
+      dt <- IsotopicDistribution(formula = ListFormula(fml1))
+    }else if(input$class == "PE"){
+      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
+                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
+      dt <- IsotopicDistribution(formula = ListFormula(fml1))
+      fml2 <- paste0(
+        "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", input$C*2 - (2*input$db) + 10 - 1 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1))) - 2), 
+        "NO7P")
+      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      dt2[,3] <- dt2[,3]*0.2
+      if(input$sn1 != input$sn2){
+        fml3 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
+                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
+        dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
+        dt3[,3] <- dt3[,3]*0.5
+        dt <- rbind(dt, dt3)
+      } 
+      dt <- rbind(dt, dt2)
+    }
+  })
+  
+  thr_MS2_POS <- reactive({
+    if(input$class == "Lyso_PC"){
+      fml1 <- paste0("C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18 + 1, 
+                     "NO6P")
+      dt <- IsotopicDistribution(formula = ListFormula(fml1))
+      dt2 <- IsotopicDistribution(formula = ListFormula("C5H15NO4P"))
+      dt2[,3] <- dt2[,3]*0.3
+      dt <- rbind(dt, dt2)
+    } else if(input$class == "PC"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
+        "NO8P"))), ad)
+      if(input$C < 36){
+        dt <- data.frame(cbind(i.mz - 157.05, 100, 100))
+      } else {
+        dt <- data.frame(cbind(i.mz - 183.0684, 100, 100))
+        dt[,3] <- dt[,3]*0.3
+      }
+      colnames(dt) <- c("mz", "intensity", "percent")
+      dt$mz <- sprintf("%.2f", dt$mz)
+      fml2 <- paste0(
+        "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1)))), 
+        "NO6P")
+      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      if(input$C < 36){
+        dt2[,3] <- dt2[,3]*0.35
+      } else{
+        dt2[,3] <- dt2[,3]*0.6
+      }
+      dt <- rbind(dt, dt2)
+      fml3 <- paste0(
+        "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1)))) + 2, 
+        "NO7P")
+      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
+      if(input$C < 36){
+        dt3[,3] <- dt3[,3]*0.45
+      }
+      dt <- rbind(dt, dt3)
+      if(input$sn1 != input$sn2){
+        fml4 <- paste0(
+          "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+          "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+            (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+              gsub(".*:", "", input$sn2)))), 
+          "NO6P")
+        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
+        if(input$C < 36){
+          dt4[,3] <- dt4[,3]*0.4
+        } else {
+          dt4[,3] <- dt4[,3]*0.8
+        }
+        
+        dt <- rbind(dt, dt4)
+      } else {
+        dt <- dt
+      }
+    } else if(input$class == "Lyso_PE"){
+      fml1 <-paste0("C", input$C + 3, "H", input$C*2 - (2 + 2*input$db) + 6 + 1, 
+                    "O3")
+      dt <- IsotopicDistribution(formula = ListFormula(fml1))
+      dt[,3] <- dt[,3]*0.3
+      fml2 <- paste0(
+        "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 12 + 1, "NO6P")
+      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      dt <- rbind(dt, dt2)
+    } else if(input$class == "PE"){
+      fml <- paste0("C", input$C + 3, "H", input$C*2 - (2*input$db) + 3, 
+                    "O4")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+    }
+  })
+  
+  output$thr_MS2_N <- renderPlot({
+    dt <- thr_MS2_NEG()
+    if(input$class == "FFA"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, "H", input$C*2 - (2*input$db), "O2"))), ad)
+    } else if(input$class == "Lyso_PC"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
+    } else if(input$class == "Lyso_PC_MS3"){
+      ad <- "[M+CHO2]-"
+      i.mz <- MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")))
+    } else if(input$class == "PC"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
+        "NO8P"))), ad)
+    } else if(input$class == "Lyso_PE"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 14, "NO7P"))), ad)
+    }else if(input$class == "PE"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2*input$db) + 10, "NO8P"))), ad)
+    }
+    plot(dt$mz, dt$percent,
+         type = "h", xlim = c(50, i.mz), 
+         ylim = c(0, 105),
+         xlab = "m/z", ylab = "relative intensity", 
+         main = paste("MS2", ad, sprintf("%.5f", i.mz)))
+    idx <- which(dt$percent > 15)
+    text(dt$mz[idx],
+         dt$percent[idx], 
+         dt$mz[idx], pos = 3)
+  })
+  
+  output$thr_MS2_P <- renderPlot({
+    dt <- thr_MS2_POS()
+    if(input$class == "Lyso_PC"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
+    } else if(input$class == "PC"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
+        "NO8P"))), ad)
+    } else if(input$class == "Lyso_PE"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 14, "NO7P"))), ad)
+    }else if(input$class == "PE"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2*input$db) + 10, "NO8P"))), ad)
+    }
+    plot(dt$mz, dt$percent,
+         type = "h", xlim = c(50, i.mz), 
+         ylim = c(0, 105),
+         xlab = "m/z", ylab = "relative intensity", 
+         main = paste("MS2", ad, sprintf("%.5f", i.mz)))
+    idx <- which(dt$percent > 15)
+    text(dt$mz[idx],
+         dt$percent[idx], 
+         dt$mz[idx], pos = 3)
+  })
+  
+  output$thr_MS2_tb_N <- renderPrint({
+    dt <- thr_MS2_NEG()
+    dt[,c(1,3)]
+  })
+  
+  output$thr_MS2_tb_P <- renderPrint({
+    dt <- thr_MS2_POS()
+    dt[,c(1,3)]
   })
   
 } # close server
