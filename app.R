@@ -904,7 +904,37 @@ ui <- navbarPage(
              strong("Negative [M-H+HCOOH]-:"),
              tags$li("[M - H - carnitine]- / [sn - H]-")
       )
-    ) # close tab Carnitines
+    ), # close tab Carnitines
+    
+    ### Ceramides ----
+    tabPanel(
+      "Ceramides",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("cerC", "C", value = 15)),
+               column(2, numericInput("cerdb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("cerformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("cermzvals1")),
+             fluidRow(verbatimTextOutput("cermzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("cerfragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("cerfragneg"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for cernitines:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - H2O]+")),
+      column(3, 
+             strong("Negative [M-H+HCOOH]-:"),
+             tags$li("[M - H]-")
+      )
+    ) # close tab Ceramides
   ), # close Others
   
   
@@ -963,6 +993,7 @@ ui <- navbarPage(
                selectInput("class", "Lipid class:",
                            choices = list("FFA" = "FFA",
                                           "CAR" = "CAR",
+                                          "CER" = "CER",
                                           "Lyso_PC" = "Lyso_PC",
                                           "Lyso_PC_MS3" = "Lyso_PC_MS3",
                                           "PC" = "PC",
@@ -970,9 +1001,9 @@ ui <- navbarPage(
                                           "PE" = "PE",
                                           "PG" = "PG",
                                           "PI" = "PI"),
-                           selected = "CAR"),
+                           selected = "CER"),
                fluidRow(
-                 column(2, numericInput("C", "C", value = 24)),
+                 column(2, numericInput("C", "C", value = 15)),
                  column(2, numericInput("db", "db", value = 0))
                ),
                fluidRow(
@@ -1059,26 +1090,6 @@ server <- function(input, output) {
     idx <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg$dif) < 0.01),
              unlist(matchWithPpm(input$negfrag6, mzdif.neg$dif, ppm = 10)))
     mzdif.neg$add[idx]
-  })
-  
-  ## FFA ----
-  ffafml <- reactive({
-    paste0("C", input$ffaC, "H", 
-           input$ffaC*2 - (2*input$ffadb), "O2")
-  })
-  
-  ffamass <- reactive({
-    MonoisotopicMass(formula = ListFormula(ffafml()))
-  })
-  
-  output$ffaformula <- renderPrint({ffafml()})
-  
-  output$ffamzvals1 <- renderPrint({
-    mass2mz(ffamass(), adduct = c("[M+H]+", "[M+CHO2]-"))
-  })
-  
-  output$ffafragneg <- renderPrint({
-    round(as.numeric(mass2mz(ffamass(), "[M+CHO2]-")) - MonoisotopicMass(formula = ListFormula("CO2")), 5)
   })
   
   ## PA ----
@@ -2103,6 +2114,26 @@ server <- function(input, output) {
     paste0(sn$C[idxa] + sn$C[idxb], ":", sn$db[idxa] + sn$db[idxb])
   })
   
+  ## FFA ----
+  ffafml <- reactive({
+    paste0("C", input$ffaC, "H", 
+           input$ffaC*2 - (2*input$ffadb), "O2")
+  })
+  
+  ffamass <- reactive({
+    MonoisotopicMass(formula = ListFormula(ffafml()))
+  })
+  
+  output$ffaformula <- renderPrint({ffafml()})
+  
+  output$ffamzvals1 <- renderPrint({
+    mass2mz(ffamass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$ffafragneg <- renderPrint({
+    round(as.numeric(mass2mz(ffamass(), "[M+CHO2]-")) - MonoisotopicMass(formula = ListFormula("CO2")), 5)
+  })
+  
   ## Carnitines ----
   carfml <- reactive({
     paste0("C", input$carC + 7, "H", 
@@ -2134,6 +2165,30 @@ server <- function(input, output) {
   output$carfragneg <- renderPrint({
     round(as.numeric(mass2mz(carmass(), "[M-H]-")) - 
             MonoisotopicMass(formula = ListFormula("C7H13NO2")), 5)
+  })
+  
+  ## Ceramides ----
+  cerfml <- reactive({
+    paste0("C", input$cerC + 18, "H", 
+           input$cerC*2 - (2*input$cerdb) + 35, "NO3")
+  })
+  
+  cermass <- reactive({
+    MonoisotopicMass(formula = ListFormula(cerfml()))
+  })
+  
+  output$cerformula <- renderPrint({cerfml()})
+  
+  output$cermzvals1 <- renderPrint({
+    mass2mz(cermass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$cerfragpos <- renderPrint({
+    mass2mz(cermass(), "[M+H-H2O]+")
+  })
+  
+  output$cerfragneg <- renderPrint({
+    mass2mz(cermass(), "[M-H]-")
   })
   
   # MS2 library ----
@@ -2340,6 +2395,10 @@ server <- function(input, output) {
     } else if(input$class == "CAR"){
       fml <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O2")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
+    } else if(input$class == "CER"){
+      fml <- paste0("C", input$cerC + 18, 
+                    "H", input$cerC*2 - (2*input$cerdb) + 35 - 1, "NO3")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
     } else if(input$class == "Lyso_PC"){
       fml <- paste0("C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
@@ -2489,6 +2548,10 @@ server <- function(input, output) {
       dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
       dt2[,3] <- dt2[,3]*0.2
       dt <- rbind(dt, dt2)
+    } else if(input$class == "CER"){
+      fml <- paste0("C", input$cerC + 18, 
+                    "H", input$cerC*2 - (2*input$cerdb) + 35 - 1, "NO2")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
     } else if(input$class == "Lyso_PC"){
       fml1 <- paste0("C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18 + 1, 
                      "NO6P")
@@ -2601,6 +2664,11 @@ server <- function(input, output) {
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 15, "NO4"))), ad)
+    } else if(input$class == "CER"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
+        "NO3"))), ad)
     } else if(input$class == "Lyso_PC"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -2649,6 +2717,11 @@ server <- function(input, output) {
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 15, "NO4"))), ad)
+    } else if(input$class == "CER"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
+        "NO3"))), ad)
     } else if(input$class == "Lyso_PC"){
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
