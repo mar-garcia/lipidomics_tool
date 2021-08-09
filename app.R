@@ -898,10 +898,11 @@ ui <- navbarPage(
       h3("Commonly occuring product ions for Carnitines:"),
       column(3,
              strong("Positive [M+H]+:"),
-             tags$li("[M + H - trimethylamine]+")),
+             tags$li("[M + H - trimethylamine]+"),
+             tags$li("[sn + H - H2O]+")),
       column(3, 
              strong("Negative [M-H+HCOOH]-:"),
-             tags$li("[M - H - carnitine]-")
+             tags$li("[M - H - carnitine]- / [sn - H]-")
       )
     ) # close tab Carnitines
   ), # close Others
@@ -961,6 +962,7 @@ ui <- navbarPage(
              sidebarPanel(
                selectInput("class", "Lipid class:",
                            choices = list("FFA" = "FFA",
+                                          "CAR" = "CAR",
                                           "Lyso_PC" = "Lyso_PC",
                                           "Lyso_PC_MS3" = "Lyso_PC_MS3",
                                           "PC" = "PC",
@@ -968,10 +970,10 @@ ui <- navbarPage(
                                           "PE" = "PE",
                                           "PG" = "PG",
                                           "PI" = "PI"),
-                           selected = "PI"),
+                           selected = "CAR"),
                fluidRow(
-                 column(2, numericInput("C", "C", value = 34)),
-                 column(2, numericInput("db", "db", value = 1))
+                 column(2, numericInput("C", "C", value = 24)),
+                 column(2, numericInput("db", "db", value = 0))
                ),
                fluidRow(
                  column(6, selectInput("sn1", "sn1",
@@ -2118,11 +2120,20 @@ server <- function(input, output) {
   })
   
   output$carfragpos <- renderPrint({
-    round(as.numeric(mass2mz(carmass(), "[M+H]+")) - MonoisotopicMass(formula = ListFormula("C3H9N")), 5)
+    tmp <- c(round(as.numeric(mass2mz(carmass(), "[M+H]+")) - 
+                     MonoisotopicMass(formula = ListFormula("C3H9N")), 5),
+             round(as.numeric(mass2mz(
+               MonoisotopicMass(formula = ListFormula(
+                 paste0("C", input$carC, "H", 
+                        input$carC*2 - (2*input$cardb), "O2"))), "[M+H-H2O]+")), 
+               5))
+    names(tmp) <- c("[M+H-TMA]+", "[sn+H-H2O]+")
+    tmp
   })
   
   output$carfragneg <- renderPrint({
-    round(as.numeric(mass2mz(carmass(), "[M-H]-")) - MonoisotopicMass(formula = ListFormula("C7H13NO2")), 5)
+    round(as.numeric(mass2mz(carmass(), "[M-H]-")) - 
+            MonoisotopicMass(formula = ListFormula("C7H13NO2")), 5)
   })
   
   # MS2 library ----
@@ -2326,28 +2337,12 @@ server <- function(input, output) {
     if(input$class == "FFA"){
       fml <- paste0("C", input$C-1, "H", input$C*2 - (2*input$db), "HCOO")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
-      plot(dt$mz, dt$percent,
-           type = "h", xlim = c(50, i.mz), 
-           ylim = c(0, 105),
-           xlab = "m/z", ylab = "relative intensity", 
-           main = paste("MS2 [M-H+HCOOH]-", sprintf("%.5f", i.mz)))
-      idx <- dt$percent > 30
-      text(dt$mz[idx],
-           dt$percent[idx], 
-           dt$mz[idx], pos = 3 
-      )
+    } else if(input$class == "CAR"){
+      fml <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O2")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
     } else if(input$class == "Lyso_PC"){
       fml <- paste0("C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
-      plot(dt$mz, dt$percent,
-           type = "h", xlim = c(50, i.mz), 
-           ylim = c(0, 105),
-           xlab = "m/z", ylab = "relative intensity", 
-           main = paste("MS2 [M-H+HCOOH]-", sprintf("%.5f", i.mz)))
-      idx <- which(dt$percent > 15)
-      text(dt$mz[idx],
-           dt$percent[idx], 
-           dt$mz[idx], pos = 3)
     } else if(input$class == "Lyso_PC_MS3"){
       fml <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
@@ -2486,7 +2481,15 @@ server <- function(input, output) {
   })
   
   thr_MS2_POS <- reactive({
-    if(input$class == "Lyso_PC"){
+    if(input$class == "CAR"){
+      fml <- paste0("C", input$carC + 7 - 3, 
+                    "H", input$carC*2 - (2 + 2*input$cardb) + 15 - 9 + 1, "O4")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      fml2 <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O")
+      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      dt2[,3] <- dt2[,3]*0.2
+      dt <- rbind(dt, dt2)
+    } else if(input$class == "Lyso_PC"){
       fml1 <- paste0("C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18 + 1, 
                      "NO6P")
       dt <- IsotopicDistribution(formula = ListFormula(fml1))
@@ -2594,6 +2597,10 @@ server <- function(input, output) {
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C, "H", input$C*2 - (2*input$db), "O2"))), ad)
+    } else if(input$class == "CAR"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 15, "NO4"))), ad)
     } else if(input$class == "Lyso_PC"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -2638,7 +2645,11 @@ server <- function(input, output) {
   
   output$thr_MS2_P <- renderPlot({
     dt <- thr_MS2_POS()
-    if(input$class == "Lyso_PC"){
+    if(input$class == "CAR"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 15, "NO4"))), ad)
+    } else if(input$class == "Lyso_PC"){
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
