@@ -930,7 +930,32 @@ ui <- navbarPage(
              strong("Negative [M-H+HCOOH]-:"),
              tags$li("[M - H]-")
       )
-    ) # close tab Ceramides
+    ), # close tab Ceramides
+    
+    ### Sphingomyelines ----
+    tabPanel(
+      "Sphingomyelines",
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("smC", "C", value = 36)),
+               column(2, numericInput("smdb", "db", value = 2))
+             ),
+             column(4, fluidRow(verbatimTextOutput("smformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("smmzvals1")),
+             fluidRow(verbatimTextOutput("smmzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("smfragpos"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Sphingomyelines:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[M + H - H2O]+"))
+    ) # close tab Sphingomyelines
   ), # close Others
   
   
@@ -990,6 +1015,7 @@ ui <- navbarPage(
                            choices = list("FFA" = "FFA",
                                           "CAR" = "CAR",
                                           "CER" = "CER",
+                                          "SM" = "SM",
                                           "PA" = "PA",
                                           "mPA" = "mPA",
                                           "dmPA" = "dmPA",
@@ -1001,18 +1027,18 @@ ui <- navbarPage(
                                           "PG" = "PG",
                                           "PI" = "PI",
                                           "PS" = "PS"),
-                           selected = "PS"),
+                           selected = "SM"),
                fluidRow(
-                 column(2, numericInput("C", "C", value = 40)),
+                 column(2, numericInput("C", "C", value = 36)),
                  column(2, numericInput("db", "db", value = 2))
                ),
                fluidRow(
                  column(6, selectInput("sn1", "sn1",
                                        choices = sn$sn,
-                                       selected = "18:2")),
+                                       selected = "18:1")),
                  column(6, selectInput("sn2", "sn2",
                                        choices = sn$sn,
-                                       selected = "22:0"))
+                                       selected = "18:1"))
                )
              ),
              mainPanel(
@@ -2191,6 +2217,26 @@ server <- function(input, output) {
     mass2mz(cermass(), "[M-H]-")
   })
   
+  ## Sphingomyelines ----
+  smfml <- reactive({
+    paste0("C", input$smC + 5, "H", 
+           input$smC*2 - (2*input$smdb) + 13, "N2O6P")
+  })
+  
+  smmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(smfml()))
+  })
+  
+  output$smformula <- renderPrint({smfml()})
+  
+  output$smmzvals1 <- renderPrint({
+    mass2mz(smmass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+  })
+  
+  output$smfragpos <- renderPrint({
+    mass2mz(smmass(), "[M+H-H2O]+")
+  })
+  
   # MS2 library ----
   dbx <- reactive({
     db <- data.frame(cbind(compound = sps_ms2$name, 
@@ -2640,16 +2686,21 @@ server <- function(input, output) {
   
   thr_MS2_POS <- reactive({
     if(input$class == "CAR"){
-      fml <- paste0("C", input$carC + 7 - 3, 
-                    "H", input$carC*2 - (2 + 2*input$cardb) + 15 - 9 + 1, "O4")
+      fml <- paste0("C", input$C + 7 - 3, 
+                    "H", input$C*2 - (2 + 2*input$db) + 15 - 9 + 1, "O4")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
       fml2 <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O")
       dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
       dt2[,3] <- dt2[,3]*0.2
       dt <- rbind(dt, dt2)
     } else if(input$class == "CER"){
-      fml <- paste0("C", input$cerC + 18, 
-                    "H", input$cerC*2 - (2*input$cerdb) + 35 - 1, "NO2")
+      fml <- paste0("C", input$C + 18, 
+                    "H", input$C*2 - (2*input$db) + 35 - 1, "NO2")
+      dt <- IsotopicDistribution(formula = ListFormula(fml))
+    } else if(input$class == "SM"){
+      fml <- paste0("C", input$C + 5, 
+                    "H", input$C*2 - (2*input$db) + 13 + 1 - 2, 
+                    "N2O5P")
       dt <- IsotopicDistribution(formula = ListFormula(fml))
     } else if(input$class == "PA"){
       fml <- paste0("C", input$C + 3, "H", input$C*2 - (2*input$db) + 5 + 1, 
@@ -2809,6 +2860,11 @@ server <- function(input, output) {
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
         "NO3"))), ad)
+    } else if(input$class == "SM"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2*input$db) + 13, 
+        "N2O6P"))), ad)
     } else if(input$class == "PA"){
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -2879,6 +2935,11 @@ server <- function(input, output) {
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
         "NO3"))), ad)
+    } else if(input$class == "SM"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2*input$db) + 13, 
+        "N2O6P"))), ad)
     } else if(input$class == "PA"){
       ad <- "[M+NH4]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
