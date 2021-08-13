@@ -1030,19 +1030,20 @@ ui <- navbarPage(
                                           "MGDG" = "MGDG",
                                           "MGDG_Na" = "MGDG_Na",
                                           "DGDG" = "DGDG",
-                                          "DGDG_Na" = "DGDG_Na"),
-                           selected = "DGDG_Na"),
+                                          "DGDG_Na" = "DGDG_Na",
+                                          "DAG" = "DAG"),
+                           selected = "DAG"),
                fluidRow(
                  column(2, numericInput("C", "C", value = 36)),
-                 column(2, numericInput("db", "db", value = 6))
+                 column(2, numericInput("db", "db", value = 4))
                ),
                fluidRow(
                  column(6, selectInput("sn1", "sn1",
                                        choices = sn$sn,
-                                       selected = "18:3")),
+                                       selected = "18:2")),
                  column(6, selectInput("sn2", "sn2",
                                        choices = sn$sn,
-                                       selected = "18:3"))
+                                       selected = "18:2"))
                )
              ),
              mainPanel(
@@ -2998,7 +2999,27 @@ thr_MS2_POS <- reactive({
     dt2$mz <- sprintf("%.2f", dt2$mz)
     dt2[,3] <- dt2[,3]*0.2
     dt <- rbind(dt, dt2)
-  }
+  } else if(input$class == "DAG"){
+    fml1 <- paste0("C", input$C + 3, 
+                   "H", input$C*2 - (2*input$db) + 4 + 1, 
+                  "O", 5)
+    dt <- IsotopicDistribution(formula = ListFormula(fml1))
+    fml2 <- paste0("C", input$C + 3, 
+                   "H", input$C*2 - (2*input$db) + 4 + 1 - 2, 
+                   "O", 5 - 1)
+    dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+    dt2[,3] <- dt2[,3]*0.3
+    dt <- rbind(dt, dt2)
+    fml3 <- paste0(
+      "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
+      "H", input$C*2 - (2*input$db) + 4 + 1 - 
+        (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+          gsub(".*:", "", input$sn1)))), 
+      "O", 5 - 2)
+    dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
+    dt3[,3] <- dt3[,3]*0.2
+    dt <- rbind(dt, dt3)
+  } 
 })
 
 #### thr_MS2_N ----
@@ -3069,12 +3090,7 @@ output$thr_MS2_N <- renderPlot({
     i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
       "C", input$C + 6, 
       "H", input$C*2 - (2*input$db) + 10, "NO10P"))), ad)
-  } else if(input$class == "MGDG"){
-    ad <- "[M-H]-"
-    i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-      "C", input$C + 9, 
-      "H", input$C*2 - (2*input$db) + 14, "O10"))), ad)
-  } else if(input$class == "MGDG_Na"){
+  } else if(input$class == "MGDG" | input$class == "MGDG_Na"){
     ad <- "[M+CHO2]-"
     i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
       "C", input$C + 9, 
@@ -3084,7 +3100,12 @@ output$thr_MS2_N <- renderPlot({
     i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
       "C", input$C + 15, 
       "H", input$C*2 - (2*input$db) + 24, "O15"))), ad)
-  }
+  } else if(input$class == "DAG"){
+    ad <- "[M+CHO2]-"
+    i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+      "C", input$C + 3, 
+      "H", input$C*2 - (2*input$db) + 4, "O5"))), ad)
+  } 
   plot(dt$mz, dt$percent,
        type = "h", xlim = c(50, i.mz), 
        ylim = c(0, 105),
@@ -3176,7 +3197,12 @@ output$thr_MS2_P <- renderPlot({
     i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
       "C", input$C + 15, 
       "H", input$C*2 - (2*input$db) + 24, "O15"))), ad)
-  }
+  } else if(input$class == "DAG"){
+    ad <- "[M+NH4]+"
+    i.mz <-  mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+      "C", input$C + 3, 
+      "H", input$C*2 - (2*input$db) + 4, "O5"))), ad)
+  } 
   plot(dt$mz, dt$percent,
        type = "h", xlim = c(50, i.mz), 
        ylim = c(0, 105),
