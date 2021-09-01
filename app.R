@@ -1879,11 +1879,12 @@ server <- function(input, output) {
   
   tagms2 <- reactive({
     tmp <- c(
-      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn1],
-      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn2],
-      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$sn3])
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$tagsn1],
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$tagsn2],
+      unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$tagsn3])
     tmp <- unique(tmp)
-    names(tmp) <- unique(paste0("[M+H-C", c(input$sn1, input$sn2, input$sn3), "]+"))
+    names(tmp) <- unique(paste0("[M+H-C", 
+                                c(input$tagsn1, input$tagsn2, input$tagsn3), "]+"))
     tmp
   })
   
