@@ -1033,7 +1033,7 @@ ui <- navbarPage(
                                           "DGDG_Na" = "DGDG_Na",
                                           "DAG" = "DAG",
                                           "TAG" = "TAG"),
-                           selected = "TAG"),
+                           selected = "PA"),
                fluidRow(
                  column(2, numericInput("C", "C", value = 54)),
                  column(2, numericInput("db", "db", value = 6))
@@ -1041,13 +1041,13 @@ ui <- navbarPage(
                fluidRow(
                  column(4, selectInput("sn1", "sn1",
                                        choices = sn$sn,
-                                       selected = "18:2")),
+                                       selected = "18:0")),
                  column(4, selectInput("sn2", "sn2",
                                        choices = sn$sn,
-                                       selected = "18:2")),
+                                       selected = "18:0")),
                  column(4, selectInput("sn3", "sn3",
                                        choices = sn$sn,
-                                       selected = "18:2"))
+                                       selected = "16:0"))
                )
              ),
              mainPanel(
@@ -2394,10 +2394,19 @@ server <- function(input, output) {
   ## RT ----
   output$cmps_rts <- renderPrint({
     rts <- as.data.frame(rbind(
-      c("PA", 5.705, 0.315, -0.585),
-      c("PC", 1.265, 0.393, -0.651),
-      c("DAG", 7.458, 0.315, -0.545),
-      c("TAG", 13.434, 0.161, -0.278)))
+      c("FFA", 8.469, 0.311, 0),
+      c("PA", 2.592, 0.403, -0.643),
+      #c("mPA", 3.591, 0.365, -0.616),
+      #c("dmPA", 4.895, 0.325, -0.580),
+      #c("Lyso_PC", 9.720, 0, -1.380),
+      c("PC", 1.640, 0.382, -0.624),
+      #c("PE", 4.269, 0.349, -0.605),
+      #c("PG", 2.418, 0.364, -0.602),
+      #c("PI", -0.971, 0.414, -0.644),
+      #c("MGDG", 3.577, 0.341, -0.586),
+      #c("DGDG", -1.859, 0.402, -0.653),
+      c("DAG", 7.368, 0.314, -0.518),
+      c("TAG", 14.006, 0.151, -0.280)))
     colnames(rts) <- c("class", "intrs", "Cx", "dbx")
     rts$intrs <- as.numeric(rts$intrs)
     rts$Cx <- as.numeric(rts$Cx)
@@ -2417,7 +2426,12 @@ server <- function(input, output) {
     for(i in seq(ncol(tb))){
       idx <- which(!is.na(tb[,i]))
       for(j in idx){
-        if(colnames(tb)[i] == "PA"){
+        if(colnames(tb)[i] == "FFA"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i])*2 - (2*as.numeric(rownames(tb)[j])), "O2")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("FFA", (tb[j,i]), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+H]+", "[M+CHO2]-"))))
+          
+        } else if(colnames(tb)[i] == "PA"){
           i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 7, "O8P")
           i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
           print(cbind(paste0("PA", (tb[j,i] - 3), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
@@ -2447,316 +2461,357 @@ server <- function(input, output) {
   #### thr_MS2_NEG ----
   thr_MS2_NEG <- reactive({
     if(input$class == "FFA"){
-      fml <- paste0("C", input$C-1, "H", input$C*2 - (2*input$db), "HCOO")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C - 1, "H", input$C*2 - (2*input$db), "HCOOH"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "CAR"){
-      fml <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O2")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, "H", input$C*2 - (2*input$db), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "CER"){
-      fml <- paste0("C", input$cerC + 18, 
-                    "H", input$cerC*2 - (2*input$cerdb) + 35 - 1, "NO3")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$cerC + 18, 
+        "H", input$cerC*2 - (2*input$cerdb) + 35, "NO3"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "PA"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                     "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      dt[,3] <- dt[,3]*0.9
-      fml2 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn2)),
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 90))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 5 - 1 - 
+        "H", input$C*2 - (2*input$db) + 5 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O6P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+        "O6P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
-      fml3 <- paste0(
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 5 - 1 - 
+        "H", input$C*2 - (2*input$db) + 5 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "O7P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.7
+        "O7P"))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 70))
+
       if(input$sn1 != input$sn2){
-        fml4 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                       "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-        dt4[,3] <- dt4[,3]*0.3
+        i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn1)),
+          "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+        dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 30))
         dt <- rbind(dt, dt4)
-        fml5 <- paste0(
+        
+        i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn2)), 
-          "H", input$C*2 - (2*input$db) + 5 - 1 - 
+          "H", input$C*2 - (2*input$db) + 5 - 
             (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2)))), 
-          "O6P")
-        dt5 <- IsotopicDistribution(formula = ListFormula(fml5))
-        dt5[,3] <- dt5[,3]*0.35
+          "O6P"))), "[M-H]-")
+        dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), "percent" = 35))
         dt <- rbind(dt, dt5)
       } 
       dt <- rbind(dt, dt3)
     } else if(input$class == "mPA"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml3 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 4 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 7 - 1 - 
+        "H", input$C*2 - (2*input$db) + 7 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "O7P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.2
+        "O7P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
+
       if(input$sn1 != input$sn2){
-        fml4 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-        dt4[,3] <- dt4[,3]*0.4
-        dt <- rbind(dt, dt4)
+        i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 40))
+        dt <- rbind(dt, dt3)
       } 
-      dt <- rbind(dt, dt3)
+      dt <- rbind(dt, dt2)
     } else if(input$class == "dmPA"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml3 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 9 - 1 - 
+        "H", input$C*2 - (2*input$db) + 9 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "O7P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.2
+        "O7P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
+
       if(input$sn1 != input$sn2){
-        fml4 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-        dt4[,3] <- dt4[,3]*0.35
-        dt <- rbind(dt, dt4)
+        i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 35))
+        dt <- rbind(dt, dt3)
       } 
-      dt <- rbind(dt, dt3)
+      dt <- rbind(dt, dt2)
     } else if(input$class == "Lyso_PC"){
-      fml <- paste0("C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7, "H", input$C*2 - (2*input$db) + 16, "NO7P"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "Lyso_PC_MS3"){
-      fml <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                    "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                      (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "PC"){
-      fml <- paste0("C", input$C + 7, 
-                    "H", input$C*2 - (2 + 2*input$db) + 15, "NO8P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7, 
+        "H", input$C*2 - ( 2*input$db) + 14, "NO8P"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "Lyso_PE"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "PE"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 10 - 1 - 
+        "H", input$C*2 - (2*input$db) + 10 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "NO7P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+        "NO7P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
+
       if(input$sn1 != input$sn2){
-        fml3 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-        dt3[,3] <- dt3[,3]*0.5
+        i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 50))
         dt <- rbind(dt, dt3)
       } 
       dt <- rbind(dt, dt2)
     } else if(input$class == "PG"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 13 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O8P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+        "O8P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
-      fml3 <- paste0(
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 13 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "O9P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.25
+        "O9P"))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 25))
       dt <- rbind(dt, dt3)
-      fml4 <- paste0(
+      
+      i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)) - 3, 
-        "H", input$C*2 - (2 + 2*input$db) + 13 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2) - 8, 
-        "O6P")
-      dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-      dt4[,3] <- dt4[,3]*0.35
+        "O6P"))), "[M-H]-")
+      dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 35))
+
       if(input$sn1 != input$sn2){
-        fml5 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt5 <- IsotopicDistribution(formula = ListFormula(fml5))
-        dt5[,3] <- dt5[,3]*0.9
+        i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), "percent" = 90))
         dt <- rbind(dt, dt5)
       } 
       dt <- rbind(dt, dt4)
     } else if(input$class == "PI"){
-      fml1 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      dt[,3] <- dt[,3]*0.5
-      fml2 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 50))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 17 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 17 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O11P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+        "O11P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
-      fml3 <- paste0(
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 17 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 17 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2), 
-        "O12P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.2
+        "O12P"))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 20))
       dt <- rbind(dt, dt3)
-      fml4 <- paste0(
+      
+      i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
-        "H", input$C*2 - (2 + 2*input$db) + 17 - 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 17 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))) - 2) - 12, 
-        "O6P")
-      dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-      dt4[,3] <- dt4[,3]*0.7
+        "O6P"))), "[M-H]-")
+      dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 70))
+
       if(input$sn1 != input$sn2){
-        fml5 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt5 <- IsotopicDistribution(formula = ListFormula(fml5))
-        dt5[,3] <- dt5[,3]*0.6
+        i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), "percent" = 60))
         dt <- rbind(dt, dt5)
-        fml6 <- paste0(
+        
+        i.mz6 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
-          "H", input$C*2 - (2 + 2*input$db) + 17 - 1 - 
+          "H", input$C*2 - (2 + 2*input$db) + 17 - 
             (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2)))), 
-          "O11P")
-        dt6 <- IsotopicDistribution(formula = ListFormula(fml6))
-        dt6[,3] <- dt6[,3]*0.25
+          "O11P"))), "[M-H]-")
+        dt6 <- data.frame(cbind("mz" = as.numeric(i.mz6), "percent" = 25))
         dt <- rbind(dt, dt6)
-        fml7 <- paste0(
+        
+        i.mz7 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)) - 6, 
-          "H", input$C*2 - (2 + 2*input$db) + 17 - 1 - 
+          "H", input$C*2 - (2 + 2*input$db) + 17 - 
             (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2))) - 2) - 12, 
-          "O6P")
-        dt7 <- IsotopicDistribution(formula = ListFormula(fml7))
-        dt7[,3] <- dt7[,3]*0.15
+          "O6P"))), "[M-H]-")
+        dt7 <- data.frame(cbind("mz" = as.numeric(i.mz7), "percent" = 15))
         dt <- rbind(dt, dt7)
       } 
       dt <- rbind(dt, dt4)
     } else if(input$class == "PS"){
-      fml1 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 6 - 3, 
-        "H", input$C*2 - (2*input$db) + 10 - 1 - 5, 
-        "O8P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0(
+        "H", input$C*2 - (2*input$db) + 10 - 5, 
+        "O8P"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 6 - 3 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 10 - 1 - 5 -
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O6P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+        "O6P"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
     } else if(input$class == "MGDG"){
-      fml1 <- paste0("C", input$C + 9, 
-                     "H", input$C*2 - (2*input$db) + 14 - 1, 
-                     "O10")
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0("C", as.numeric(gsub(":.*", "", input$sn1)),
-                     "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-                       (2*(as.numeric(gsub(".*:", "", input$sn1)))) - 1, "O2") 
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      fml3 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 14, 
+        "O10"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)),
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
+      dt <- rbind(dt, dt2)
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 14 - 1 -
+        "H", input$C*2 - (2*input$db) + 14 -
           ((as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))) - 2), 
-        "O9")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
+        "O9"))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 20))
+
       if(input$sn1 == input$sn2){
-        dt2[,3] <- dt2[,3]*0.9
-        dt3[,3] <- dt3[,3]*0.3
+        dt2[,2] <- dt2[,2]*0.9
+        dt3[,2] <- dt3[,2]*0.3
       }
       if(input$sn1 != input$sn2){
-        dt2[,3] <- dt2[,3]*0.5
-        dt3[,3] <- dt3[,3]*0.1
-        fml4 <- paste0("C", as.numeric(gsub(":.*", "", input$sn2)),
-                       "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-                         (2*(as.numeric(gsub(".*:", "", input$sn2)))) - 1, "O2") 
-        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
-        dt4[,3] <- dt4[,3]*0.2
+        dt2[,2] <- dt2[,2]*0.5
+        dt3[,2] <- dt3[,2]*0.1
+        i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", as.numeric(gsub(":.*", "", input$sn2)),
+          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+        dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 20))
         dt <- rbind(dt, dt4)
-        fml5 <- paste0(
+        
+        i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
-          "H", input$C*2 - (2*input$db) + 14 - 1 -
+          "H", input$C*2 - (2*input$db) + 14 -
             ((as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2)))) - 2), 
-          "O9")
-        dt5 <- IsotopicDistribution(formula = ListFormula(fml5))
-        dt5[,3] <- dt5[,3]*0.15
+          "O9"))), "[M-H]-")
+        dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), "percent" = 15))
         dt <- rbind(dt, dt5)
       }
       dt <- rbind(dt, dt2)
       dt <- rbind(dt, dt3)
     } else if(input$class == "DGDG"){
-      fml1 <- paste0("C", input$C + 15, 
-                     "H", input$C*2 - (2*input$db) + 24 - 1, 
-                     "O15")
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 15, 
+        "H", input$C*2 - (2*input$db) + 24, 
+        "O15"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 24 - 1 -
+        "H", input$C*2 - (2*input$db) + 24 -
           ((as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))))), 
-        "O", 15 - 2)
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+        "O", 15 - 2))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
+
       if(input$sn1 == input$sn2){
-        dt2[,3] <- dt2[,3]*0.4
+        dt2[,2] <- dt2[,2]*0.4
       } else {
-        dt2[,3] <- dt2[,3]*0.2
-        fml3 <- paste0(
+        dt2[,2] <- dt2[,2]*0.2
+        i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn2)), 
-          "H", input$C*2 - (2*input$db) + 24 - 1 -
+          "H", input$C*2 - (2*input$db) + 24 -
             ((as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2))))), 
-          "O", 15 - 2)
-        dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-        dt3[,3] <- dt3[,3]*0.2
+          "O", 15 - 2))), "[M-H]-")
+        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 20))
         dt <- rbind(dt, dt3)
       }
       dt <- rbind(dt, dt2)
@@ -2766,304 +2821,304 @@ server <- function(input, output) {
   #### thr_MS2_POS ----
   thr_MS2_POS <- reactive({
     if(input$class == "CAR"){
-      fml <- paste0("C", input$C + 7 - 3, 
-                    "H", input$C*2 - (2 + 2*input$db) + 15 - 9 + 1, "O4")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
-      fml2 <- paste0("C", input$C, "H", input$C*2 - (2*input$db) - 1, "O")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 7 - 3, 
+        "H", input$C*2 - (2 + 2*input$db) + 15 - 9, "O4"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C, "H", input$C*2 - (2*input$db) - 2, "O"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
     } else if(input$class == "CER"){
-      fml <- paste0("C", input$C + 18, 
-                    "H", input$C*2 - (2*input$db) + 35 - 1, "NO2")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 18, 
+        "H", input$C*2 - (2*input$db) + 35 - 2, "NO2"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "SM"){
-      fml <- paste0("C", input$C + 5, 
-                    "H", input$C*2 - (2*input$db) + 13 + 1 - 2, 
-                    "N2O5P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, 
+        "H", input$C*2 - (2*input$db) + 13 - 2, 
+        "N2O5P"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "PA"){
-      fml <- paste0("C", input$C + 3, "H", input$C*2 - (2*input$db) + 5 + 1, 
-                    "O8P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
-      dt[,3] <- dt[,3]*0.3
-      fml2 <- paste0("C", input$C + 3, 
-                     "H", input$C*2 - (2*input$db) + 5 + 1 - 3, 
-                     "O4")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 3, "H", input$C*2 - (2*input$db) + 5, 
+        "O8P"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 30))
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 3, 
+        "H", input$C*2 - (2*input$db) + 5 - 3, 
+        "O4"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
     } else if(input$class == "mPA"){
-      fml <- paste0("C", input$C + 4, "H", input$C*2 - (2*input$db) + 7 + 1, 
-                    "O8P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
-      dt[,3] <- dt[,3]*0.3
-      fml2 <- paste0("C", input$C + 4 - 1, 
-                     "H", input$C*2 - (2*input$db) + 7 + 1 - 5, 
-                     "O4")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 4, "H", input$C*2 - (2*input$db) + 7, 
+        "O8P"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 30))
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 4 - 1, 
+        "H", input$C*2 - (2*input$db) + 7 - 5, 
+        "O4"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
     } else if(input$class == "dmPA"){
-      fml <- paste0("C", input$C + 5, "H", input$C*2 - (2*input$db) + 9 + 1, 
-                    "O8P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
-      dt[,3] <- dt[,3]*0.6
-      fml2 <- paste0("C", input$C + 5 - 2, 
-                     "H", input$C*2 - (2*input$db) + 9 + 1 - 7, 
-                     "O4")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2*input$db) + 9, 
+        "O8P"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 60))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 5 - 2, 
+        "H", input$C*2 - (2*input$db) + 9 - 7, 
+        "O4"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
-      fml3 <- paste0("C", input$C + 5, 
-                     "H", input$C*2 - (2*input$db) + 9 + 1 - 3, 
-                     "O4")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.3
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 5, 
+        "H", input$C*2 - (2*input$db) + 9 - 3, 
+        "O4"))), "[M+H]+")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 30))
       dt <- rbind(dt, dt3)
     } else if(input$class == "Lyso_PC"){
-      fml1 <- paste0("C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18 + 1, 
-                     "NO6P")
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      dt2 <- IsotopicDistribution(formula = ListFormula("C5H15NO4P"))
-      dt2[,3] <- dt2[,3]*0.3
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
+        "NO6P"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula("C5H14NO4P")), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 30))
       dt <- rbind(dt, dt2)
     } else if(input$class == "PC"){
-      ad <- "[M+H]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
-        "NO8P"))), ad)
+        "NO8P"))), "[M+H]+")
       if(input$C < 36){
-        dt <- data.frame(cbind(i.mz - 157.05, 100, 100))
+        dt <- data.frame(cbind("mz" = as.numeric(i.mz1 - 157.05), "percent" = 100))
       } else {
-        dt <- data.frame(cbind(i.mz - 183.0684, 100, 100))
-        dt[,3] <- dt[,3]*0.3
+        dt <- data.frame(cbind("mz" = as.numeric(i.mz1 - 183.0684), "percent" = 30))
       }
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
-      fml2 <- paste0(
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 18 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "NO6P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+        "NO6P"
+      ))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
+      dt <- rbind(dt, dt2)
       if(input$C < 36){
-        dt2[,3] <- dt2[,3]*0.35
+        dt2[,2] <- dt2[,2]*0.35
       } else{
-        dt2[,3] <- dt2[,3]*0.6
+        dt2[,2] <- dt2[,2]*0.6
       }
       dt <- rbind(dt, dt2)
-      fml3 <- paste0(
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+        "H", input$C*2 - (2 + 2*input$db) + 18 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))) + 2, 
-        "NO7P")
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
+        "NO7P"))), "[M+H]+")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 100))
       if(input$C < 36){
-        dt3[,3] <- dt3[,3]*0.45
+        dt3[,2] <- dt3[,2]*0.45
       }
       dt <- rbind(dt, dt3)
       if(input$sn1 != input$sn2){
-        fml4 <- paste0(
+        i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
-          "H", input$C*2 - (2 + 2*input$db) + 18 + 1 - 
+          "H", input$C*2 - (2 + 2*input$db) + 18 - 
             (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2)))), 
-          "NO6P")
-        dt4 <- IsotopicDistribution(formula = ListFormula(fml4))
+          "NO6P"))), "[M+H]+")
+        dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 100))
         if(input$C < 36){
-          dt4[,3] <- dt4[,3]*0.4
+          dt4[,2] <- dt4[,2]*0.4
         } else {
-          dt4[,3] <- dt4[,3]*0.8
+          dt4[,2] <- dt4[,2]*0.8
         }
         dt <- rbind(dt, dt4)
       } else {
         dt <- dt
       }
     } else if(input$class == "Lyso_PE"){
-      fml1 <-paste0("C", input$C + 3, "H", input$C*2 - (2 + 2*input$db) + 6 + 1, 
-                    "O3")
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      dt[,3] <- dt[,3]*0.3
-      fml2 <- paste0(
-        "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 12 + 1, "NO6P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 3, "H", input$C*2 - (2 + 2*input$db) + 6, 
+        "O3"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 30))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 12, "NO6P"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
     } else if(input$class == "PE"){
-      fml <- paste0("C", input$C + 3, "H", input$C*2 - (2*input$db) + 3, 
-                    "O4")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
-    } else if(input$class == "PG"){
-      ad <- "[M+NH4]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$C + 6, "H", input$C*2 - (2 + 2*input$db) + 13, "O10P"))), 
-        ad)
-      dt <- data.frame(cbind(i.mz - 141.04, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
+        "C", input$C + 3, "H", input$C*2 - (2*input$db) + 2, 
+        "O4"))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
+    } else if(input$class == "PG"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, 
+        "H", input$C*2 - (2*input$db) + 11, "O10P"))), 
+        "[M+NH4]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz - 141.04), "percent" = 100))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "PI"){
-      ad <- "[M+NH4]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 9, 
-        "H", input$C*2 - (2 + 2*input$db) + 17, "O13P"))), ad) - 
+        "H", input$C*2 - (2 + 2*input$db) + 17, "O13P"))), "[M+NH4]+") - 
         MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) + 0.984
-      dt <- data.frame(cbind(i.mz, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
-      fml2 <-paste0("C", input$C + 9, 
-                    "H", input$C*2 - (2 + 2*input$db) + 17 + 1, 
-                    "O13P")
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.6
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 15, 
+        "O13P"))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 60))
       dt <- rbind(dt, dt2)
     } else if(input$class == "PS"){
-      fml <- paste0("C", input$C + 6 - 3, 
-                    "H", input$C*2 - (2*input$db) + 10 + 1 - 8, 
-                    "O4")
-      dt <- IsotopicDistribution(formula = ListFormula(fml))
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6 - 3, 
+        "H", input$C*2 - (2*input$db) + 10 - 8, 
+        "O", 10 - 6))), 
+        "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), "percent" = 100))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "MGDG"){
-      ad <- "[M+NH4]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - 6, 
         "H", input$C*2 - (2*input$db) + 14 - 12, 
-        "O", 10 - 6))), ad) + 0.984
-      dt <- data.frame(cbind(i.mz, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
-      fml2 <- paste0(
+        "O", 10 - 6))), "[M+NH4]+") + 0.984
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - 6, 
-        "H", input$C*2 - (2*input$db) + 14 + 1 - 12, 
-        "O", 10 - 6)
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+        "H", input$C*2 - (2*input$db) + 14 - 12, 
+        "O", 10 - 6))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
+      
     } else if(input$class == "MGDG_Na"){
-      ad <- "[M+Na]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 14 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O", 10 - 2))), ad)
-      dt <- data.frame(cbind(i.mz, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
-      fml2 <- "H2O"
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.05
+        "O", 10 - 2))), "[M+Na]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+      #dt <- rbind(dt, dt)
+      #dt <- dt[1,]
+
+      #fml2 <- "H2O"
+      #dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
+      #dt2[,3] <- dt2[,3]*0.05
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula("H2O")), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 5))
+      #dt <- rbind(dt, dt2)
+      
       if(input$sn1 != input$sn2){
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
           "H", input$C*2 - (2*input$db) + 14 - 
             (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2)))), 
-          "O", 10 - 2))), ad)
-        dt3 <- data.frame(cbind(i.mz3, 100, 100))
-        colnames(dt3) <- c("mz", "intensity", "percent")
-        dt3$mz <- sprintf("%.2f", dt3$mz)
-        dt3[,3] <- dt3[,3]*0.5
+          "O", 10 - 2))), "[M+Na]+")
+        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 50))
         dt <- rbind(dt, dt3)
       }
       dt <- rbind(dt, dt2)
+      dt <- dt[dt$mz > 20, ]
     } else if(input$class == "DGDG"){
-      ad <- "[M+NH4]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - 12, 
         "H", input$C*2 - (2*input$db) + 24 - 22, 
-        "O", 15 - 11))), ad) + 0.984
-      dt <- data.frame(cbind(i.mz, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
-      fml2 <- paste0(
+        "O", 15 - 11))), "[M+NH4]+") + 0.984
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - 12, 
-        "H", input$C*2 - (2*input$db) + 24 + 1 - 22, 
-        "O", 15 - 11)
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.2
+        "H", input$C*2 - (2*input$db) + 24 - 22, 
+        "O", 15 - 11))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
     } else if(input$class == "DGDG_Na"){
-      ad <- "[M+Na]+"
-      i.mz <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 24 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O", 15 - 2))), ad)
-      dt <- data.frame(cbind(i.mz, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.2f", dt$mz)
+        "O", 15 - 2))), "[M+Na]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
         "H", input$C*2 - (2*input$db) + 24 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))) - 10, 
-        "O", 15 - 2 - 5))), ad)
-      dt2 <- data.frame(cbind(i.mz2, 100, 100))
-      colnames(dt2) <- c("mz", "intensity", "percent")
-      dt2$mz <- sprintf("%.2f", dt2$mz)
-      dt2[,3] <- dt2[,3]*0.2
+        "O", 15 - 2 - 5))), "[M+Na]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       dt <- rbind(dt, dt2)
     } else if(input$class == "DAG"){
-      fml1 <- paste0("C", input$C + 3, 
-                     "H", input$C*2 - (2*input$db) + 4 + 1, 
-                     "O", 5)
-      dt <- IsotopicDistribution(formula = ListFormula(fml1))
-      fml2 <- paste0("C", input$C + 3, 
-                     "H", input$C*2 - (2*input$db) + 4 + 1 - 2, 
-                     "O", 5 - 1)
-      dt2 <- IsotopicDistribution(formula = ListFormula(fml2))
-      dt2[,3] <- dt2[,3]*0.3
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0("C", input$C + 3, 
+                     "H", input$C*2 - (2*input$db) + 4, 
+                     "O", 5))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0("C", input$C + 3, 
+                     "H", input$C*2 - (2*input$db) + 4 - 2, 
+                     "O", 5 - 1))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 30))
       dt <- rbind(dt, dt2)
-      fml3 <- paste0(
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
-        "H", input$C*2 - (2*input$db) + 4 + 1 - 
+        "H", input$C*2 - (2*input$db) + 4 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
-        "O", 5 - 2)
-      dt3 <- IsotopicDistribution(formula = ListFormula(fml3))
-      dt3[,3] <- dt3[,3]*0.2
+        "O", 5 - 2))), "[M+H]+")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 20))
       dt <- rbind(dt, dt3)
     } else if(input$class == "TAG"){
-      i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 3, 
         "H", input$C*2 - (2*input$db) + 2, 
         "O", 6))), "[M+H]+")
-      dt <- data.frame(cbind(i.mz1, 100, 100))
-      colnames(dt) <- c("mz", "intensity", "percent")
-      dt$mz <- sprintf("%.4f", dt$mz)
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
+      
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 2 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
         "O", 6 - 2))), "[M+H]+")
-      dt2 <- data.frame(cbind(i.mz2, 100, 100))
-      colnames(dt2) <- c("mz", "intensity", "percent")
-      dt2$mz <- sprintf("%.4f", dt2$mz)
-      dt2[,3] <- dt2[,3]*0.5
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 50))
       dt <- rbind(dt, dt2)
-      i.mz3 <-mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn2)), 
         "H", input$C*2 - (2*input$db) + 2 - 
           (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn2)))), 
         "O", 6 - 2))), "[M+H]+")
-      dt3 <- data.frame(cbind(i.mz3, 100, 100))
-      colnames(dt3) <- c("mz", "intensity", "percent")
-      dt3$mz <- sprintf("%.4f", dt3$mz)
-      dt3[,3] <- dt3[,3]*0.7
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 70))
       dt <- rbind(dt, dt3)
+      
       i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn3)), 
         "H", input$C*2 - (2*input$db) + 2 - 
           (as.numeric(gsub(":.*", "", input$sn3))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn3)))), 
         "O", 6 - 2))), "[M+H]+")
-      dt4 <- data.frame(cbind(i.mz4, 100, 100))
-      colnames(dt4) <- c("mz", "intensity", "percent")
-      dt4$mz <- sprintf("%.4f", dt4$mz)
-      dt4[,3] <- dt4[,3]*0.3
+      dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 30))
       dt <- rbind(dt, dt4)
     } 
   })
@@ -3165,7 +3220,7 @@ server <- function(input, output) {
     idx <- which(dt$percent > 15)
     text(dt$mz[idx],
          dt$percent[idx], 
-         dt$mz[idx], pos = 3)
+         sprintf("%.5f", dt$mz[idx]), pos = 3)
   })
   
   #### thr_MS2_P ----
@@ -3267,17 +3322,19 @@ server <- function(input, output) {
     idx <- which(dt$percent > 15)
     text(dt$mz[idx],
          dt$percent[idx], 
-         dt$mz[idx], pos = 3)
+         sprintf("%.5f", dt$mz[idx]), pos = 3)
   })
   
   output$thr_MS2_tb_N <- renderPrint({
     dt <- thr_MS2_NEG()
-    dt[,c(1,3)]
+    dt$mz <- sprintf("%.6f", dt$mz)
+    dt
   })
   
   output$thr_MS2_tb_P <- renderPrint({
     dt <- thr_MS2_POS()
-    dt[,c(1,3)]
+    dt$mz <- sprintf("%.6f", dt$mz)
+    dt
   })
   
 } # close server
