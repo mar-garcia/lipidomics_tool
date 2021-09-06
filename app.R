@@ -964,10 +964,23 @@ ui <- navbarPage(
              tabPanel("MS/MS spectras",
                       sidebarLayout(
                         sidebarPanel(
-                          sliderInput("mz", "m/z zoom:", min = 50, max = 1000, 
-                                      value = c(50, 1000), step = 10),
-                          sliderInput("int", "intensity threshold:", min = 0, max = 100, 
-                                      value = 10, step = 1)
+                          sliderInput(
+                            "mz", "m/z zoom:", min = 50, max = 1000, 
+                            value = c(50, 1000), step = 10),
+                          sliderInput(
+                            "int", "intensity threshold:", min = 0, max = 100, 
+                            value = 10, step = 1),
+                          fluidRow(
+                            strong("Filter MS2 spectra that contain the fragment:")
+                          ),
+                          fluidRow(
+                            column(5, numericInput(
+                              "frag", "With an m/z value", 
+                              value = 0)),
+                            column(2, numericInput("ppm", "ppm", value = 10)),
+                            column(5, numericInput(
+                              "intx", "With an intensity >", value = 1))
+                          )
                         ),
                         mainPanel(
                           fluidRow(DT::dataTableOutput("table")),
@@ -1038,8 +1051,8 @@ ui <- navbarPage(
                                           "TAG" = "TAG"),
                            selected = "PA"),
                fluidRow(
-                 column(2, numericInput("C", "C", value = 54)),
-                 column(2, numericInput("db", "db", value = 6))
+                 column(2, numericInput("C", "C", value = 36)),
+                 column(2, numericInput("db", "db", value = 0))
                ),
                fluidRow(
                  column(4, selectInput("sn1", "sn1",
@@ -1050,7 +1063,7 @@ ui <- navbarPage(
                                        selected = "18:0")),
                  column(4, selectInput("sn3", "sn3",
                                        choices = sn$sn,
-                                       selected = "16:0"))
+                                       selected = "18:0"))
                )
              ),
              mainPanel(
@@ -2252,6 +2265,13 @@ server <- function(input, output) {
   
   # MS2 library ----
   dbx <- reactive({
+    if(input$frag > 0){
+      tmp <- intensity(sps_ms2)[matchWithPpm(
+        input$frag, mz(sps_ms2), ppm = input$ppm)[[1]]]/max(intensity(sps_ms2))
+      tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
+      sps_ms2 <- sps_ms2[unlist(tmp>(input$intx/100))]
+    }
+    
     db <- data.frame(cbind(compound = sps_ms2$name, 
                            adduct = sps_ms2$adduct))
     db$precursor <- as.numeric(sprintf("%.5f", precursorMz(sps_ms2)))
