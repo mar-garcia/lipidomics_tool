@@ -463,8 +463,8 @@ ui <- navbarPage(
       h1("Phosphatidylcholines (PCs)"),
       column(4, h3("Formula"),
              fluidRow(
-               column(2, numericInput("pcC", "C", value = 36)),
-               column(2, numericInput("pcdb", "db", value = 0))
+               column(3, numericInput("pcC", "C", value = 36)),
+               column(3, numericInput("pcdb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("pcformula"))),
              fluidRow(),
@@ -1051,8 +1051,8 @@ ui <- navbarPage(
                                           "TAG" = "TAG"),
                            selected = "PA"),
                fluidRow(
-                 column(2, numericInput("C", "C", value = 36)),
-                 column(2, numericInput("db", "db", value = 0))
+                 column(3, numericInput("C", "C", value = 36)),
+                 column(3, numericInput("db", "db", value = 0))
                ),
                fluidRow(
                  column(4, selectInput("sn1", "sn1",
@@ -2221,8 +2221,8 @@ server <- function(input, output) {
   
   ## Ceramides ----
   cerfml <- reactive({
-    paste0("C", input$cerC + 18, "H", 
-           input$cerC*2 - (2*input$cerdb) + 35, "NO3")
+    paste0("C", input$cerC, "H", 
+           input$cerC*2 - (2*input$cerdb) + 1, "NO3")
   })
   
   cermass <- reactive({
@@ -2419,15 +2419,15 @@ server <- function(input, output) {
     rts <- as.data.frame(rbind(
       c("FFA", 8.469, 0.311, 0),
       c("PA", 2.592, 0.403, -0.643),
-      #c("mPA", 3.591, 0.365, -0.616),
-      #c("dmPA", 4.895, 0.325, -0.580),
+      c("mPA", 3.591, 0.365, -0.616),
+      c("dmPA", 4.895, 0.325, -0.580),
       #c("Lyso_PC", 9.720, 0, -1.380),
       c("PC", 1.640, 0.382, -0.624),
-      #c("PE", 4.269, 0.349, -0.605),
-      #c("PG", 2.418, 0.364, -0.602),
-      #c("PI", -0.971, 0.414, -0.644),
-      #c("MGDG", 3.577, 0.341, -0.586),
-      #c("DGDG", -1.859, 0.402, -0.653),
+      c("PE", 4.269, 0.349, -0.605),
+      c("PG", 2.418, 0.364, -0.602),
+      c("PI", -0.971, 0.414, -0.644),
+      c("MGDG", 3.577, 0.341, -0.586),
+      c("DGDG", -1.859, 0.402, -0.653),
       c("DAG", 7.368, 0.314, -0.518),
       c("TAG", 14.006, 0.151, -0.280)))
     colnames(rts) <- c("class", "intrs", "Cx", "dbx")
@@ -2455,14 +2455,52 @@ server <- function(input, output) {
           print(cbind(paste0("FFA", (tb[j,i]), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+H]+", "[M+CHO2]-"))))
           
         } else if(colnames(tb)[i] == "PA"){
-          i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 7, "O8P")
+          i.fml <- paste0("C", (tb[j,i]), 
+                          "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 7, "O8P")
           i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
           print(cbind(paste0("PA", (tb[j,i] - 3), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
           
+        } else if(colnames(tb)[i] == "mPA"){
+          i.fml <- paste0("C", (tb[j,i]), 
+                          "H", (tb[j,i] - 4)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 9, "O8P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("mPA", (tb[j,i] - 4), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
+          
+        } else if(colnames(tb)[i] == "dmPA"){
+          i.fml <- paste0("C", (tb[j,i]), 
+                          "H", (tb[j,i] - 5)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 11, "O8P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("mPA", (tb[j,i] - 5), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
+          
         } else if(colnames(tb)[i] == "PC"){
-          i.fml <- paste0("C", (tb[j,i] - 8), "H", (tb[j,i] - 8)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 18, "NO8P")
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 8)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 18, "NO8P")
           i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
           print(cbind(paste0("PC", (tb[j,i] - 8), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+H]+", "[M+CHO2]-"))))
+          
+        } else if(colnames(tb)[i] == "PE"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 5)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 12, "NO8P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("PE", (tb[j,i] - 5), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+H]+", "[M-H]-"))))
+          
+        } else if(colnames(tb)[i] == "PG"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 6)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 13, "O10P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("PG", (tb[j,i] - 6), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
+          
+        } else if(colnames(tb)[i] == "PI"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 9)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 17, "O13P")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("PI", (tb[j,i] - 9), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M-H]-"))))
+          
+        } else if(colnames(tb)[i] == "MGDG"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 9)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 16, "O10")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("MGDG", (tb[j,i] - 9), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M+CHO2]-"))))
+          
+        } else if(colnames(tb)[i] == "DGDG"){
+          i.fml <- paste0("C", (tb[j,i]), "H", (tb[j,i] - 15)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 26, "O15")
+          i.mass <- MonoisotopicMass(formula = ListFormula(i.fml))
+          print(cbind(paste0("DGDG", (tb[j,i] - 15), ":", rownames(tb)[j]), mass2mz(i.mass, adduct = c("[M+NH4]+", "[M+CHO2]-"))))
           
         } else if(colnames(tb)[i] == "DAG"){
           i.fml <- paste0("C", (tb[j,i] - 3), "H", (tb[j,i] - 3)*2 - (2 + 2*as.numeric(rownames(tb)[j])) + 6, "O5")
@@ -2482,14 +2520,86 @@ server <- function(input, output) {
   
   output$cmps_mzs <- renderPrint({
     dt <- matrix(nrow = 0, ncol = 3)
-    for(c in 32:40){
-      for(db in 1:6){
+    for(c in 10:30){
+      for(db in 0:4){
+        dt <- rbind(
+          dt,
+          c(paste0("CAR", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 7, 
+                     "H", c*2 - (2*db) + 13, "NO4"))), "[M+CHO2]-")),
+          c(paste0("CAR", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 7, 
+                     "H", c*2 - (2*db) + 13, "NO4"))),"[M+H]+")),
+          c(paste0("LPC", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 8, 
+                     "H", c*2 - (2*db) + 18, "NO7P"))), "[M+CHO2]-")),
+          c(paste0("LPC", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 8, 
+                     "H", c*2 - (2*db) + 18, "NO7P"))),"[M+H]+")),
+          c(paste0("LPE", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 12, "NO7P"))), "[M-H]-")),
+          c(paste0("LPE", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 12, "NO7P"))),"[M+H]+")),
+          c(paste0("LPG", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 13, "O9P"))), "[M-H]-")),
+          c(paste0("LPG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 13, "O9P"))),"[M+NH4]+")),
+          c(paste0("LPI", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 17, "O12P"))), "[M-H]-")),
+          c(paste0("LPI", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 17, "O12P"))),"[M+NH4]+")),
+          c(paste0("LPS", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 12, "NO9P"))), "[M-H]-")),
+          c(paste0("LPS", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 12, "NO9P"))),"[M+H]+"))
+        )
+      }}
+    for(c in 10:40){
+      for(db in 0:4){
         dt <- rbind(
           dt, 
           c(paste0("FFA", c, ":", db), 
             "[M+CHO2]-",
             mass2mz(MonoisotopicMass(formula = ListFormula(
-              paste0("C", c, "H", c*2 - (2*db), "O2"))), "[M+CHO2]-")),
+              paste0("C", c, "H", c*2 - (2*db), "O2"))), "[M+CHO2]-"))
+        )
+      }}
+    for(c in 20:50){
+      for(db in 0:6){
+        dt <- rbind(
+          dt, 
           c(paste0("PA", c, ":", db), 
             "[M-H]-",
             mass2mz(MonoisotopicMass(formula = ListFormula(
@@ -2499,8 +2609,224 @@ server <- function(input, output) {
             "[M+NH4]+",
             mass2mz(MonoisotopicMass(formula = ListFormula(
               paste0("C", c + 3, 
-                     "H", c*2 - (2*db) + 5, "O8P"))),"[M+NH4]+"))
+                     "H", c*2 - (2*db) + 5, "O8P"))),"[M+NH4]+")),
+          c(paste0("mPA", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 4, 
+                     "H", c*2 - (2*db) + 7, "O8P"))), "[M-H]-")),
+          c(paste0("mPA", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 4, 
+                     "H", c*2 - (2*db) + 7, "O8P"))),"[M+NH4]+")),
+          c(paste0("dmPA", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 9, "O8P"))), "[M-H]-")),
+          c(paste0("dmPA", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 9, "O8P"))),"[M+NH4]+")),
+          c(paste0("PC", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 8, 
+                     "H", c*2 - (2*db) + 16, "NO8P"))), "[M+CHO2]-")),
+          c(paste0("PC", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 8, 
+                     "H", c*2 - (2*db) + 16, "NO8P"))),"[M+H]+")),
+          c(paste0("PE", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 10, "NO8P"))), "[M-H]-")),
+          c(paste0("PE", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 10, "NO8P"))),"[M+H]+")),
+          c(paste0("PG", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 11, "O10P"))), "[M-H]-")),
+          c(paste0("PG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 11, "O10P"))),"[M+NH4]+")),
+          c(paste0("PI", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 15, "O13P"))), "[M-H]-")),
+          c(paste0("PI", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 15, "O13P"))),"[M+NH4]+")),
+          c(paste0("PS", c, ":", db), 
+            "[M-H]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 10, "NO10P"))), "[M-H]-")),
+          c(paste0("PS", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 10, "NO10P"))),"[M+H]+")),
+          c(paste0("SM", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 13, "N2O6P"))), "[M+CHO2]-")),
+          c(paste0("SM", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 5, 
+                     "H", c*2 - (2*db) + 13, "N2O6P"))),"[M+H]+")),
+          c(paste0("CER", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO3"))), "[M+CHO2]-")),
+          c(paste0("CER", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO3"))),"[M+H]+")),
+          c(paste0("CER_gluc", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 11, "NO8"))), "[M+CHO2]-")),
+          c(paste0("CER_gluc", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 11, "NO8"))),"[M+H]+")),
+          c(paste0("CER_lact", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 12, 
+                     "H", c*2 - (2*db) + 21, "NO13"))), "[M+CHO2]-")),
+          c(paste0("CER_lact", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 12, 
+                     "H", c*2 - (2*db) + 21, "NO13"))),"[M+H]+")),
+          c(paste0("CER_hex3", c , ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 18, 
+                     "H", c*2 - (2*db) + 31, "NO18"))), "[M+CHO2]-")),
+          c(paste0("CER_hex3", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 18, 
+                     "H", c*2 - (2*db) + 31, "NO18"))),"[M+H]+")),
+          c(paste0("dihydroCER", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 3, "NO3"))), "[M+CHO2]-")),
+          c(paste0("dihydroCER", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 3, "NO3"))),"[M+H]+")),
+          c(paste0("dihydroCER_gluc", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 13, "NO8"))), "[M+CHO2]-")),
+          c(paste0("dihydroCER_gluc", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 6, 
+                     "H", c*2 - (2*db) + 13, "NO8"))),"[M+H]+")),
+          c(paste0("dihydroCER_lact", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 12, 
+                     "H", c*2 - (2*db) + 23, "NO13"))), "[M+CHO2]-")),
+          c(paste0("dihydroCER_lact", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 12, 
+                     "H", c*2 - (2*db) + 23, "NO13"))),"[M+H]+")),
+          c(paste0("deoxyCER", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO2"))), "[M+CHO2]-")),
+          c(paste0("deoxyCER", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO2"))),"[M+H]+")),
+          c(paste0("phytoCER", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO4"))), "[M+CHO2]-")),
+          c(paste0("phytoCER", c, ":", db), 
+            "[M+H]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c, 
+                     "H", c*2 - (2*db) + 1, "NO4"))),"[M+H]+")),
+          c(paste0("MGDG", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 14, "O10"))), "[M+CHO2]-")),
+          c(paste0("MGDG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 9, 
+                     "H", c*2 - (2*db) + 14, "O10"))),"[M+NH4]+")),
+          c(paste0("DGDG", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 15, 
+                     "H", c*2 - (2*db) + 24, "O15"))), "[M+CHO2]-")),
+          c(paste0("DGDG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 15, 
+                     "H", c*2 - (2*db) + 24, "O15"))),"[M+NH4]+")),
+          c(paste0("DAG", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 3, 
+                     "H", c*2 - (2*db) + 4, "O5"))), "[M+CHO2]-")),
+          c(paste0("DAG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 3, 
+                     "H", c*2 - (2*db) + 4, "O5"))),"[M+NH4]+"))
         )
+      }}
+        for(c in 35:70){
+        for(db in 0:10){
+          dt <- rbind(
+            dt, 
+            c(paste0("TAG", c, ":", db), 
+              "[M+CHO2]-",
+              mass2mz(MonoisotopicMass(formula = ListFormula(
+                paste0("C", c + 3, 
+                       "H", c*2 - (2*db) + 2, "O6"))), "[M+CHO2]-")),
+            c(paste0("TAG", c, ":", db), 
+              "[M+NH4]+",
+              mass2mz(MonoisotopicMass(formula = ListFormula(
+                paste0("C", c + 3, 
+                       "H", c*2 - (2*db) + 2, "O6"))),"[M+NH4]+"))
+          )
       }
     }
     dt <- data.frame(dt)
@@ -2576,24 +2902,24 @@ server <- function(input, output) {
       dt <- rbind(dt, dt3)
     } else if(input$class == "mPA"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", as.numeric(gsub(":.*", "", input$sn1)),
-        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+        "C", as.numeric(gsub(":.*", "", input$sn2)),
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 100))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 4 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "C", input$C + 4 - as.numeric(gsub(":.*", "", input$sn2)), 
         "H", input$C*2 - (2*input$db) + 7 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1))) - 2), 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2))) - 2), 
         "O7P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 20))
       
       if(input$sn1 != input$sn2){
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-          "C", as.numeric(gsub(":.*", "", input$sn2)),
-          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+          "C", as.numeric(gsub(":.*", "", input$sn1)),
+          "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 40))
         dt <- rbind(dt, dt3)
       } 
@@ -2719,59 +3045,59 @@ server <- function(input, output) {
       dt <- rbind(dt, dt4)
     } else if(input$class == "PI"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", as.numeric(gsub(":.*", "", input$sn1)),
-        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+        "C", as.numeric(gsub(":.*", "", input$sn2)),
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), "percent" = 50))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
         "H", input$C*2 - (2 + 2*input$db) + 17 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1)))), 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2)))), 
         "O11P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), "percent" = 100))
       dt <- rbind(dt, dt2)
       
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
         "H", input$C*2 - (2 + 2*input$db) + 17 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1))) - 2), 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2))) - 2), 
         "O12P"))), "[M-H]-")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), "percent" = 20))
       dt <- rbind(dt, dt3)
       
       i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
+        "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)) - 6, 
         "H", input$C*2 - (2 + 2*input$db) + 17 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1))) - 2) - 12, 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2))) - 2) - 12, 
         "O6P"))), "[M-H]-")
       dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), "percent" = 70))
       
       if(input$sn1 != input$sn2){
         i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-          "C", as.numeric(gsub(":.*", "", input$sn2)),
-          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+          "C", as.numeric(gsub(":.*", "", input$sn1)),
+          "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), "percent" = 60))
         dt <- rbind(dt, dt5)
         
         i.mz6 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-          "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)), 
+          "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
           "H", input$C*2 - (2 + 2*input$db) + 17 - 
-            (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
-              gsub(".*:", "", input$sn2)))), 
+            (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+              gsub(".*:", "", input$sn1)))), 
           "O11P"))), "[M-H]-")
         dt6 <- data.frame(cbind("mz" = as.numeric(i.mz6), "percent" = 25))
         dt <- rbind(dt, dt6)
         
         i.mz7 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-          "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn2)) - 6, 
+          "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
           "H", input$C*2 - (2 + 2*input$db) + 17 - 
-            (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
-              gsub(".*:", "", input$sn2))) - 2) - 12, 
+            (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+              gsub(".*:", "", input$sn1))) - 2) - 12, 
           "O6P"))), "[M-H]-")
         dt7 <- data.frame(cbind("mz" = as.numeric(i.mz7), "percent" = 15))
         dt <- rbind(dt, dt7)
