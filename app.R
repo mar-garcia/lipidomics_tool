@@ -2428,7 +2428,7 @@ server <- function(input, output) {
       c("PI", -0.971, 0.414, -0.644),
       c("MGDG", 3.577, 0.341, -0.586),
       c("DGDG", -1.859, 0.402, -0.653),
-      c("DAG", 7.368, 0.314, -0.518),
+      c("DAG", 6.878, 0.329, -0.539),
       c("TAG", 14.006, 0.151, -0.280)))
     colnames(rts) <- c("class", "intrs", "Cx", "dbx")
     rts$intrs <- as.numeric(rts$intrs)
