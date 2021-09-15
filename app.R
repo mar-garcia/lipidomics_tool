@@ -17,7 +17,7 @@ matchWithPpm <- function(x, y, ppm = 0) {
 }
 label_fun <- function(x) {
   ints <- unlist(intensity(x))
-  mzs <- format(unlist(mz(x)), digits = 4)
+  mzs <- format(unlist(mz(x)), digits = 7)
   mzs[ints < 5] <- ""
   mzs
 }
@@ -99,7 +99,9 @@ mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
 load("MS2_spectra.RData")
 sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
-
+sps_ms2_nl <- sps_ms2
+sps_ms2_nl <- applyProcessing(sps_ms2_nl)
+mz(sps_ms2_nl@backend) <- mz(sps_ms2_nl) - precursorMz(sps_ms2_nl)
 
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
@@ -922,7 +924,7 @@ ui <- navbarPage(
       ),
       fluidRow(),
       hr(),
-      h3("Commonly occuring product ions for cernitines:"),
+      h3("Commonly occuring product ions for ceramides:"),
       column(3,
              strong("Positive [M+H]+:"),
              tags$li("[M + H - H2O]+")),
@@ -980,6 +982,12 @@ ui <- navbarPage(
                             column(2, numericInput("ppm", "ppm", value = 10)),
                             column(5, numericInput(
                               "intx", "With an intensity >", value = 1))
+                          ),
+                          fluidRow(
+                            radioButtons(
+                              "radio", label = "", 
+                              choices = list("Fragment" = 1, "Neutral loss" = 2),
+                              selected = 1)
                           )
                         ),
                         mainPanel(
@@ -999,7 +1007,8 @@ ui <- navbarPage(
                             "pol", "Polarity",
                             choices = list("POS" = 1, "NEG" = 0),
                             selected = 0)),
-                          fluidRow(plotOutput("ms2_x"))),
+                          fluidRow(plotOutput("ms2_x")),
+                          fluidRow(actionButton("go", "Go"))),
                         mainPanel(
                           fluidRow(
                             column(6, DT::dataTableOutput("spectra")),
@@ -2266,10 +2275,19 @@ server <- function(input, output) {
   # MS2 library ----
   dbx <- reactive({
     if(input$frag > 0){
-      tmp <- intensity(sps_ms2)[matchWithPpm(
-        input$frag, mz(sps_ms2), ppm = input$ppm)[[1]]]/max(intensity(sps_ms2))
-      tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
-      sps_ms2 <- sps_ms2[unlist(tmp>(input$intx/100))]
+      if(input$radio == 1){
+        tmp <- intensity(sps_ms2)[matchWithPpm(
+          input$frag, mz(sps_ms2), ppm = input$ppm)[[1]]]/max(intensity(sps_ms2))
+        tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
+        sps_ms2 <- sps_ms2[unlist(tmp>(input$intx/100))]
+      } else if(input$radio == 2){
+        #tmp <- unlist(matchWithPpm(input$frag, abs(mz(sps_ms2_nl)), ppm = input$ppm))[[1]]
+        tmp <- intensity(sps_ms2)[matchWithPpm(
+          input$frag, abs(mz(sps_ms2_nl)), ppm = input$ppm)[[1]]]/max(intensity(sps_ms2))
+        tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
+        #sps_ms2 <- sps_ms2[which(tmp > 0)]
+        sps_ms2 <- sps_ms2[unlist(tmp>(input$intx/100))]
+      }
     }
     
     db <- data.frame(cbind(compound = sps_ms2$name, 
@@ -2340,11 +2358,12 @@ server <- function(input, output) {
     x_spd <- Spectra(x_spd)
   })
   
-  tbx <- reactive({
+  tbx <- eventReactive(input$go, {
     x_spd <- x_spdx()
     spdx <- filterPolarity(sps_ms2, input$pol)
+    #spdx <- spdx[grep("Unk-00", spdx$name)]
     c_spd <- c(x_spd, spdx)
-    tb <- cbind(c_spd$name, compareSpectra(c_spd, ppm = 50)[,1],
+    tb <- cbind(c_spd$name,  Spectra::compareSpectra(c_spd, ppm = 50)[,1],
                 c_spd$adduct)
     tb <- tb[-1,]
     colnames(tb) <- c("name", "corr", "adduct")
@@ -2352,18 +2371,33 @@ server <- function(input, output) {
     return(tb)
   })
   
-  tby <- reactive({
+  #tbx <- reactive({
+  #  x_spd <- x_spdx()
+  #  spdx <- filterPolarity(sps_ms2, input$pol)
+  #  spdx <- spdx[grep("Unk-00", spdx$name)]
+  #  c_spd <- c(x_spd, spdx)
+  #  tb <- cbind(c_spd$name,  Spectra::compareSpectra(c_spd, ppm = 50)[,1],
+  #              c_spd$adduct)
+  #  tb <- tb[-1,]
+  #  colnames(tb) <- c("name", "corr", "adduct")
+  #  tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
+  #  return(tb)
+  #})
+  
+  #tby <- reactive({
+  tby <- eventReactive(input$go, {
     x_spd <- x_spdx()
     spdx <- filterPolarity(sps_ms2, input$pol)
+    #spdx <- spdx[grep("Unk-00", spdx$name)]
     c_spd <- c(x_spd, spdx)
     c_spd <- applyProcessing(c_spd)
     mz(c_spd@backend) <- mz(c_spd) - precursorMz(c_spd)
-    tb <- cbind(c_spd$name, compareSpectra(c_spd, tolerance = 0.005)[,1],
+    tb <- cbind(c_spd$name,  Spectra::compareSpectra(c_spd, tolerance = 0.01)[,1],
                 c_spd$adduct)
     tb <- tb[-1,]
     colnames(tb) <- c("name", "corr", "adduct")
     tb[,2] <- sprintf("%.3f", round(as.numeric(tb[,2]), 3))
-    return(tb)
+    return(tb) 
   })
   
   output$spectra <- DT::renderDataTable(DT::datatable({
@@ -2386,8 +2420,8 @@ server <- function(input, output) {
     if(length(i) == 1){
       j <- which(sps_ms2$name == tb[i, "name"] & 
                    sps_ms2$adduct == tb[i, "adduct"] &
-                   sps_ms2$polarity == tb[i, "polarity"])
-      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.2,
+                   sps_ms2$polarity == input$pol)
+      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.01,
                         labels = label_fun, labelPos = 2, labelOffset = 0.2,
                         labelSrt = -30)
       grid()
@@ -2406,8 +2440,8 @@ server <- function(input, output) {
     if(length(i) == 1){
       j <- which(sps_ms2$name == tb[i, "name"] & 
                    sps_ms2$adduct == tb[i, "adduct"] &
-                   sps_ms2$polarity == tb[i, "polarity"])
-      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.2,
+                   sps_ms2$polarity == input$pol)
+      plotSpectraMirror(x_spd, sps_ms2[j], tolerance = 0.01,
                         labels = label_fun, labelPos = 2, labelOffset = 0.2,
                         labelSrt = -30)
       grid()
@@ -2812,21 +2846,21 @@ server <- function(input, output) {
                      "H", c*2 - (2*db) + 4, "O5"))),"[M+NH4]+"))
         )
       }}
-        for(c in 35:70){
-        for(db in 0:10){
-          dt <- rbind(
-            dt, 
-            c(paste0("TAG", c, ":", db), 
-              "[M+CHO2]-",
-              mass2mz(MonoisotopicMass(formula = ListFormula(
-                paste0("C", c + 3, 
-                       "H", c*2 - (2*db) + 2, "O6"))), "[M+CHO2]-")),
-            c(paste0("TAG", c, ":", db), 
-              "[M+NH4]+",
-              mass2mz(MonoisotopicMass(formula = ListFormula(
-                paste0("C", c + 3, 
-                       "H", c*2 - (2*db) + 2, "O6"))),"[M+NH4]+"))
-          )
+    for(c in 35:70){
+      for(db in 0:10){
+        dt <- rbind(
+          dt, 
+          c(paste0("TAG", c, ":", db), 
+            "[M+CHO2]-",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 3, 
+                     "H", c*2 - (2*db) + 2, "O6"))), "[M+CHO2]-")),
+          c(paste0("TAG", c, ":", db), 
+            "[M+NH4]+",
+            mass2mz(MonoisotopicMass(formula = ListFormula(
+              paste0("C", c + 3, 
+                     "H", c*2 - (2*db) + 2, "O6"))),"[M+NH4]+"))
+        )
       }
     }
     dt <- data.frame(dt)
