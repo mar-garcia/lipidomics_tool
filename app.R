@@ -38,14 +38,22 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("NH3")), "loss NH3 -> PA / mPA / dmPA / PI / DAG / TAG / MGDG / DGDG"),
-  c(MonoisotopicMass(formula = ListFormula("H2O")), "loss H2O -> CER / Lyso PA / Lyso PE / Lyso PC / Lyso PS"),
-  c(MonoisotopicMass(formula = ListFormula("NH3H2O")), "loss NH3 & H2O -> DAG"),
-  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), "loss NH3 & phosphate -> PA / dmPA"),
-  c(MonoisotopicMass(formula = ListFormula("NH3H3PO4CH2")), "loss NH3 & mPA -> mPA"),
-  c(MonoisotopicMass(formula = ListFormula("NH3H3PO4C2H4")), "loss NH3 & dmPA -> dmPA"),
-  c(MonoisotopicMass(formula = ListFormula("C3H9N")), "loss trimethylamine -> PC / Carnitine"),
-  c(MonoisotopicMass(formula = ListFormula("C5H14NO4P")), "loss C5H14NO4P -> PC"),
+  c(MonoisotopicMass(formula = ListFormula("NH3")), 
+    "loss NH3 -> PA / mPA / dmPA / PI / DAG / TAG / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("H2O")), 
+    "loss H2O -> CER / Lyso PA / Lyso PE / Lyso PC / Lyso PS"),
+  c(MonoisotopicMass(formula = ListFormula("NH3H2O")), 
+    "loss NH3 & H2O -> DAG"),
+  c(MonoisotopicMass(formula = ListFormula("H3PO4NH3")), 
+    "loss NH3 & phosphate -> PA / dmPA"),
+  c(MonoisotopicMass(formula = ListFormula("NH3H3PO4CH2")), 
+    "loss NH3 & mPA -> mPA"),
+  c(MonoisotopicMass(formula = ListFormula("NH3H3PO4C2H4")), 
+    "loss NH3 & dmPA -> dmPA"),
+  c(MonoisotopicMass(formula = ListFormula("C3H9N")), 
+    "loss trimethylamine -> PC / Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("C5H14NO4P")), 
+    "loss C5H14NO4P -> PC"),
   c(MonoisotopicMass(formula = ListFormula("H3PO4C6H12O6")) - 0.984, 
     "loss phosphoinositol (NH4 ion) -> PI"),
   c(MonoisotopicMass(formula = ListFormula("C2H8NO4P")), 
@@ -67,15 +75,19 @@ mzdif.pos <- data.frame(rbind(
   c(MonoisotopicMass(formula = ListFormula("C12H22O11")) + 
       MonoisotopicMass(formula = ListFormula("NH3")), 
     "loss NH4 & 2 galactoses -> DGDG"),
-  cbind(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), "[Phosphocholine]+ -> Lyso PC")
+  cbind(MonoisotopicMass(formula = ListFormula("C5H15NO4P")), 
+        "[Phosphocholine]+ -> Lyso PC")
 ))
 colnames(mzdif.pos) <- c("dif", "add")
 mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 
 mzdif.neg <- data.frame(rbind(
-  c(MonoisotopicMass(formula = ListFormula("HCOOH")), "loss HCOOH -> CER / MGDG / DGDG"),
-  c(MonoisotopicMass(formula = ListFormula("CO2")), "loss of CO2 (HCOOH ion) -> FFA"),
-  c(MonoisotopicMass(formula = ListFormula("C3H5NO2")), "loss C3H5NO2 -> LysoPS"),
+  c(MonoisotopicMass(formula = ListFormula("HCOOH")), 
+    "loss HCOOH -> CER / MGDG / DGDG"),
+  c(MonoisotopicMass(formula = ListFormula("CO2")), 
+    "loss of CO2 (HCOOH ion) -> FFA"),
+  c(MonoisotopicMass(formula = ListFormula("C3H5NO2")), 
+    "loss C3H5NO2 -> LysoPS"),
   cbind(sn$mass, paste("loss ", sn$sn, "-> Lyso PA / PA / PG / PI")),
   cbind(sn$mass - MonoisotopicMass(formula = ListFormula("H2O")), 
         paste0("loss '", sn$sn, "-H2O' -> PA / mPA / dmPA / PG / PE")),
@@ -89,19 +101,26 @@ mzdif.neg <- data.frame(rbind(
         paste0("loss HCOOH & '", sn$sn, "-H2O' -> MGDG")),
   cbind(MonoisotopicMass(formula = ListFormula("HCOOHCH2")), 
         "loss HCOOH & CH2 -> Lyso PC / PC"),
-  c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), "loss HCOOH & carnitine -> Carnitine"),
+  c(MonoisotopicMass(formula = ListFormula("HCOOHC7H13NO2")), 
+    "loss HCOOH & carnitine -> Carnitine"),
   cbind(mass2mz(sn$mass, "[M-H]-"), 
-        paste0("[", sn$sn, "-H]- -> PA / mPA / dmPA / PG / Lyso PG / PE / Lyso PC / PI / MGDG"))
+        paste0("[", sn$sn, 
+               "-H]- -> PA / mPA / dmPA / PG / Lyso PG / PE / Lyso PC / PI / MGDG"))
 ))
 colnames(mzdif.neg) <- c("dif", "add")
 mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
 
 load("MS2_spectra.RData")
-sps_ms2 <- c(sps_ms2_POS, sps_ms2_NEG)
+sps_ms2 <- c(sps_ms2_POS_cmps, sps_ms2_NEG_cmps)
 sps_ms2_nl <- sps_ms2
 sps_ms2_nl <- applyProcessing(sps_ms2_nl)
 mz(sps_ms2_nl@backend) <- mz(sps_ms2_nl) - precursorMz(sps_ms2_nl)
+
+sps_ms2_std <- c(sps_ms2_POS_stds, sps_ms2_NEG_stds)
+sps_ms2_std_nl <- sps_ms2_std
+sps_ms2_std_nl <- applyProcessing(sps_ms2_std_nl)
+mz(sps_ms2_std_nl@backend) <- mz(sps_ms2_std_nl) - precursorMz(sps_ms2_std_nl)
 
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
@@ -332,6 +351,10 @@ ui <- navbarPage(
       column(3, 
              strong("Negative [M-H]-:"),
              tags$li("[sn1 - H]-"),
+             tags$li("[M - H - sn1]-"),
+             tags$li("[M - H - sn1 - H2O]-"),
+             tags$li("[M - H - sn1 - H2O - glycerol]-"),
+             br(),
              tags$li("[sn2 - H]-"),
              tags$li("[M - H - sn2]-"),
              tags$li("[M - H - sn2 - H2O]-"),
@@ -410,11 +433,9 @@ ui <- navbarPage(
              tags$li("[M + H - phosphoethanolamina]+")),
       column(3, 
              strong("Negative [M-H]-:"),
-             tags$li("[M - H - (sn1-H2O)]-"),
              tags$li("[sn1 - H]-"),
-             br(),
-             tags$li("[M - H - (sn2-H2O)]-"),
-             tags$li("[sn2 - H]-")
+             tags$li("[sn2 - H]-"),
+             tags$li("[M - H - sn2]-")
              
       )
     ), # close tab PEs
@@ -501,7 +522,7 @@ ui <- navbarPage(
              tags$li("[M + Na - phosphocholine]+"),
              br(),
              strong("[M+H]+:"),
-             tags$li("< C34 [M + H - 157.05]+ ; > C36 [M + H - 183.0684]"),
+             tags$li("< C34 [M + H - 157.0504]+ ; > C36 [M + H - 183.0684]+"),
              tags$li("[M + H - sn1]+"),
              tags$li("[M + H - (sn1 - H2O)]+"),
              tags$li("[M + H - sn2]+"),
@@ -545,6 +566,8 @@ ui <- navbarPage(
       )
     ), # close tab Lyso-PSs
     
+    
+    
     ### PS ----
     tabPanel(
       "Phosphatidylserines (PSs)",
@@ -581,6 +604,38 @@ ui <- navbarPage(
              tags$li("[M - H - serine - sn1]-")
       )
     ), # close tab PSs
+    
+    ### Lyso-PI ----
+    tabPanel(
+      "Lyso-Phosphatidylserines (Lyso-PIs)",
+      h1("Lyso-Phosphatidylserines (Lyso-PIs)"),
+      column(4, h3("Formula"),
+             fluidRow(
+               column(2, numericInput("lpiC", "C", value = 18)),
+               column(2, numericInput("lpidb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("lpiformula"))),
+             fluidRow(),
+             fluidRow(h3("m/z values"), verbatimTextOutput("lpimzvals1")),
+             fluidRow(verbatimTextOutput("lpimzvals2"))
+      ),
+      column(1), 
+      column(6, h3("MS2"),
+             fluidRow(h4("ESI+"), verbatimTextOutput("lpifragpos")),
+             fluidRow(h4("ESI-"), verbatimTextOutput("lpifragneg"))
+      ),
+      fluidRow(),
+      hr(),
+      h3("Commonly occuring product ions for Lyso-PCs:"),
+      column(3,
+             strong("Positive [M+H]+:"),
+             tags$li("[]+")),
+      column(3, 
+             strong("Negative [M-H]-:"),
+             tags$li("[]-")
+             
+      )
+    ), # close tab Lyso-PIs
     
     ### PI ----
     tabPanel(
@@ -843,30 +898,50 @@ ui <- navbarPage(
     ### FFA ----
     tabPanel(
       "FFAs",
-      column(4, h3("Formula"),
+      h3("Free Fatty Acids (FFAs)"),
+      column(4, strong("Formula"),
              fluidRow(
                column(2, numericInput("ffaC", "C", value = 18)),
                column(2, numericInput("ffadb", "db", value = 0))
              ),
              column(4, fluidRow(verbatimTextOutput("ffaformula"))),
              fluidRow(),
-             fluidRow(h3("m/z values"), verbatimTextOutput("ffamzvals1")),
-             fluidRow(verbatimTextOutput("ffamzvals2"))
-      ),
+             fluidRow(strong("m/z values"), verbatimTextOutput("ffamzvals1"))),
       column(1), 
-      column(6, h3("MS2"),
-             fluidRow(h4("ESI+"), verbatimTextOutput("ffafragpos")),
-             fluidRow(h4("ESI-"), verbatimTextOutput("ffafragneg"))
+      column(6, 
+             h3("Commonly occuring product ions for Free Fatty Acids:"),
+             p("STDs: there are only MS2 for [M-H]-, but any of them seems to be of good quality"),
+             strong("Study samples:"),
+             fluidRow(verbatimTextOutput("ffafrag"))
       ),
       fluidRow(),
       hr(),
-      h3("Commonly occuring product ions for Free Fatty Acids:"),
-      column(3,
-             strong("Positive [M+H]+:")),
-      column(3, 
-             strong("Negative [M-H+HCOOH]-:"),
-             tags$li("[M - H - CO2]-")
-      )
+      h3("FFAs reduced"),
+      column(4, strong("Formula"),
+             fluidRow(
+               column(2, numericInput("ffarC", "C", value = 18)),
+               column(2, numericInput("ffardb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("ffarformula"))),
+             fluidRow(),
+             fluidRow(strong("m/z values"), verbatimTextOutput("ffarmzvals1"))),
+      column(1),
+      column(6,
+             verbatimTextOutput("ffarfrag")),
+      fluidRow(),
+      hr(),
+      h3("FFAs + Phenylacetic acid"),
+      column(4, strong("Formula"),
+             fluidRow(
+               column(2, numericInput("ffapaC", "C", value = 18)),
+               column(2, numericInput("ffapadb", "db", value = 0))
+             ),
+             column(4, fluidRow(verbatimTextOutput("ffapaformula"))),
+             fluidRow(),
+             fluidRow(strong("m/z values"), verbatimTextOutput("ffapamzvals1"))),
+      column(1),
+      column(6,
+             verbatimTextOutput("ffapafrag")),
     ), # close tab FFA
     
     ### Carnitines ----
@@ -1015,7 +1090,42 @@ ui <- navbarPage(
                             column(6, plotOutput("nl_spectra"))
                           )
                         )
-                      ))
+                      )),
+             tabPanel(
+               "MS/MS spectras (STDs)",
+               sidebarLayout(
+                 sidebarPanel(
+                   #sliderInput(
+                   #   "mz", "m/z zoom:", min = 50, max = 2000, 
+                   #   value = c(50, 1000), step = 10),
+                   sliderInput(
+                     "int_std", "intensity threshold:", min = 0, max = 100, 
+                     value = 10, step = 1),
+                   fluidRow(
+                     strong("Filter MS2 spectra that contain the fragment:")
+                   ),
+                   fluidRow(
+                     column(5, numericInput(
+                       "frag_std", "With an m/z value", 
+                       value = 0)),
+                     column(2, numericInput("ppm_std", "ppm", value = 10)),
+                     column(5, numericInput(
+                       "intx_std", "With an intensity >", value = 1))
+                   ),
+                   fluidRow(
+                     radioButtons(
+                       "radio_std", label = "", 
+                       choices = list("Fragment" = 1, "Neutral loss" = 2),
+                       selected = 1)
+                   )
+                 ),
+                 mainPanel(
+                   fluidRow(dataTableOutput("table_std")),
+                   fluidRow(
+                     column(6, plotOutput("plot_MS2_std")),
+                     column(6, plotOutput("plot_NL_std"))
+                   ))
+               )),
   ),
   
   ## RT prediction ----
@@ -1034,18 +1144,25 @@ ui <- navbarPage(
              sidebarPanel(
                selectInput("class", "Lipid class:",
                            choices = list("FFA" = "FFA",
+                                          "FFA_red" = "FFA_red",
+                                          "FFA_PA" = "FFA_PA",
                                           "CAR" = "CAR",
                                           "CER" = "CER",
+                                          "CER_FA" = "CER_FA",
+                                          "CER_hex" = "CER_hex",
+                                          "CER_hex_FA" = "CER_hex_FA",
+                                          "CER_lact" = "CER_lact",
                                           "SM" = "SM",
                                           "PA" = "PA",
                                           "mPA" = "mPA",
                                           "dmPA" = "dmPA",
-                                          "Lyso_PC" = "Lyso_PC",
-                                          "Lyso_PC_MS3" = "Lyso_PC_MS3",
+                                          "LPC" = "LPC",
+                                          "LPC_MS3" = "LPC_MS3",
                                           "PC" = "PC",
-                                          "Lyso_PE" = "Lyso_PE",
+                                          "LPE" = "LPE",
                                           "PE" = "PE",
                                           "PG" = "PG",
+                                          "LPI" = "LPI",
                                           "PI" = "PI",
                                           "PS" = "PS",
                                           "MGDG" = "MGDG",
@@ -1054,18 +1171,18 @@ ui <- navbarPage(
                                           "DGDG_Na" = "DGDG_Na",
                                           "DAG" = "DAG",
                                           "TAG" = "TAG"),
-                           selected = "PS"),
+                           selected = "PA"),
                fluidRow(
-                 column(3, numericInput("C", "C", value = 40)),
+                 column(3, numericInput("C", "C", value = 36)),
                  column(3, numericInput("db", "db", value = 2))
                ),
                fluidRow(
                  column(4, selectInput("sn1", "sn1",
                                        choices = sn$sn,
-                                       selected = "18:2")),
+                                       selected = "18:0")),
                  column(4, selectInput("sn2", "sn2",
                                        choices = sn$sn,
-                                       selected = "22:0")),
+                                       selected = "18:2")),
                  column(4, selectInput("sn3", "sn3",
                                        choices = sn$sn,
                                        selected = "18:0"))
@@ -1721,6 +1838,33 @@ server <- function(input, output) {
     paste0(input$psC - sn$C[idx], ":", input$psdb - sn$db[idx])
   })
   
+  ## Lyso-PI ----
+  lpifml <- reactive({
+    paste0("C", input$lpiC + 9, 
+           "H", input$lpiC*2 - (2*input$lpidb) + 17, 
+           "O12P")
+  })
+  
+  lpimass <- reactive({
+    MonoisotopicMass(formula = ListFormula(lpifml()))
+  })
+  
+  output$lpiformula <- renderPrint({lpifml()})
+  
+  output$lpimzvals1 <- renderPrint({
+    mass2mz(lpimass(), adduct = c("[M+H]+", "[M+NH4]+", "[M-H]-"))
+  })
+  
+  #output$lpifragpos <- renderPrint({
+  #  round(mass2mz(lpimass(), "[M+H-H2O]+"), 5)
+  #})
+  
+  #output$lpifragneg <- renderPrint({
+  #  as.numeric(round(mass2mz(lpimass(), "[M-H]-") - 
+  #                     MonoisotopicMass(formula = ListFormula("C3H5NO2")), 5))
+  #})
+  
+  
   ## PI ----
   pifml <- reactive({
     paste0("C", input$piC + 9, "H", 
@@ -1904,8 +2048,8 @@ server <- function(input, output) {
       unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$tagsn2],
       unlist(mass2mz(tagmass(), "[M+H]+")) - sn$mass[sn$sn == input$tagsn3])
     tmp <- unique(tmp)
-    names(tmp) <- unique(paste0("[M+H-C", 
-                                c(input$tagsn1, input$tagsn2, input$tagsn3), "]+"))
+    names(tmp) <- unique(paste0(
+      "[M+H-C", c(input$tagsn1, input$tagsn2, input$tagsn3), "]+"))
     tmp
   })
   
@@ -2184,11 +2328,58 @@ server <- function(input, output) {
   output$ffaformula <- renderPrint({ffafml()})
   
   output$ffamzvals1 <- renderPrint({
-    mass2mz(ffamass(), adduct = c("[M+H]+", "[M+CHO2]-"))
+    mass2mz(ffamass(), adduct = c("[M+H]+", "[M-H]-", "[M+CHO2]-"))
   })
   
-  output$ffafragneg <- renderPrint({
-    round(as.numeric(mass2mz(ffamass(), "[M+CHO2]-")) - MonoisotopicMass(formula = ListFormula("CO2")), 5)
+  output$ffafrag <- renderPrint({
+    mz <- as.numeric(mass2mz(ffamass(), "[M+CHO2]-") - MonoisotopicMass(formula = ListFormula("CO2")))
+    names(mz) <- "[M-H+HCOOH-CO2]-"
+    mz
+  })
+  
+  
+  ffarfml <- reactive({
+    paste0("C", input$ffarC, 
+           "H", input$ffarC*2 - (2*input$ffardb) + 2, 
+           "O")
+  })
+  
+  ffarmass <- reactive({
+    MonoisotopicMass(formula = ListFormula(ffarfml()))
+  })
+  
+  output$ffarformula <- renderPrint({ffarfml()})
+  
+  output$ffarmzvals1 <- renderPrint({
+    mass2mz(ffarmass(), adduct = c("[M+H]+", "[M-H]-", "[M+CHO2]-"))
+  })
+  
+  output$ffarfrag <- renderPrint({
+    mass2mz(ffarmass(), "[M-H]-")
+  })
+  
+  
+  
+  ffapafml <- reactive({
+    paste0("C", input$ffapaC + 8, 
+           "H", input$ffapaC*2 - (2*input$ffardb) + 8, 
+           "O", 2 + 2)
+  })
+  
+  ffapamass <- reactive({
+    MonoisotopicMass(formula = ListFormula(ffapafml()))
+  })
+  
+  output$ffapaformula <- renderPrint({ffapafml()})
+  
+  output$ffapamzvals1 <- renderPrint({
+    mass2mz(ffapamass(), adduct = c("[M+H]+", "[M-H]-", "[M+CHO2]-"))
+  })
+  
+  output$ffapafrag <- renderPrint({
+    mz <- as.numeric(mass2mz(ffapamass(), "[M-H]-") - MonoisotopicMass(formula = ListFormula("C8H8O2")))
+    names(mz) <- "[M-H-PA]-"
+    mz
   })
   
   ## Carnitines ----
@@ -2250,8 +2441,9 @@ server <- function(input, output) {
   
   ## Sphingomyelines ----
   smfml <- reactive({
-    paste0("C", input$smC + 5, "H", 
-           input$smC*2 - (2*input$smdb) + 13, "N2O6P")
+    paste0("C", input$smC + 4, 
+           "H", input$smC*2 - (2*input$smdb) + 11, 
+           "N2O6P")
   })
   
   smmass <- reactive({
@@ -2446,6 +2638,77 @@ server <- function(input, output) {
     }
   })
   
+  # MS2 library (STDs) ----
+  dbx_std <- reactive({
+    if(input$frag_std > 0){
+      if(input$radio_std == 1){
+        tmp <- intensity(sps_ms2_std)[matchWithPpm(
+          input$frag_std, mz(sps_ms2_std), ppm = input$ppm_std)[[1]]]/max(intensity(sps_ms2_std))
+        tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
+        sps_ms2_std <- sps_ms2_std[unlist(tmp>(input$intx_std/100))]
+      } else if(input$radio_std == 2){
+        tmp <- intensity(sps_ms2_std)[matchWithPpm(
+          input$frag_std, abs(mz(sps_ms2_std_nl)), ppm = input$ppm_std)[[1]]]/max(intensity(sps_ms2_std))
+        tmp <- lapply(tmp, function(x) if (length(x) == 0) {0} else {x})
+        sps_ms2_std <- sps_ms2_std[unlist(tmp>(input$intx_std/100))]
+      }
+    }
+    
+    db <- data.frame(cbind(class = sps_ms2_std$class, 
+                           compound = sps_ms2_std$name, 
+                           adduct = sps_ms2_std$adduct))
+    db$class[is.na(db$class)] <- "unknown"
+    db$precursor <- as.numeric(sprintf("%.5f", precursorMz(sps_ms2_std)))
+    db <- db[order(db$class, db$compound, db$adduct),]
+    db
+  })
+  
+  output$table_std <- renderDataTable(datatable({
+    dbx_std()
+  }, rownames = FALSE))
+  
+  output$plot_MS2_std <- renderPlot({
+    db <- dbx_std()
+    k <- input$table_std_rows_selected
+    if(length(k) == 1){
+      j <- which(sps_ms2_std$name == db$compound[k] & 
+                   sps_ms2_std$adduct == db$adduct[k])
+      plot(unlist(mz(sps_ms2_std[j])),
+           unlist(intensity(sps_ms2_std[j])), type = "h", 
+           xlab = "m/z", ylab = "relative intensity", 
+           xlim = c(50,#input$mz[1],#min(unlist(mz(sps_ms2_std[j])))-10, 
+                    precursorMz(sps_ms2_std[j])),#input$mz[2]), #max(unlist(mz(sps_ms2_std[j])))+10), 
+           ylim = c(0, 105),
+           main = paste("MS2 for m/z", 
+                        sprintf("%.5f", precursorMz(sps_ms2_std[j])), "@", 
+                        sprintf("%.2f", rtime(sps_ms2_std[j])/60), "min"))
+      idx <- unlist(intensity(sps_ms2_std[j])) > input$int_std
+      text(unlist(mz(sps_ms2_std[j]))[idx],
+           unlist(intensity(sps_ms2_std[j]))[idx], 
+           sprintf("%.5f", unlist(mz(sps_ms2_std[j])))[idx], pos = 3 
+           #offset = -1, pos = 2, srt = -30
+      )
+    }
+  })
+  
+  output$plot_NL_std <- renderPlot({
+    db <- dbx_std()
+    k <- input$table_std_rows_selected
+    if(length(k) == 1){
+      j <- which(sps_ms2_std$name == db$compound[k] & 
+                   sps_ms2_std$adduct == db$adduct[k])
+      mzvals <- as.numeric(unlist(mz(sps_ms2_std[j]))) - precursorMz(sps_ms2_std[j])
+      plot(mzvals, unlist(intensity(sps_ms2_std[j])), type = "h", 
+           xlab = "m/z", ylab = "relative intensity", main = "Neutral Loss",
+           xlim = c(50 - precursorMz(sps_ms2_std[j]), 
+                    0),#min(mzvals) - 10, max(mzvals) + 10), 
+           ylim = c(0, 105))
+      idx <- unlist(intensity(sps_ms2_std[j])) > input$int_std
+      text(mzvals[idx], unlist(intensity(sps_ms2_std[j]))[idx], 
+           sprintf("%.5f", mzvals)[idx], pos = 3)
+    }
+  })
+  
   ## RT ----
   output$cmps_rts <- renderPrint({
     rts <- as.data.frame(rbind(
@@ -2453,7 +2716,7 @@ server <- function(input, output) {
       c("PA", 2.592, 0.403, -0.643),
       c("mPA", 3.591, 0.365, -0.616),
       c("dmPA", 4.895, 0.325, -0.580),
-      #c("Lyso_PC", 9.720, 0, -1.380),
+      #c("LPC", 9.720, 0, -1.380),
       c("PC", 1.640, 0.382, -0.624),
       c("PE", 4.269, 0.349, -0.605),
       c("PG", 2.418, 0.364, -0.602),
@@ -2876,26 +3139,218 @@ server <- function(input, output) {
         "C", input$C - 1, "H", input$C*2 - (2*input$db), "HCOOH"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M-H-HCOOH-CO2]-"))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
+    } else if(input$class == "FFA_red"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db) + 2,
+        "O"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
+                             "percent" = 100,
+                             "fragment" = "[M-H]-"))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
+    } else if(input$class == "FFA_PA"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db),
+        "O2"))), "[M-H]-")
+      dt <- data.frame(cbind(
+        "mz" = as.numeric(i.mz), 
+        "percent" = 100,
+        "fragment" = paste0("[", input$C, ":", input$db, "-H]-")))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "CAR"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C, "H", input$C*2 - (2*input$db), "O2"))), "[M-H]-")
-      dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
-                             "percent" = 100,
-                             "fragment" = "X"))
+      dt <- data.frame(cbind(
+        "mz" = as.numeric(i.mz), 
+        "percent" = 100,
+        "fragment" = paste0("[", input$C, ":", input$db, "-H]-")))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "CER"){
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C - 1, 
+        "H", input$C*2 - (2*input$db) + 1 - 4, 
+        "N",
+        "O", 3 - 1))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
+                             "percent" = 100,
+                             "fragment" = "[M-H-CH3OH]-"))
+      
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db) + 1 - 2, 
+        "N",
+        "O", 3 - 1))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
+                              "percent" = 15,
+                              "fragment" = "[M-H-H2O]-"))
+      dt <- rbind(dt, dt2)
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C - 1, 
+        "H", input$C*2 - (2*input$db) + 1 - 4, 
+        "N",
+        "O", 3 - 2))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
+                              "percent" = 60,
+                              "fragment" = "[M-H-CH4O2]-"))
+      dt <- rbind(dt, dt3)
+      
+      i.mz4 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)) + 2, 
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 - (
+          2*as.numeric(gsub(".*:", "", input$sn1))) + 3, 
+        "N",
+        "O", 2 - 1))), "[M-H]-")
+      dt4 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz4), 
+        "percent" = 80,
+        "fragment" = paste0("[", input$sn1, "+C2H3N-O]-")))
+      dt <- rbind(dt, dt4)
+      
+      i.mz5 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)) + 2, 
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 - (
+          2*as.numeric(gsub(".*:", "", input$sn1))) + 3, 
+        "N",
+        "O", 2))), "[M-H]-")
+      dt5 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz5), 
+        "percent" = 30,
+        "fragment" = paste0("[", input$sn1, "+C2H3N]-")))
+      dt <- rbind(dt, dt5)
+      
+      i.mz6 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 - 
+          (2*as.numeric(gsub(".*:", "", input$sn1))), 
+        "O", 2))), "[M-H]-")
+      dt6 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz6), 
+        "percent" = 40,
+        "fragment" = paste0("[", input$sn1, "-H]-")))
+      dt <- rbind(dt, dt6)
+      
+      i.mz6 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 - 
+          (2*as.numeric(gsub(".*:", "", input$sn1))) - 2, 
+        "O", 2 - 1))), "[M-H]-")
+      dt6 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz6), 
+        "percent" = 20,
+        "fragment" = paste0("[", input$sn1, "-H-H2O]-")))
+      dt <- rbind(dt, dt6)
+      
+      i.mz7 <- MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", as.numeric(gsub(":.*", "", input$sn1))*2 - 
+          (2*as.numeric(gsub(".*:", "", input$sn1))), 
+        "N",
+        "O", 2 - 1)))
+      dt7 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz7), 
+        "percent" = 5,
+        "fragment" = paste0("[", input$sn1, "+N-O]-")))
+      dt <- rbind(dt, dt7)
+      
+      i.mz8 <- MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn2)) - 2, 
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 - 
+          (2*as.numeric(gsub(".*:", "", input$sn2))) - 5, 
+        "O", 2 - 1)))
+      dt8 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz8), 
+        "percent" = 9,
+        "fragment" = paste0("[", input$sn2, "-C2H5O]-")))
+      dt <- rbind(dt, dt8)
+      
+      i.mz9 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", as.numeric(gsub(":.*", "", input$sn2)), 
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 - 
+          (2*as.numeric(gsub(".*:", "", input$sn2))) - 2, 
+        "O", 2 - 1))), "[M-H]-")
+      dt9 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz9), 
+        "percent" = 20,
+        "fragment" = paste0("[", input$sn2, "-H-H2O]-")))
+      dt <- rbind(dt, dt9)
+      
+      i.mz10 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C - 1, 
+        "H", input$C*2 - (2*input$db) + 1 - 2, 
+        "N",
+        "O", 3 - 1))), "[M-H]-")
+      dt10 <- data.frame(cbind("mz" = as.numeric(i.mz10), 
+                               "percent" = 80,
+                               "fragment" = "[M-H-CH2O]-"))
+      dt <- rbind(dt, dt10)
+    } else if(input$class == "CER_FA"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$cerC + 18, 
-        "H", input$cerC*2 - (2*input$cerdb) + 35, "NO3"))), "[M-H]-")
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db) + 1, 
+        "NO3"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M-H]-"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
+    } else if(input$class == "CER_hex"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6 - 6, 
+        "H", input$C*2 - (2*input$db) + 11 - 10, 
+        "N",
+        "O", 3 + 5 - 5))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
+                             "percent" = 100,
+                             "fragment" = "[M-H-hexose]-"))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
+    } else if(input$class == "CER_hex_FA"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, 
+        "H", input$C*2 - (2*input$db) + 11, 
+        "NO8"))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
+                             "percent" = 100,
+                             "fragment" = "[M-H]-"))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
+    } else if(input$class == "CER_lact"){
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6*2 - 6, 
+        "H", input$C*2 - (2*input$db) + 1 + 10*2 - 10, 
+        "N",
+        "O", 3 + 5*2 - 5))), "[M-H]-")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
+                             "percent" = 100,
+                             "fragment" = "[M-H-hexose]-"))
+      
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6*2 - 6, 
+        "H", input$C*2 - (2*input$db) + 1 + 10*2 - 10 - 2, 
+        "N",
+        "O", 3 + 5*2 - 5 - 1))), "[M-H]-")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
+                              "percent" = 75,
+                              "fragment" = "[M-H-hexose-H2O]-"))
+      dt <- rbind(dt, dt2)
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6*2 - 6*2, 
+        "H", input$C*2 - (2*input$db) + 1 + 10*2 - 10*2, 
+        "N",
+        "O", 3 + 5*2 - 5*2))), "[M-H]-")
+      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
+                              "percent" = 80,
+                              "fragment" = "[M-H-2(hexose)]-"))
+      dt <- rbind(dt, dt3)
     } else if(input$class == "PA"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", as.numeric(gsub(":.*", "", input$sn2)),
@@ -2903,7 +3358,7 @@ server <- function(input, output) {
           (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 90,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn2,"-H]-")))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
@@ -2913,7 +3368,7 @@ server <- function(input, output) {
         "O6P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M-H-", input$sn1,"-H2O]-")))
       dt <- rbind(dt, dt2)
       
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -2924,7 +3379,7 @@ server <- function(input, output) {
         "O7P"))), "[M-H]-")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                               "percent" = 70,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M-H-", input$sn1,"]-")))
       
       if(input$sn1 != input$sn2){
         i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -2933,7 +3388,7 @@ server <- function(input, output) {
             (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), 
                                 "percent" = 30,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[", input$sn1,"-H]-")))
         dt <- rbind(dt, dt4)
         
         i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -2944,7 +3399,7 @@ server <- function(input, output) {
           "O6P"))), "[M-H]-")
         dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), 
                                 "percent" = 35,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[M-H-", input$sn2,"-H2O]-")))
         dt <- rbind(dt, dt5)
       } 
       dt <- rbind(dt, dt3)
@@ -2955,7 +3410,7 @@ server <- function(input, output) {
           (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn2, "-H]-")))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 4 - as.numeric(gsub(":.*", "", input$sn2)), 
@@ -2965,7 +3420,7 @@ server <- function(input, output) {
         "O7P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M-H-", input$sn2, "]-")))
       
       if(input$sn1 != input$sn2){
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -2974,7 +3429,7 @@ server <- function(input, output) {
             (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                                 "percent" = 40,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[", input$sn1, "-H]-")))
         dt <- rbind(dt, dt3)
       } 
       dt <- rbind(dt, dt2)
@@ -2985,7 +3440,7 @@ server <- function(input, output) {
           (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn1, "-H]-")))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn1)), 
@@ -2995,7 +3450,7 @@ server <- function(input, output) {
         "O7P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M-H-", input$sn1, "]-")))
       
       if(input$sn1 != input$sn2){
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3004,26 +3459,26 @@ server <- function(input, output) {
             (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
         dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                                 "percent" = 35,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[", input$sn2, "-H]-")))
         dt <- rbind(dt, dt3)
       } 
       dt <- rbind(dt, dt2)
-    } else if(input$class == "Lyso_PC"){
+    } else if(input$class == "LPC"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 7, "H", input$C*2 - (2*input$db) + 16, "NO7P"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M - CH3]-"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
-    } else if(input$class == "Lyso_PC_MS3"){
+    } else if(input$class == "LPC_MS3"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", as.numeric(gsub(":.*", "", input$sn1)),
         "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
           (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn1, "-H]-")))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "PC"){
@@ -3032,46 +3487,46 @@ server <- function(input, output) {
         "H", input$C*2 - ( 2*input$db) + 14, "NO8P"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M - CH3]-"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
-    } else if(input$class == "Lyso_PE"){
+    } else if(input$class == "LPE"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", as.numeric(gsub(":.*", "", input$sn1)),
         "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
           (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn1,"-H]-")))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "PE"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", as.numeric(gsub(":.*", "", input$sn1)),
-        "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
-          (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
+        "C", as.numeric(gsub(":.*", "", input$sn2)),
+        "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
+          (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[", input$sn2, "-H]-")))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "C", input$C + 5 - as.numeric(gsub(":.*", "", input$sn2)), 
         "H", input$C*2 - (2*input$db) + 10 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1))) - 2), 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2))) - 2), 
         "NO7P"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M-H-", input$sn2, "]-")))
       
       if(input$sn1 != input$sn2){
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-          "C", as.numeric(gsub(":.*", "", input$sn2)),
-          "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
-            (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
+          "C", as.numeric(gsub(":.*", "", input$sn1)),
+          "H", as.numeric(gsub(":.*", "", input$sn1))*2 -
+            (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                                 "percent" = 50,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[", input$sn1, "-H]-")))
         dt <- rbind(dt, dt3)
       } 
       dt <- rbind(dt, dt2)
@@ -3092,7 +3547,7 @@ server <- function(input, output) {
         "O8P"))), "[M-H]-")
       dt2 <- data.frame(cbind(
         "mz" = as.numeric(i.mz2), 
-        "percent" = 20,
+        "percent" = 10,
         "fragment" = paste0("[M-H-", input$sn2, "-H2O]-")))
       dt <- rbind(dt, dt2)
       
@@ -3104,7 +3559,7 @@ server <- function(input, output) {
         "O9P"))), "[M-H]-")
       dt3 <- data.frame(cbind(
         "mz" = as.numeric(i.mz3), 
-        "percent" = 25,
+        "percent" = 15,
         "fragment" = paste0("[M-H-", input$sn2, "]-")))
       dt <- rbind(dt, dt3)
       
@@ -3116,7 +3571,7 @@ server <- function(input, output) {
         "O6P"))), "[M-H]-")
       dt4 <- data.frame(cbind(
         "mz" = as.numeric(i.mz4), 
-        "percent" = 35,
+        "percent" = 20,
         "fragment" = paste0("[M-H-", input$sn2, "-H2O-glycerol]-")))
       
       if(input$sn1 != input$sn2){
@@ -3126,18 +3581,74 @@ server <- function(input, output) {
             (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt5 <- data.frame(cbind(
           "mz" = as.numeric(i.mz5), 
-          "percent" = 50,
+          "percent" = 70,
           "fragment" = paste0("[", input$sn1, "-H]-")))
         dt <- rbind(dt, dt5)
       } 
+      i.mz6 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1)))), 
+        "O8P"))), "[M-H]-")
+      dt6 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz6), 
+        "percent" = 25,
+        "fragment" = paste0("[M-H-", input$sn1, "-H2O]-")))
+      dt <- rbind(dt, dt6)
+      
+      i.mz7 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)), 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1))) - 2), 
+        "O9P"))), "[M-H]-")
+      dt7 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz7), 
+        "percent" = 20,
+        "fragment" = paste0("[M-H-", input$sn1, "]-")))
+      dt <- rbind(dt, dt7)
+      
+      i.mz8 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 6 - as.numeric(gsub(":.*", "", input$sn1)) - 3, 
+        "H", input$C*2 - (2 + 2*input$db) + 13 - 
+          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn1))) - 2) - 8, 
+        "O6P"))), "[M-H]-")
+      dt8 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz8), 
+        "percent" = 40,
+        "fragment" = paste0("[M-H-", input$sn1, "-H2O-glycerol]-")))
+      dt <- rbind(dt, dt8)
       dt <- rbind(dt, dt4)
+    } else if(input$class == "LPI"){
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db), 
+        "O2"))), "[M-H]-")
+      dt <- data.frame(cbind(
+        "mz" = as.numeric(i.mz1), 
+        "percent" = 100,
+        "fragment" = paste0("[", input$C, ":", input$db, "-H]-")))
+      
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9 - 6, 
+        "H", input$C*2 - (2*input$db) + 17 - 12, 
+        "O", 12 - 6,
+        "P"))), "[M-H]-")
+      dt2 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz2), 
+        "percent" = 50,
+        "fragment" = "[M-H-hexose-H2O]-"))
+      
+      dt <- rbind(dt, dt2)
     } else if(input$class == "PI"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", as.numeric(gsub(":.*", "", input$sn2)),
         "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
           (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
-                             "percent" = 50,
+                             "percent" = 20,
                              "fragment" = paste0("[", input$sn2, "-H]-")))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3182,7 +3693,7 @@ server <- function(input, output) {
             (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
         dt5 <- data.frame(cbind(
           "mz" = as.numeric(i.mz5), 
-          "percent" = 60,
+          "percent" = 50,
           "fragment" = paste0("[", input$sn1, "-H]-")))
         dt <- rbind(dt, dt5)
         
@@ -3206,7 +3717,7 @@ server <- function(input, output) {
           "O6P"))), "[M-H]-")
         dt7 <- data.frame(cbind(
           "mz" = as.numeric(i.mz7), 
-          "percent" = 15,
+          "percent" = 10,
           "fragment" = paste0("[M-H-", input$sn1, "-H2O-inositol]-")))
         dt <- rbind(dt, dt7)
         
@@ -3250,7 +3761,7 @@ server <- function(input, output) {
         "O10"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M-H]-"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", as.numeric(gsub(":.*", "", input$sn1)),
@@ -3258,9 +3769,8 @@ server <- function(input, output) {
           (2*(as.numeric(gsub(".*:", "", input$sn1)))), "O2"))), "[M-H]-")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[", input$sn1,"-H]-")))
       dt <- rbind(dt, dt2)
-      
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 14 -
@@ -3269,22 +3779,21 @@ server <- function(input, output) {
         "O9"))), "[M-H]-")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                               "percent" = 20,
-                              "fragment" = "X"))
-      
+                              "fragment" = paste0("[M-H-", input$sn1,"]-")))
       if(input$sn1 == input$sn2){
-        dt2[,2] <- dt2[,2]*0.9
-        dt3[,2] <- dt3[,2]*0.3
-      }
-      if(input$sn1 != input$sn2){
-        dt2[,2] <- dt2[,2]*0.5
-        dt3[,2] <- dt3[,2]*0.1
+        dt2$percent <- as.numeric(dt2$percent)*0.9
+        dt3$percent <- as.numeric(dt3$percent)*0.3
+      } else {
+        dt2$percent <- as.numeric(dt2$percent)*0.5
+        dt3$percent <- as.numeric(dt3$percent)*0.1
+        
         i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", as.numeric(gsub(":.*", "", input$sn2)),
           "H", as.numeric(gsub(":.*", "", input$sn2))*2 -
             (2*(as.numeric(gsub(".*:", "", input$sn2)))), "O2"))), "[M-H]-")
         dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), 
                                 "percent" = 20,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[", input$sn2,"-H]-")))
         dt <- rbind(dt, dt4)
         
         i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3295,9 +3804,10 @@ server <- function(input, output) {
           "O9"))), "[M-H]-")
         dt5 <- data.frame(cbind("mz" = as.numeric(i.mz5), 
                                 "percent" = 15,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[M-H-", input$sn2,"]-")))
         dt <- rbind(dt, dt5)
       }
+      
       dt <- rbind(dt, dt2)
       dt <- rbind(dt, dt3)
     } else if(input$class == "DGDG"){
@@ -3307,7 +3817,7 @@ server <- function(input, output) {
         "O15"))), "[M-H]-")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M-H]-"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)), 
@@ -3315,23 +3825,25 @@ server <- function(input, output) {
           ((as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1))))), 
         "O", 15 - 2))), "[M-H]-")
-      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
-                              "percent" = 100,
-                              "fragment" = "X"))
+      dt2 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz2), 
+        "percent" = 100,
+        "fragment" = paste0("[", input$sn1, "]-")))
       
       if(input$sn1 == input$sn2){
-        dt2[,2] <- dt2[,2]*0.4
+        dt2$percent <- as.numeric(dt2$percent)*0.4
       } else {
-        dt2[,2] <- dt2[,2]*0.2
+        dt2$percent <- as.numeric(dt2$percent)*0.2
         i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn2)), 
           "H", input$C*2 - (2*input$db) + 24 -
             ((as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn2))))), 
           "O", 15 - 2))), "[M-H]-")
-        dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
-                                "percent" = 20,
-                                "fragment" = "X"))
+        dt3 <- data.frame(cbind(
+          "mz" = as.numeric(i.mz3), 
+          "percent" = 20,
+          "fragment" = paste0("[", input$sn2, "]-")))
         dt <- rbind(dt, dt3)
       }
       dt <- rbind(dt, dt2)
@@ -3348,22 +3860,44 @@ server <- function(input, output) {
         "H", input$C*2 - (2 + 2*input$db) + 15 - 9, "O4"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M + H - trimethylamine]+"))
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C, "H", input$C*2 - (2*input$db) - 2, "O"))), "[M+H]+")
-      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
-                              "percent" = 20,
-                              "fragment" = "X"))
+      dt2 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz2), 
+        "percent" = 20,
+        "fragment" = paste0("[", input$C, ":", input$db, " + H - H2O]+")))
       dt <- rbind(dt, dt2)
     } else if(input$class == "CER"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$C + 18, 
-        "H", input$C*2 - (2*input$db) + 35 - 2, "NO2"))), "[M+H]+")
+        "C", input$C, 
+        "H", input$C*2 - (2*input$db) + 1 - 2, 
+        "NO2"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H-H2O]+"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
+    } else if(input$class == "CER_hex"){
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, 
+        "H", input$C*2 - (2*input$db) + 11 - 2, 
+        "N",
+        "O", 3 + 5 - 1))), "[M+H]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
+                             "percent" = 100,
+                             "fragment" = "[M+H-H2O]+"))
+      
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6 - 6, 
+        "H", input$C*2 - (2*input$db) + 11 - 2 - 10, 
+        "N",
+        "O", 3 + 5 - 1 - 5))), "[M+H]+")
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
+                              "percent" = 25,
+                              "fragment" = "[M+H-hexose-H2O]+"))
+      
+      dt <- rbind(dt, dt2)
     } else if(input$class == "SM"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 5, 
@@ -3371,7 +3905,7 @@ server <- function(input, output) {
         "N2O5P"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H-H2O]+"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "PA"){
@@ -3380,14 +3914,14 @@ server <- function(input, output) {
         "O8P"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 30,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H]+"))
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3, 
         "H", input$C*2 - (2*input$db) + 5 - 3, 
         "O4"))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-phosphate]+"))
       dt <- rbind(dt, dt2)
     } else if(input$class == "mPA"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3395,14 +3929,14 @@ server <- function(input, output) {
         "O8P"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 30,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H]+"))
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 4 - 1, 
         "H", input$C*2 - (2*input$db) + 7 - 5, 
         "O4"))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-methylphosphate]+"))
       dt <- rbind(dt, dt2)
     } else if(input$class == "dmPA"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3410,7 +3944,7 @@ server <- function(input, output) {
         "O8P"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 60,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H]+"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 5 - 2, 
@@ -3418,7 +3952,7 @@ server <- function(input, output) {
         "O4"))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-dimethylphosphate]+"))
       dt <- rbind(dt, dt2)
       
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3427,97 +3961,157 @@ server <- function(input, output) {
         "O4"))), "[M+H]+")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                               "percent" = 30,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-phosphate]+"))
       dt <- rbind(dt, dt3)
-    } else if(input$class == "Lyso_PC"){
+    } else if(input$class == "LPC"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
         "NO6P"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H-H2O]+"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula("C5H14NO4P")), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 30,
-                              "fragment" = "X"))
+                              "fragment" = "[Phosphocholine]+"))
       dt <- rbind(dt, dt2)
+    } else if(input$class == "LPC_MS3"){
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8 - 3, 
+        "H", input$C*2 - (2*input$db) + 18 - 9, 
+        "O7P"))), "[M+Na]+")
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
+                             "percent" = 100,
+                             "fragment" = "[M+Na-C3H9N]+"))
+      dt <- rbind(dt, dt)
+      dt <- dt[1,]
     } else if(input$class == "PC"){
-      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
-        "NO8P"))), "[M+H]+")
       if(input$C < 36){
-        dt <- data.frame(cbind("mz" = as.numeric(i.mz1 - 157.05), 
+        i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+          "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
+          "NO8P"))), "[M+H]+")
+        dt <- data.frame(cbind("mz" = as.numeric(i.mz1 - 157.0504), 
                                "percent" = 100,
-                               "fragment" = "X"))
-      } else {
-        dt <- data.frame(cbind("mz" = as.numeric(i.mz1 - 183.0684), 
-                               "percent" = 30,
-                               "fragment" = "X"))
-      }
-      
-      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
-        "H", input$C*2 - (2 + 2*input$db) + 18 - 
-          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn2)))), 
-        "NO6P"
-      ))), "[M+H]+")
-      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
-                              "percent" = 100,
-                              "fragment" = "X"))
-      if(input$C < 36){
-        dt2[,2] <- dt2[,2]*0.35
-      } else{
-        dt2[,2] <- dt2[,2]*0.6
-      }
-      dt <- rbind(dt, dt2)
-      
-      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
-        "H", input$C*2 - (2 + 2*input$db) + 18 - 
-          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn2)))) + 2, 
-        "NO7P"))), "[M+H]+")
-      dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
-                              "percent" = 100,
-                              "fragment" = "X"))
-      if(input$C < 36){
-        dt3[,2] <- dt3[,2]*0.45
-      }
-      dt <- rbind(dt, dt3)
-      if(input$sn1 != input$sn2){
-        i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+                               "fragment" = "[M + H - 157.0504]+"))
+        
+        i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
           "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
           "H", input$C*2 - (2 + 2*input$db) + 18 - 
             (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
               gsub(".*:", "", input$sn1)))), 
-          "NO6P"))), "[M+H]+")
-        dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), 
-                                "percent" = 100,
-                                "fragment" = "X"))
-        if(input$C < 36){
-          dt4[,2] <- dt4[,2]*0.4
-        } else {
-          dt4[,2] <- dt4[,2]*0.8
+          "NO6P"
+        ))), "[M+H]+")
+        dt2 <- data.frame(cbind(
+          "mz" = as.numeric(i.mz2), 
+          "percent" = 40,
+          "fragment" = paste0("[M + H - ", input$sn1, " - H2O]+")))
+        
+        i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+          "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+          "H", input$C*2 - (2 + 2*input$db) + 18 - 
+            (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+              gsub(".*:", "", input$sn2)))) + 2, 
+          "NO7P"))), "[M+H]+")
+        dt3 <- data.frame(cbind(
+          "mz" = as.numeric(i.mz3), 
+          "percent" = 30,
+          "fragment" = paste0("[M + H - ", input$sn2, "]+")))
+        dt <- rbind(dt, dt3)
+        if(input$C > 32){
+          dt2$percent <- as.numeric(dt2$percent)*0.5
+          
+          i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn2)))), 
+            "NO6P"
+          ))), "[M+H]+")
+          dt4 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz4), 
+            "percent" = 10,
+            "fragment" = paste0("[M + H - ", input$sn2, " - H2O]+")))
+          dt <- rbind(dt, dt4)
         }
-        dt <- rbind(dt, dt4)
-      } else {
-        dt <- dt
+        dt <- rbind(dt, dt2)
+      } else{
+        if(input$sn1 == input$sn2){
+          i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn1)))), 
+            "NO6P"
+          ))), "[M+H]+")
+          dt2 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz2), 
+            "percent" = 100,
+            "fragment" = paste0("[M + H - ", input$sn1, " - H2O]+")))
+          
+          i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn2)))) + 2, 
+            "NO7P"))), "[M+H]+")
+          dt3 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz3), 
+            "percent" = 80,
+            "fragment" = paste0("[M + H - ", input$sn2, "]+")))
+          dt <- rbind(dt2, dt3)
+        } else {
+          i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn2)))) + 2, 
+            "NO7P"))), "[M+H]+")
+          dt3 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz3), 
+            "percent" = 100,
+            "fragment" = paste0("[M + H - ", input$sn2, "]+")))
+          
+          i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn1)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn1)))), 
+            "NO6P"
+          ))), "[M+H]+")
+          dt2 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz2), 
+            "percent" = 80,
+            "fragment" = paste0("[M + H - ", input$sn1, " - H2O]+")))
+          dt <- rbind(dt2, dt3)
+          
+          i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+            "C", input$C + 8 - as.numeric(gsub(":.*", "", input$sn2)), 
+            "H", input$C*2 - (2 + 2*input$db) + 18 - 
+              (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+                gsub(".*:", "", input$sn2)))), 
+            "NO6P"
+          ))), "[M+H]+")
+          dt4 <- data.frame(cbind(
+            "mz" = as.numeric(i.mz4), 
+            "percent" = 40,
+            "fragment" = paste0("[M + H - ", input$sn2, " - H2O]+")))
+          dt <- rbind(dt, dt4)
+        }
       }
-    } else if(input$class == "Lyso_PE"){
+    } else if(input$class == "LPE"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 3, "H", input$C*2 - (2 + 2*input$db) + 6, 
         "O3"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 30,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H-phosphoethanolamina]+"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 12, "NO6P"))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 100,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-H2O]+"))
       dt <- rbind(dt, dt2)
     } else if(input$class == "PE"){
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3525,7 +4119,7 @@ server <- function(input, output) {
         "O4"))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H-phosphoethanolamine]+"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "PG"){
@@ -3538,6 +4132,25 @@ server <- function(input, output) {
                              "fragment" = "[M+NH4-C3H9O6]+"))
       dt <- rbind(dt, dt)
       dt <- dt[1,]
+    } else if(input$class == "LPI"){
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 17 - 2, 
+        "O", 12 - 1, 
+        "P"))), "[M+H]+") 
+      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
+                             "percent" = 100,
+                             "fragment" = "[M+H-H2O]+"))
+      
+      i.mz2 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 17 - 2*2, 
+        "O", 12 - 1*2, 
+        "P"))), "[M+H]+") 
+      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
+                              "percent" = 30,
+                              "fragment" = "[M+H-2(H2O)]+"))
+      dt <- rbind(dt, dt2)
     } else if(input$class == "PI"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 9, 
@@ -3567,13 +4180,13 @@ server <- function(input, output) {
       dt <- rbind(dt, dt)
       dt <- dt[1,]
     } else if(input$class == "MGDG"){
-      i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      i.mz1 <- as.numeric(mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - 6, 
         "H", input$C*2 - (2*input$db) + 14 - 12, 
-        "O", 10 - 6))), "[M+NH4]+") + 0.984
+        "O", 10 - 6))), "[M+NH4]+")) + 0.984
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+NH4-galactose]+ +0.984"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 9 - 6, 
@@ -3581,7 +4194,7 @@ server <- function(input, output) {
         "O", 10 - 6))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-galactose]+"))
       dt <- rbind(dt, dt2)
       
     } else if(input$class == "MGDG_Na"){
@@ -3593,7 +4206,7 @@ server <- function(input, output) {
         "O", 10 - 2))), "[M+Na]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = paste0("[M+Na-", input$sn1, "]+")))
       #dt <- rbind(dt, dt)
       #dt <- dt[1,]
       
@@ -3615,7 +4228,7 @@ server <- function(input, output) {
           "O", 10 - 2))), "[M+Na]+")
         dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                                 "percent" = 50,
-                                "fragment" = "X"))
+                                "fragment" = paste0("[M+Na-", input$sn2, "]+")))
         dt <- rbind(dt, dt3)
       }
       dt <- rbind(dt, dt2)
@@ -3627,7 +4240,7 @@ server <- function(input, output) {
         "O", 15 - 11))), "[M+NH4]+") + 0.984
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+NH4-2(galactose)]+ +0.984"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - 12, 
@@ -3635,42 +4248,80 @@ server <- function(input, output) {
         "O", 15 - 11))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-2(galactose)]+"))
       dt <- rbind(dt, dt2)
     } else if(input$class == "DGDG_Na"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn2)), 
+        "H", input$C*2 - (2*input$db) + 24 - 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2)))), 
+        "O", 15 - 2))), "[M+Na]+")
+      dt <- data.frame(cbind(
+        "mz" = as.numeric(i.mz1), 
+        "percent" = 100,
+        "fragment" = paste0("[M+Na-", input$sn2, "]+")))
+      
+      #i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+      #  "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
+      #  "H", input$C*2 - (2*input$db) + 24 - 
+      #    (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
+      #      gsub(".*:", "", input$sn1)))) - 10, 
+      #  "O", 15 - 2 - 5))), "[M+Na]+")
+      #dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
+      #                        "percent" = 20,
+      #                        "fragment" = "X"))
+      #dt <- rbind(dt, dt2)
+      
+      i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)), 
         "H", input$C*2 - (2*input$db) + 24 - 
           (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
             gsub(".*:", "", input$sn1)))), 
         "O", 15 - 2))), "[M+Na]+")
-      dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
-                             "percent" = 100,
-                             "fragment" = "X"))
+      dt3 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz3), 
+        "percent" = 60,
+        "fragment" = paste0("[M+Na-", input$sn1, "]+")))
+      dt <- rbind(dt, dt3)
       
-      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
-        "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn1)) - 6, 
+      i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 15 - 6, 
+        "H", input$C*2 - (2*input$db) + 24 - 10, 
+        "O", 15 - 5))), "[M+Na]+")
+      dt4 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz4), 
+        "percent" = 20,
+        "fragment" = "[M+Na-hexose]+"))
+      dt <- rbind(dt, dt4)
+      
+      i.mz5 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
+        "C", input$C + 15 - as.numeric(gsub(":.*", "", input$sn2)) - 6, 
         "H", input$C*2 - (2*input$db) + 24 - 
-          (as.numeric(gsub(":.*", "", input$sn1))*2 - (2*as.numeric(
-            gsub(".*:", "", input$sn1)))) - 10, 
+          (as.numeric(gsub(":.*", "", input$sn2))*2 - (2*as.numeric(
+            gsub(".*:", "", input$sn2)))) - 10, 
         "O", 15 - 2 - 5))), "[M+Na]+")
-      dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
-                              "percent" = 20,
-                              "fragment" = "X"))
-      dt <- rbind(dt, dt2)
+      dt5 <- data.frame(cbind(
+        "mz" = as.numeric(i.mz5), 
+        "percent" = 15,
+        "fragment" = paste0("[M+Na-", input$sn2, "-hexose]+")))
+      dt <- rbind(dt, dt5)
+      
     } else if(input$class == "DAG"){
-      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0("C", input$C + 3, 
-                                                                     "H", input$C*2 - (2*input$db) + 4, 
-                                                                     "O", 5))), "[M+H]+")
+      i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(
+        paste0("C", input$C + 3, 
+               "H", input$C*2 - (2*input$db) + 4, 
+               "O", 5))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
-      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0("C", input$C + 3, 
-                                                                    "H", input$C*2 - (2*input$db) + 4 - 2, 
-                                                                    "O", 5 - 1))), "[M+H]+")
+                             "fragment" = "[M+H]+"))
+      i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(
+        paste0("C", input$C + 3, 
+               "H", input$C*2 - (2*input$db) + 4 - 2, 
+               "O", 5 - 1))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 30,
-                              "fragment" = "X"))
+                              "fragment" = "[M+H-H2O]+"))
       dt <- rbind(dt, dt2)
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
@@ -3680,7 +4331,7 @@ server <- function(input, output) {
         "O", 5 - 2))), "[M+H]+")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                               "percent" = 20,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M+H-", input$sn1,"]+")))
       dt <- rbind(dt, dt3)
     } else if(input$class == "TAG"){
       i.mz1 <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3689,7 +4340,7 @@ server <- function(input, output) {
         "O", 6))), "[M+H]+")
       dt <- data.frame(cbind("mz" = as.numeric(i.mz1), 
                              "percent" = 100,
-                             "fragment" = "X"))
+                             "fragment" = "[M+H]+"))
       
       i.mz2 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
         "C", input$C + 3 - as.numeric(gsub(":.*", "", input$sn1)), 
@@ -3699,7 +4350,7 @@ server <- function(input, output) {
         "O", 6 - 2))), "[M+H]+")
       dt2 <- data.frame(cbind("mz" = as.numeric(i.mz2), 
                               "percent" = 50,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M+H-", input$sn1, "]+")))
       dt <- rbind(dt, dt2)
       
       i.mz3 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3710,7 +4361,7 @@ server <- function(input, output) {
         "O", 6 - 2))), "[M+H]+")
       dt3 <- data.frame(cbind("mz" = as.numeric(i.mz3), 
                               "percent" = 70,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M+H-", input$sn2, "]+")))
       dt <- rbind(dt, dt3)
       
       i.mz4 <- mass2mz(MonoisotopicMass(formula =ListFormula(paste0(
@@ -3721,7 +4372,7 @@ server <- function(input, output) {
         "O", 6 - 2))), "[M+H]+")
       dt4 <- data.frame(cbind("mz" = as.numeric(i.mz4), 
                               "percent" = 30,
-                              "fragment" = "X"))
+                              "fragment" = paste0("[M+H-", input$sn3, "]+")))
       dt <- rbind(dt, dt4)
     } 
     dt <- dt[order(dt$percent, decreasing = T),]
@@ -3737,15 +4388,44 @@ server <- function(input, output) {
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C, "H", input$C*2 - (2*input$db), "O2"))), ad)
+    } else if(input$class == "FFA_red"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, "H", input$C*2 - (2*input$db) + 2, "O"))), ad)
+    } else if(input$class == "FFA_PA"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, 
+        "H", input$C*2 - (2*input$db) + 8, "O", 2 + 2))), ad)
     } else if(input$class == "CAR"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 15, "NO4"))), ad)
     } else if(input$class == "CER"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C, "H", input$C*2 - (2*input$db) + 1, 
+        "NO3"))), ad)
+    } else if(input$class == "CER_FA"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
+        "C", input$C, "H", input$C*2 - (2*input$db) + 1, 
         "NO3"))), ad)
+    } else if(input$class == "CER_hex"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, "H", input$C*2 - (2*input$db) + 11, 
+        "NO8"))), ad)
+    } else if(input$class == "CER_hex_FA"){
+      ad <- "[M+CHO2]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, "H", input$C*2 - (2*input$db) + 11, 
+        "NO8"))), ad)
+    } else if(input$class == "CER_lact"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6*2, "H", input$C*2 - (2*input$db) + 1 + 10*2, 
+        "N", "O", 3 + 5*2))), ad)
     } else if(input$class == "SM"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3763,11 +4443,11 @@ server <- function(input, output) {
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 5, "H", input$C*2 - (2*input$db) + 9, "O8P"))), ad)
-    } else if(input$class == "Lyso_PC"){
+    } else if(input$class == "LPC"){
       ad <- "[M+CHO2]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
-    } else if(input$class == "Lyso_PC_MS3"){
+    } else if(input$class == "LPC_MS3"){
       ad <- "[M+CHO2]-"
       i.mz <- MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 7, "H", input$C*2 - (2 + 2*input$db) + 17, "NO7P")))
@@ -3776,7 +4456,7 @@ server <- function(input, output) {
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
         "NO8P"))), ad)
-    } else if(input$class == "Lyso_PE"){
+    } else if(input$class == "LPE"){
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 14, "NO7P"))), ad)
@@ -3788,11 +4468,16 @@ server <- function(input, output) {
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 6, "H", input$C*2 - (2 + 2*input$db) + 13, "O10P"))), ad)
+    } else if(input$class == "LPI"){
+      ad <- "[M-H]-"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 17, "O12P"))), ad)
     } else if(input$class == "PI"){
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 9, 
-        "H", input$C*2 - (2 + 2*input$db) + 17, "O13P"))), ad)
+        "H", input$C*2 - (2*input$db) + 17, "O13P"))), ad)
     } else if(input$class == "PS"){
       ad <- "[M-H]-"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3842,8 +4527,13 @@ server <- function(input, output) {
     } else if(input$class == "CER"){
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
-        "C", input$C + 18, "H", input$C*2 - (2*input$db) + 35, 
+        "C", input$C, "H", input$C*2 - (2*input$db) + 1, 
         "NO3"))), ad)
+    } else if(input$class == "CER_hex"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 6, "H", input$C*2 - (2*input$db) + 11, 
+        "NO8"))), ad)
     } else if(input$class == "SM"){
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
@@ -3861,8 +4551,12 @@ server <- function(input, output) {
       ad <- "[M+NH4]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 5, "H", input$C*2 - (2*input$db) + 9, "O8P"))), ad)
-    } else if(input$class == "Lyso_PC"){
+    } else if(input$class == "LPC"){
       ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
+    } else if(input$class == "LPC_MS3"){
+      ad <- "[M+Na]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 20, "NO7P"))), ad)
     } else if(input$class == "PC"){
@@ -3870,7 +4564,7 @@ server <- function(input, output) {
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 8, "H", input$C*2 - (2 + 2*input$db) + 18, 
         "NO8P"))), ad)
-    } else if(input$class == "Lyso_PE"){
+    } else if(input$class == "LPE"){
       ad <- "[M+H]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 5, "H", input$C*2 - (2 + 2*input$db) + 14, "NO7P"))), ad)
@@ -3882,6 +4576,11 @@ server <- function(input, output) {
       ad <- "[M+NH4]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
         "C", input$C + 6, "H", input$C*2 - (2 + 2*input$db) + 13, "O10P"))), ad)
+    } else if(input$class == "LPI"){
+      ad <- "[M+H]+"
+      i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
+        "C", input$C + 9, 
+        "H", input$C*2 - (2*input$db) + 17, "O12P"))), ad)
     } else if(input$class == "PI"){
       ad <- "[M+NH4]+"
       i.mz <- mass2mz(MonoisotopicMass(formula = ListFormula(paste0(
