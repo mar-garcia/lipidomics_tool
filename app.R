@@ -1,6 +1,7 @@
 options(repos = BiocManager::repositories())
-#options("repos")
+options("repos")
 
+cmps <- readxl::read_xlsx("compounds.xlsx")
 
 library(shiny)
 library(tidyverse)
@@ -135,13 +136,6 @@ mz_calculator <- function(class, fml){
 ref <- c(12, 1, 16, 14, 31, 32)
 names(ref) <- c("C", "H", "O", "N", "P", "S")
 
-
-cmps <- read.csv("compounds.csv")
-cmps <- cmps[cmps$class %in% c("FA", "CAR", "SM", "Cer", "HexCer", "LactCer", 
-                               "LPA", "LPC", "LPG", "LPI", "LPS", 
-                               "PA", "PC", "PE", "PG", "PI", "PS",
-                               "MGDG", "DGDG", "MG", "DG", "TG"),]
-
 cmps$formula <- fml_maker(cmps$class, cmps$C, cmps$db)
 cmps$mass <- calculateMass(cmps$formula)
 
@@ -155,6 +149,36 @@ for(i in seq(nrow(cmps))){
 cmps$KMD <- cmps$NM - (cmps$mass * ref["H"] / calculateMass("H"))
 cmps$db <- as.character(cmps$db)
 
+
+sn <- data.frame(
+  "C" = rep(seq(14, 24), each = 4),
+  "db" = rep(seq(0, 3), 11)
+)
+sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
+sn$sn <- paste0(sn$C, ":", sn$db)
+sn$mass <- NA
+sn.list <- list()
+for(i in seq(nrow(sn))){
+  sn$mass[i] <- calculateMass(sn$formula[i])
+  sn.list[[i]] <- sn$sn[i]
+  names(sn.list)[[i]] <- sn$sn[i]
+}
+
+mzdif.pos <- data.frame(rbind(
+  c(calculateMass("NH3"), "loss NH3 -> PA / DG / TG"),
+  c(calculateMass("NH3H2O"), "loss NH3 & H2O -> DG"),
+  c(calculateMass("H3PO4NH3"), "loss NH3 & PA -> PA"),
+  c(calculateMass("CH3"), "loss CH3"),
+  cbind(sn$mass + calculateMass("NH3"), paste("loss NH3 &", sn$sn, "-> DG / TG"))
+))
+colnames(mzdif.pos) <- c("dif", "add")
+mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
+
+mzdif.neg <- data.frame(rbind(
+  c(calculateMass("HCOOH"), "loss HCOOH -> CER / MGDG / DGDG")
+))
+colnames(mzdif.neg) <- c("dif", "add")
+mzdif.neg$dif <- as.numeric(mzdif.neg$dif)
 
 # UI ------------------------------------------------------------------------
 ui <- navbarPage(
@@ -248,7 +272,62 @@ ui <- navbarPage(
       mainPanel(
         plotlyOutput("kmd")
       )
-    )) # close tabPanel "KMD"
+    )), # close tabPanel "KMD"
+  tabPanel(
+    "MS2",
+    column(6, h2("ESI+"),
+           numericInput("posprec", "Precursor", value = 0),
+           fluidRow(
+             column(2, numericInput("posfrag1", "Fragment 1", value = 0)),
+             column(8, verbatimTextOutput("posfrag1add"))
+           ),
+           fluidRow(
+             column(2, numericInput("posfrag2", "Fragment 2", value = 0)),
+             column(8, verbatimTextOutput("posfrag2add"))
+           ),
+           fluidRow(
+             column(2, numericInput("posfrag3", "Fragment 3", value = 0)),
+             column(8, verbatimTextOutput("posfrag3add"))
+           ),
+           fluidRow(
+             column(2, numericInput("posfrag4", "Fragment 4", value = 0)),
+             column(8, verbatimTextOutput("posfrag4add"))
+           ),
+           fluidRow(
+             column(2, numericInput("posfrag5", "Fragment 5", value = 0)),
+             column(8, verbatimTextOutput("posfrag5add"))
+           ),
+           fluidRow(
+             column(2, numericInput("posfrag6", "Fragment 6", value = 0)),
+             column(8, verbatimTextOutput("posfrag6add"))
+           )), # close column ESI+
+    column(6, h2("ESI-"),
+           numericInput("negprec", "Precursor", value = 0),
+           fluidRow(
+             column(2, numericInput("negfrag1", "Fragment 1", value = 0)),
+             column(8, verbatimTextOutput("negfrag1add"))
+           ),
+           fluidRow(
+             column(2, numericInput("negfrag2", "Fragment 2", value = 0)),
+             column(8, verbatimTextOutput("negfrag2add"))
+           ),
+           fluidRow(
+             column(2, numericInput("negfrag3", "Fragment 3", value = 0)),
+             column(8, verbatimTextOutput("negfrag3add"))
+           ),
+           fluidRow(
+             column(2, numericInput("negfrag4", "Fragment 4", value = 0)),
+             column(8, verbatimTextOutput("negfrag4add"))
+           ),
+           fluidRow(
+             column(2, numericInput("negfrag5", "Fragment 5", value = 0)),
+             column(8, verbatimTextOutput("negfrag5add"))
+           ),
+           fluidRow(
+             column(2, numericInput("negfrag6", "Fragment 6", value = 0)),
+             column(8, verbatimTextOutput("negfrag6add"))
+           )) # close column ESI-
+  ) # close tabPanel MS2
 )
 
 # SERVER ---------------------------------------------------------------------
@@ -294,6 +373,78 @@ server <- function(input, output) {
                   ), 
                   hoverinfo = "text", size = 2,
                   color = cmps[,input$kmd_color])
+  })
+  
+  output$posfrag1add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag1) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag1, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag2add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag2) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag2, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag3add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag3) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag3, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag4add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag4) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag4, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag5add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag5) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag5, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$posfrag6add <- renderPrint({
+    idx <- c(which(abs((input$posprec - input$posfrag6) - mzdif.pos$dif) < 0.01),
+             unlist(matchWithPpm(input$posfrag6, mzdif.pos$dif, ppm = 10)))
+    mzdif.pos$add[idx]
+  })
+  
+  output$negfrag1add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag1, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag2add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag2) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag2, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag3add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag3, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag4add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag4) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag4, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag5add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag5) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag5, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
+  })
+  
+  output$negfrag6add <- renderPrint({
+    idx <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg$dif) < 0.01),
+             unlist(matchWithPpm(input$negfrag6, mzdif.neg$dif, ppm = 10)))
+    mzdif.neg$add[idx]
   })
   
 }
