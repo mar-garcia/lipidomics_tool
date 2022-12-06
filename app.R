@@ -101,7 +101,7 @@ cmps_db$pos <- cmps_db$neg <- NA
 idx <- which(cmps_db$class %in% c("FA", "CAR", "SM", "Cer", "HexCer", "LactCer", 
                                   "LPC", "LPS", "PC", "PE", "PS"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+H]+")
-idx <- which(cmps$class %in% c("LPA", "LPG", "LPI",
+idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
                                "PA", "PG", "PI", "MGDG", "DGDG", 
                                "MG", "DG", "TG"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+NH4]+")
