@@ -18,7 +18,7 @@ matchWithPpm <- function(x, y, ppm = 0) {
   }, ppm = force(ppm))
 }
 
-
+# to add mPA, dmPA
 fml_maker <- function(class, C, db){
   case_when(
     # 1 FA chain -----------------------------------------------------------
@@ -26,6 +26,7 @@ fml_maker <- function(class, C, db){
     class == "CAR" ~ paste0("C", C + 7, "H", C*2 - (2*db) + 13, "NO4"),
     class == "LPA" ~ paste0("C", C + 3, "H", C*2 - (2*db) + 7, "O7P"),
     class == "LPC" ~ paste0("C", C + 8, "H", C*2 - (2*db) + 18, "NO7P"),
+    class == "LPE" ~ paste0("C", C + 5, "H", C*2 - (2*db) + 12, "NO7P"),
     class == "LPG" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 13, "O9P"),
     class == "LPI" ~ paste0("C", C + 9, "H", C*2 - (2*db) + 17, "O12P"),
     class == "LPS" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "NO9P"),
@@ -46,6 +47,7 @@ fml_maker <- function(class, C, db){
     
     class == "MGDG" ~ paste0("C", C +  9, "H", C*2 - (2*db) + 14, "O10"),
     class == "DGDG" ~ paste0("C", C + 15, "H", C*2 - (2*db) + 24, "O15"),
+    class == "DGTS" ~ paste0("C", C + 10, "H", C*2 - (2*db) + 17, "NO7"),
     
     class == "DG"   ~ paste0("C", C +  3, "H", C*2 - (2*db) +  4, "O5"),
     
@@ -58,7 +60,7 @@ fml_maker <- function(class, C, db){
 
 cmps_db <- c()
 
-cls <- c("FA", "CAR", "LPA", "LPC", "LPG", "LPI", "LPS", "MG")
+cls <- c("FA", "CAR", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS", "MG")
 C <- seq(from = 12, to = 24, by = 1)
 db <- seq(from = 0, to = 6, by = 1)
 sn <-  paste(expand.grid(C, db)[,"Var1"], expand.grid(C, db)[,"Var2"], 
@@ -68,7 +70,7 @@ for(i in cls){
 }
 
 cls <- c("SM", "Cer", "HexCer", "LactCer", 
-         "PA", "PC", "PE", "PG", "PI", "PS", "MGDG", "DGDG", "DG")
+         "PA", "PC", "PE", "PG", "PI", "PS", "MGDG", "DGDG", "DGTS", "DG")
 C <- seq(from = 12*2, to = 28*2, by = 1)
 db <- seq(from = 0, to = 6*2, by = 1)
 sn <-  paste(expand.grid(C, db)[,"Var1"], expand.grid(C, db)[,"Var2"], 
@@ -99,18 +101,19 @@ cmps_db$formula <- fml_maker(cmps_db$class, cmps_db$C, cmps_db$db)
 cmps_db$mass <- calculateMass(cmps_db$formula)
 cmps_db$pos <- cmps_db$neg <- NA
 idx <- which(cmps_db$class %in% c("FA", "CAR", "SM", "Cer", "HexCer", "LactCer", 
-                                  "LPC", "LPS", "PC", "PE", "PS"))
+                                  "LPC", "LPE", "LPS", "PC", "PE", "PS",
+                                  "DGTS"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+H]+")
 idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
-                               "PA", "PG", "PI", "MGDG", "DGDG", 
-                               "MG", "DG", "TG"))
+                                  "PA", "PG", "PI", "MGDG", "DGDG", 
+                                  "MG", "DG", "TG"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+NH4]+")
-idx <- which(cmps_db$class %in% c("FA", "LPA", "LPG", "LPI", "LPS", 
+idx <- which(cmps_db$class %in% c("FA", "LPA", "LPE", "LPG", "LPI", "LPS", 
                                   "PA", "PE", "PG", "PI", "PS", 
                                   "MG", "DG", "TG"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M-H]-")
 idx <- which(cmps_db$class %in% c("SM", "CAR", "Cer", "HexCer", "LactCer", 
-                                  "LPC", "PC", "MGDG", "DGDG"))
+                                  "LPC", "PC", "MGDG", "DGDG", "DGTS"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 
 
@@ -122,9 +125,9 @@ mz_calculator <- function(class, fml){
     mass2mz(calculateMass(fml), c("[M+CHO2]-"))
   } else if(class %in% c("MG", "DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
-  } else if(class %in% c("LPS", "PE", "PS")){
+  } else if(class %in% c("LPE", "LPS", "PE", "PS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
-  } else if(class %in% c("SM", "LPC", "PC")){
+  } else if(class %in% c("SM", "LPC", "PC", "DGTS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M+CHO2]-"))
   } else if(class %in% c("CAR", "LPA", "LPG", "LPI", "PA", "PG", "PI")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
@@ -151,8 +154,8 @@ cmps$db <- as.character(cmps$db)
 
 
 sn <- data.frame(
-  "C" = rep(seq(14, 24), each = 4),
-  "db" = rep(seq(0, 3), 11)
+  "C" = rep(seq(12, 24), each = 4),
+  "db" = rep(seq(0, 3), 13)
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn$sn <- paste0(sn$C, ":", sn$db)
@@ -185,7 +188,7 @@ ui <- navbarPage(
   "Lipidomics",
   
   tabPanel(
-    "Panel 1",
+    "Main Panel",
     column(6, h3("Formula"),
            fluidRow(
              column(2, selectInput(inputId = "class", label = "Lipid class:",
@@ -197,6 +200,7 @@ ui <- navbarPage(
                                                   "LactCer" = "LactCer",
                                                   "LPA" = "LPA",
                                                   "LPC" = "LPC",
+                                                  "LPE" = "LPE",
                                                   "LPG" = "LPG",
                                                   "LPI" = "LPI",
                                                   "LPS" = "LPS",
@@ -208,6 +212,7 @@ ui <- navbarPage(
                                                   "PS" = "PS",
                                                   "MGDG" = "MGDG",
                                                   "DGDG" = "DGDG",
+                                                  "DGTS" = "DGTS",
                                                   "MG" = "MG",
                                                   "DG" = "DG",
                                                   "TG" = "TG"))),
@@ -215,9 +220,9 @@ ui <- navbarPage(
              column(2, numericInput(inputId = "db", label = "db", value = 0))
            ),
            column(4, verbatimTextOutput("formula")),
-    fluidRow(),
-    fluidRow(
-      h3("Major adducts"),
+           fluidRow(),
+           fluidRow(
+             h3("Major adducts"),
              column(6, fluidRow(verbatimTextOutput("mzvals"))))
     ), # close left column
     column(6, h3("Compound Prediction"),
@@ -228,9 +233,25 @@ ui <- navbarPage(
                                               "ESI-" = "neg"),
                                selected = "neg"),
                   numericInput("ppms", "ppm", value = 5)
-                  ),
+           ),
            column(3, verbatimTextOutput("cmps_pred"))
-           ) # close right column
+    ), # close right column
+    fluidRow(),
+    h3("Theoretical MS2"),
+    column(4, h2("ESI+"),
+           fluidRow(plotOutput("ms2_thr_pos"))),
+    column(1),
+    column(4, h2("ESI-"),
+           fluidRow(plotOutput("ms2_thr_neg"))),
+    column(1, selectInput("sn1", "sn1",
+                          choices = sn$sn,
+                          selected = "18:0")),
+    column(1, selectInput("sn2", "sn2",
+                          choices = sn$sn,
+                          selected = "18:0")),
+    column(1, selectInput("sn3", "sn3",
+                          choices = sn$sn,
+                          selected = "18:0"))
   ), # close tabPanel "P1"
   tabPanel(
     "Kendrick Mass Defect (KMD)",
@@ -245,6 +266,7 @@ ui <- navbarPage(
                                           "LactCer" = "LactCer",
                                           "LPA" = "LPA",
                                           "LPC" = "LPC",
+                                          "LPE" = "LPE",
                                           "LPG" = "LPG",
                                           "LPI" = "LPI",
                                           "LPS" = "LPS",
@@ -256,14 +278,15 @@ ui <- navbarPage(
                                           "PS" = "PS",
                                           "MGDG" = "MGDG",
                                           "DGDG" = "DGDG",
+                                          "DGTS" = "DGTS",
                                           "MG" = "MG",
                                           "DG" = "DG",
                                           "TG" = "TG"),
                            selected = c("FA", "CAR", 
                                         "SM", "Cer", "HexCer", "LactCer", 
-                                        "LPA", "LPC", "LPG", "LPI", "LPS",
+                                        "LPA", "LPC", "LPE", "LPG", "LPI", "LPS",
                                         "PA", "PC", "PE", "PG", "PI", "PS",
-                                        "MGDG", "DGDG", "MG", "DG", "TG")),
+                                        "MGDG", "DGDG", "DGTS", "MG", "DG", "TG")),
         radioButtons("kmd_color", label = "Color by:",
                      choices = list("Class" = "class", 
                                     "Double bonds" = "db"),
@@ -344,6 +367,125 @@ server <- function(input, output) {
   
   output$cmps_pred <- renderPrint({
     cmps_db$name[unlist(matchWithPpm(input$mzs, cmps_db[,input$pol], ppm = input$ppms))]
+  })
+  
+  # to add mPA, dmPA + from PC to DG + from TG;O
+  output$ms2_thr_pos <- renderPlot({
+    fml <- fml_maker(input$class, input$C, input$db)
+    mz <- mz_calculator(input$class, fml)
+    mz <- mz[grep("]\\+", colnames(mz))]
+    if(input$class == "CAR"){
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H9N")), "[M+H]+")),
+        i = 100,
+        ad = "[M+H-C3H9N]+"
+      )
+    } else if(input$class == "LPC"){
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass("C5H14NO4P")), "[M+H]+")),
+        i = c(100, 50),
+        ad = c("[M+H-H2O]+", "[PC+H]+")
+      )
+    } else if(input$class == "LPE"){
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C2H8NO4P"))), "[M+H]+")),
+        i = c(100, 50),
+        ad = c("[M+H-H2O]+", "[M+H-PE]+")
+      )
+    } else if(input$class == "PA"){
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H3PO4"))), "[M+H]+")),
+        i = c(30, 100),
+        ad = c("[M+H]+", "[M+H-PA]+")
+      )
+      # if input$C >= 40....
+    }else if(input$class == "TG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      idx3 <- which(sn$sn == input$sn3)
+      sps <- data.frame(
+        mz = c(as.numeric(mz),
+               as.numeric(mz - sn$mass[idx1]),
+               as.numeric(mz - sn$mass[idx2]),
+               as.numeric(mz - sn$mass[idx3])
+        ), 
+        i = c(30, 100, 80, 60),
+        ad = c("[M+H]+",
+               paste0("[M+H-", input$sn1, "-H2O]+"),
+               paste0("[M+H-", input$sn2, "-H2O]+"),
+               paste0("[M+H-", input$sn3, "-H2O]+")
+      ))
+      if(input$sn1 == input$sn2 & input$sn2 == input$sn3){
+        sps <- sps[c(1, 2),]
+      } else if(input$sn2 == input$sn3){
+        sps <- sps[c(1, 2, 3),]
+      }
+    }
+    if(exists("sps")){
+      sps$mz <- as.numeric(sps$mz)
+      sps$i <- as.numeric(sps$i)
+      plot(sps$mz, sps$i, type = "h", bty = "l", 
+           xlim = c(50, mz), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
+           main = paste("Precursor m/z", sprintf("%.4f", round(mz, 4))))
+      text(sps$mz, sps$i, paste(sprintf("%.4f", sps$mz), "\n", sps$ad), pos = 3)
+    }
+  })
+  
+  output$ms2_thr_neg <- renderPlot({
+    fml <- fml_maker(input$class, input$C, input$db)
+    mz <- mz_calculator(input$class, fml)
+    mz <- mz[grep("]\\-", colnames(mz))]
+    if(input$class == "LPC"){
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "CH3")), "[M]-")),        
+        i = 100,
+        ad = "[M-CH3]-"
+      )
+    } else if(input$class == "LPE"){
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(
+          paste0("C", input$C, "H", input$C*2 - (2*input$db), "O2")), "[M-H]-")), 
+        i = 100,
+        ad = paste0("[", input$C, ":", input$db, "H]-")
+      )
+    } else if(input$class == "PA"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(sn$mass[idx1], "[M-H]-")),
+               as.numeric(mass2mz(sn$mass[idx2], "[M-H]-")),
+               as.numeric(mz - sn$mass[idx1]),
+               as.numeric(mz - sn$mass[idx2]),
+               as.numeric(mz - sn$mass[idx1] + calculateMass("H2O")),
+               as.numeric(mz - sn$mass[idx2] + calculateMass("H2O"))
+               ), 
+        i = c(80, 40, 40, 100, 5, 60),
+        ad = c(paste0("[", input$sn1, "H]-"), 
+               paste0("[", input$sn2, "H]-"),
+               paste0("[M-H-", input$sn1, "-H2O]-"),
+               paste0("[M-H-", input$sn2, "-H2O]-"),
+               paste0("[M-H-", input$sn1, "]-"),
+               paste0("[M-H-", input$sn2, "]-"))
+      )
+      if(input$sn1 == input$sn2){
+        sps <- sps[c(2,4,6),]
+      }
+    }
+    if(exists("sps")){
+      sps$mz <- as.numeric(sps$mz)
+      sps$i <- as.numeric(sps$i)
+      plot(sps$mz, sps$i, type = "h", bty = "l", 
+           xlim = c(50, mz), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
+           main = paste("Precursor m/z", sprintf("%.4f", round(mz, 4))))
+      text(sps$mz, sps$i, paste(sprintf("%.4f", sps$mz), "\n", sps$ad), pos = 3)
+    }
   })
   
   output$kmd <- renderPlotly({
