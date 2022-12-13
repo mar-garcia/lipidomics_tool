@@ -168,11 +168,25 @@ for(i in seq(nrow(sn))){
 }
 
 mzdif.pos <- data.frame(rbind(
-  c(calculateMass("NH3"), "loss NH3 -> PA / DG / TG"),
-  c(calculateMass("NH3H2O"), "loss NH3 & H2O -> DG"),
+  c(calculateMass("NH3"), "loss NH3 -> LPA / PA / PG / MGDG / MG / DG / TG"),
+  c(calculateMass("NH3H2O"), "loss NH3 & H2O -> LPA / MGDG / DG"),
   c(calculateMass("H3PO4NH3"), "loss NH3 & PA -> PA"),
   c(calculateMass("CH3"), "loss CH3"),
-  cbind(sn$mass + calculateMass("NH3"), paste("loss NH3 &", sn$sn, "-> DG / TG"))
+  cbind(sn$mass + calculateMass("NH3"), paste("loss NH3 &", sn$sn, "-> DG / TG")),
+  c(calculateMass("H2O"), "loss H2O -> LPC / LPS"),
+  c(mass2mz(calculateMass("C5H14NO4P"), "[M+H]+"), "[PC+H]+ -> LPC"),
+  c(calculateMass("C3H7NO3"), "loss serine -> LPS"),
+  c(calculateMass("C3H7NO3HPO3"), "loss PS -> LPS / PS"),
+  c(calculateMass("C2H8NO4P"), "loss PE -> PE"),
+  c(calculateMass("C3H8O3HPO3NH3"), "loss NH3 & PG -> PG"),
+  c(calculateMass("C6H10O5NH3"), "loss NH3 & hexose -> MGDG"),
+  c(calculateMass("C6H12O6NH3"), "loss NH3 & hexose & H2O -> MGDG"),
+  c(calculateMass("C6H10O5C6H10O5NH3"), "loss NH3 & 2(hexose) -> DGDG"),
+  c(calculateMass("C6H10O5C6H12O6NH3"), "loss NH3 & 2(hexose) & H2O -> DGDG"),
+  
+  cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC")),
+  cbind(sn$mass - calculateMass("H2O"), paste("loss ", sn$sn, " -> PC")),
+  cbind(mass2mz(calculateMass(addElements(sn$formula, "C3H4O")), "[M+H]+"), paste0("[", sn$sn, "+H+C3H4O]+ -> MGDG / DGDG"))
 ))
 colnames(mzdif.pos) <- c("dif", "add")
 mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
@@ -380,7 +394,16 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-C3H9N]+"
       )
-    } else if(input$class == "LPC"){
+    } else if(input$class == "LPA"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))),
+        i = c(100, 20),
+        ad = c("[M+H-H2O]+", "[M+H]+")
+      )
+    }else if(input$class == "LPC"){
       sps <- data.frame(
         mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M+H]+")),
                as.numeric(mass2mz(calculateMass("C5H14NO4P")), "[M+H]+")),
@@ -394,7 +417,18 @@ server <- function(input, output) {
         i = c(100, 50),
         ad = c("[M+H-H2O]+", "[M+H-PE]+")
       )
-    } else if(input$class == "PA"){
+    } else if(input$class == "LPS"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H7NO3"))), "[M+H]+"),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H7NO3HPO3"))), "[M+H]+")
+        ),
+        i = c(100, 20, 30),
+        ad = c("[M+H-H2O]+", "[M+H-S]+", "[M+H-PS]+")
+      )
+    }else if(input$class == "PA"){
       sps <- data.frame(
         mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "H3PO4"))), "[M+H]+")),
@@ -402,7 +436,123 @@ server <- function(input, output) {
         ad = c("[M+H]+", "[M+H-PA]+")
       )
       # if input$C >= 40....
-    }else if(input$class == "TG"){
+    } else if(input$class == "PC"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mz - sn$mass[idx1]),
+               as.numeric(mz - sn$mass[idx2]),
+               as.numeric(mz - sn$mass[idx1] + calculateMass("H2O")),
+               as.numeric(mz - sn$mass[idx2] + calculateMass("H2O"))
+        ), 
+        i = c(90, 40, 10, 100),
+        ad = c(paste0("[M+H-", input$sn1, "-H2O]+"),
+               paste0("[M+H-", input$sn2, "-H2O]+"),
+               paste0("[M+H-", input$sn1, "]+"),
+               paste0("[M+H-", input$sn2, "]+")
+        ))
+      if(input$sn1 == input$sn2){
+        sps <- sps[c(2, 4),]
+      }
+    } else if(input$class == "PE"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C2H8NO4P"))), "[M+H]+"),
+        i = 100,
+        ad = "[M+H-PE]+"
+      )
+    } else if(input$class == "PG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = c(mz,
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H8O3HPO3")), "[M+H]+"))
+        ),
+        i = c(60, 100),
+        ad = c("[M+H]+", "[M+H-PG]+")
+      )
+    } else if(input$class == "PS"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H7NO3HPO3"))), "[M+H]+"),
+        i = 100,
+        ad = "[M+H-PS]+"
+      )
+    } else if(input$class == "MGDG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(mz,
+               as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx1], "C3H4O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx2], "C3H4O")), "[M+H]+"))
+        ),
+        i = c(10, 20, 100, 30, 15, 5),
+        ad = c("[M+H]+", "[M+H-H2O]+", "[M+H-hexose]+", "[M+H-hexose-H2O]+",
+               paste0("[", input$sn1, "+H+C3H4O]+"),
+               paste0("[", input$sn2, "+H+C3H4O]+"))
+      )
+      if(input$sn1 == input$sn2){
+        sps <- sps[-nrow(sps),]
+      }
+    } else if(input$class == "DGDG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(mz,
+               as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5C6H10O5")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5C6H12O6")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx1], "C3H4O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx2], "C3H4O")), "[M+H]+"))
+        ),
+        i = c(10, 20, 100, 30, 15, 5),
+        ad = c("[M+H]+", "[M+H-H2O]+", "[M+H-2(hexose)]+", "[M+H-2(hexose)-H2O]+",
+               paste0("[", input$sn1, "+H+C3H4O]+"),
+               paste0("[", input$sn2, "+H+C3H4O]+"))
+      )
+      if(input$sn1 == input$sn2){
+        sps <- sps[-nrow(sps),]
+      }
+    } else if(input$class == "MG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = mz, 
+        i = 100,
+        ad = "[M+H]+"
+        )
+    } else if(input$class == "DG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mz),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mz - sn$mass[idx1]),
+               as.numeric(mz - sn$mass[idx2])
+        ), 
+        i = c(30, 100, 60, 40),
+        ad = c("[M+H]+",
+               "[M+H-H2O]+",
+               paste0("[M+H-", input$sn1, "-H2O]+"),
+               paste0("[M+H-", input$sn2, "-H2O]+")
+        ))
+      if(input$sn1 == input$sn2){
+        sps <- sps[-nrow(sps),]
+      } 
+    } else if(input$class == "TG"){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
       idx1 <- which(sn$sn == input$sn1)
@@ -419,18 +569,20 @@ server <- function(input, output) {
                paste0("[M+H-", input$sn1, "-H2O]+"),
                paste0("[M+H-", input$sn2, "-H2O]+"),
                paste0("[M+H-", input$sn3, "-H2O]+")
-      ))
+        ))
       if(input$sn1 == input$sn2 & input$sn2 == input$sn3){
         sps <- sps[c(1, 2),]
       } else if(input$sn2 == input$sn3){
         sps <- sps[c(1, 2, 3),]
+      }else if(input$sn1 == input$sn2){
+        sps <- sps[c(1, 2, 4),]
       }
     }
     if(exists("sps")){
       sps$mz <- as.numeric(sps$mz)
       sps$i <- as.numeric(sps$i)
       plot(sps$mz, sps$i, type = "h", bty = "l", 
-           xlim = c(50, mz), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
+           xlim = c(50, mz + 2), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
            main = paste("Precursor m/z", sprintf("%.4f", round(mz, 4))))
       text(sps$mz, sps$i, paste(sprintf("%.4f", sps$mz), "\n", sps$ad), pos = 3)
     }
@@ -465,7 +617,7 @@ server <- function(input, output) {
                as.numeric(mz - sn$mass[idx2]),
                as.numeric(mz - sn$mass[idx1] + calculateMass("H2O")),
                as.numeric(mz - sn$mass[idx2] + calculateMass("H2O"))
-               ), 
+        ), 
         i = c(80, 40, 40, 100, 5, 60),
         ad = c(paste0("[", input$sn1, "H]-"), 
                paste0("[", input$sn2, "H]-"),
@@ -482,7 +634,7 @@ server <- function(input, output) {
       sps$mz <- as.numeric(sps$mz)
       sps$i <- as.numeric(sps$i)
       plot(sps$mz, sps$i, type = "h", bty = "l", 
-           xlim = c(50, mz), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
+           xlim = c(50, mz + 2), ylim = c(0, 110), xlab = "m/z", ylab = "intensity", 
            main = paste("Precursor m/z", sprintf("%.4f", round(mz, 4))))
       text(sps$mz, sps$i, paste(sprintf("%.4f", sps$mz), "\n", sps$ad), pos = 3)
     }
