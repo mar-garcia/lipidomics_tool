@@ -183,9 +183,10 @@ mzdif.pos <- data.frame(rbind(
   c(calculateMass("C6H12O6NH3"), "loss NH3 & hexose & H2O -> MGDG"),
   c(calculateMass("C6H10O5C6H10O5NH3"), "loss NH3 & 2(hexose) -> DGDG"),
   c(calculateMass("C6H10O5C6H12O6NH3"), "loss NH3 & 2(hexose) & H2O -> DGDG"),
+  c(mass2mz(calculateMass(subtractElements(addElements(addElements("C4H9NO3", "CH3CH3CH3"), "C3H8O3"), "H2OH3"))), "[GTS+H]+ -> DGTS"),
   
-  cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC")),
-  cbind(sn$mass - calculateMass("H2O"), paste("loss ", sn$sn, " -> PC")),
+  cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC / DGTS")),
+  cbind(sn$mass - calculateMass("H2O"), paste("loss ", sn$sn, " -> PC/ DGTS")),
   cbind(mass2mz(calculateMass(addElements(sn$formula, "C3H4O")), "[M+H]+"), paste0("[", sn$sn, "+H+C3H4O]+ -> MGDG / DGDG"))
 ))
 colnames(mzdif.pos) <- c("dif", "add")
@@ -524,21 +525,43 @@ server <- function(input, output) {
       if(input$sn1 == input$sn2){
         sps <- sps[-nrow(sps),]
       }
-    } else if(input$class == "MG"){
-      fml <- fml_maker(input$class, input$C, input$db)
-      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
-      sps <- data.frame(
-        mz = mz, 
-        i = 100,
-        ad = "[M+H]+"
-        )
-    } else if(input$class == "DG"){
+    } else if(input$class == "DGTS"){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
       idx1 <- which(sn$sn == input$sn1)
       idx2 <- which(sn$sn == input$sn2)
       sps <- data.frame(
-        mz = c(as.numeric(mz),
+        mz = c(as.numeric(mz - sn$mass[idx1]),
+               as.numeric(mz - sn$mass[idx2]),
+               as.numeric(mz - sn$mass[idx1] + calculateMass("H2O")),
+               as.numeric(mz - sn$mass[idx2] + calculateMass("H2O")),
+               as.numeric(mass2mz(calculateMass(subtractElements(addElements(addElements("C4H9NO3", "CH3CH3CH3"), "C3H8O3"), "H2OH3"))))
+        ), 
+        i = c(60, 100, 40, 90, 25),
+        ad = c(paste0("[M+H-", input$sn1, "-H2O]+"),
+               paste0("[M+H-", input$sn2, "-H2O]+"),
+               paste0("[M+H-", input$sn1, "]+"),
+               paste0("[M+H-", input$sn2, "]+"),
+               "[GTS+H]+"
+        ))
+      if(input$sn1 == input$sn2){
+        sps <- sps[c(2, 4),]
+      }
+    } else if(input$class == "MG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(fml), "[M+H]+")), 
+        i = 100,
+        ad = "[M+H]+"
+        )
+    } else if(input$class == "DG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")), 
                as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
                as.numeric(mz - sn$mass[idx1]),
                as.numeric(mz - sn$mass[idx2])
@@ -554,15 +577,15 @@ server <- function(input, output) {
       } 
     } else if(input$class == "TG"){
       fml <- fml_maker(input$class, input$C, input$db)
-      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
       idx1 <- which(sn$sn == input$sn1)
       idx2 <- which(sn$sn == input$sn2)
       idx3 <- which(sn$sn == input$sn3)
       sps <- data.frame(
-        mz = c(as.numeric(mz),
-               as.numeric(mz - sn$mass[idx1]),
-               as.numeric(mz - sn$mass[idx2]),
-               as.numeric(mz - sn$mass[idx3])
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+") - sn$mass[idx1]),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+") - sn$mass[idx2]),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+") - sn$mass[idx3])
         ), 
         i = c(30, 100, 80, 60),
         ad = c("[M+H]+",
