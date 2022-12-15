@@ -42,6 +42,8 @@ fml_maker <- function(class, C, db){
     
     class == "SM"       ~ paste0("C", C + 4, "H", C*2 - (2*db) + 11,"N2O6P"),
     class == "Cer"      ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO3"),
+    class == "Cer;O3"   ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO4"),
+    class == "Cer;O4"   ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO5"),
     class == "HexCer"   ~ paste0("C", C + 6, "H", C*2 - (2*db) + 11, "NO8"),
     class == "LactCer"  ~ paste0("C", C +12, "H", C*2 - (2*db) + 21, "NO13"),
     
@@ -69,7 +71,7 @@ for(i in cls){
   cmps_db <- c(cmps_db, paste(i, sn))
 }
 
-cls <- c("SM", "Cer", "HexCer", "LactCer", 
+cls <- c("SM", "Cer", "Cer;O3", "Cer;O4", "HexCer", "LactCer", 
          "PA", "PC", "PE", "PG", "PI", "PS", "MGDG", "DGDG", "DGTS", "DG")
 C <- seq(from = 12*2, to = 28*2, by = 1)
 db <- seq(from = 0, to = 6*2, by = 1)
@@ -100,7 +102,8 @@ cmps_db$db <- as.numeric(cmps_db$db)
 cmps_db$formula <- fml_maker(cmps_db$class, cmps_db$C, cmps_db$db)
 cmps_db$mass <- calculateMass(cmps_db$formula)
 cmps_db$pos <- cmps_db$neg <- NA
-idx <- which(cmps_db$class %in% c("FA", "CAR", "SM", "Cer", "HexCer", "LactCer", 
+idx <- which(cmps_db$class %in% c("FA", "CAR", 
+                                  "SM", "Cer", "Cer;O3", "Cer;O4", "HexCer", "LactCer", 
                                   "LPC", "LPE", "LPS", "PC", "PE", "PS",
                                   "DGTS"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+H]+")
@@ -112,7 +115,8 @@ idx <- which(cmps_db$class %in% c("FA", "LPA", "LPE", "LPG", "LPI", "LPS",
                                   "PA", "PE", "PG", "PI", "PS", 
                                   "MG", "DG", "TG"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M-H]-")
-idx <- which(cmps_db$class %in% c("SM", "CAR", "Cer", "HexCer", "LactCer", 
+idx <- which(cmps_db$class %in% c("CAR", 
+                                  "SM", "Cer", "Cer;O3", "Cer;O4", "HexCer", "LactCer", 
                                   "LPC", "PC", "MGDG", "DGDG", "DGTS"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 
@@ -121,7 +125,7 @@ cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 mz_calculator <- function(class, fml){
   if(class == "FA"){
     mass2mz(calculateMass(fml), c("[M-H]-"))
-  } else if(class %in% c("Cer", "HexCer", "LactCer")){
+  } else if(class %in% c("Cer", "Cer;O3", "Cer;O4", "HexCer", "LactCer")){
     mass2mz(calculateMass(fml), c("[M+CHO2]-"))
   } else if(class %in% c("MG", "DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
@@ -211,6 +215,8 @@ ui <- navbarPage(
                                                   "CAR" = "CAR", 
                                                   "SM" = "SM",
                                                   "Cer" = "Cer",
+                                                  "Cer;O3" = "Cer;O3",
+                                                  "Cer;O4" = "Cer;O4",
                                                   "HexCer" = "HexCer",
                                                   "LactCer" = "LactCer",
                                                   "LPA" = "LPA",
@@ -277,6 +283,8 @@ ui <- navbarPage(
                                           "CAR" = "CAR", 
                                           "SM" = "SM",
                                           "Cer" = "Cer",
+                                          "Cer;O3" = "Cer;O3",
+                                          "Cer;O4" = "Cer;O4",
                                           "HexCer" = "HexCer",
                                           "LactCer" = "LactCer",
                                           "LPA" = "LPA",
@@ -297,11 +305,7 @@ ui <- navbarPage(
                                           "MG" = "MG",
                                           "DG" = "DG",
                                           "TG" = "TG"),
-                           selected = c("FA", "CAR", 
-                                        "SM", "Cer", "HexCer", "LactCer", 
-                                        "LPA", "LPC", "LPE", "LPG", "LPI", "LPS",
-                                        "PA", "PC", "PE", "PG", "PI", "PS",
-                                        "MGDG", "DGDG", "DGTS", "MG", "DG", "TG")),
+                           selected = "TG"),
         radioButtons("kmd_color", label = "Color by:",
                      choices = list("Class" = "class", 
                                     "Double bonds" = "db"),
