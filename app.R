@@ -40,7 +40,7 @@ fml_maker <- function(class, C, db){
     class == "PI"  ~ paste0("C", C + 9, "H", C*2 - (2*db) + 15, "O13P"),
     class == "PS"  ~ paste0("C", C + 6, "H", C*2 - (2*db) + 10, "NO10P"),
     
-    class == "SM"       ~ paste0("C", C + 4, "H", C*2 - (2*db) + 11,"N2O6P"),
+    class == "SM"       ~ paste0("C", C + 5, "H", C*2 - (2*db) + 13,"N2O6P"),
     class == "Cer"      ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO3"),
     class == "Cer;O3"   ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO4"),
     class == "Cer;O4"   ~ paste0("C", C,     "H", C*2 - (2*db) +  1, "NO5"),
@@ -203,18 +203,20 @@ mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
 
 mzdif.neg <- data.frame(rbind(
   c(calculateMass("HCOOH"), "loss HCOOH -> Cer / HexCer / MGDG / DGDG"),
-  c(calculateMass("HCOOHCH2"), "loss HCOOH & CH3 -> LPC / PC"),
+  c(calculateMass("HCOOHCH2"), "loss HCOOH & CH3 -> SM / LPC / PC"),
   c(calculateMass("H2O"), "loss H2O -> Cer"),
   c(calculateMass("CH2O"), "loss CH2O -> Cer"),
   c(calculateMass("CH2OH2O"), "loss CH2O & H2O -> Cer"),
   c(calculateMass("CH3OH"), "loss CH3OH -> Cer"),
   c(calculateMass("C6H10O5"), "loss hexose -> HexCer;O3"),
   c(calculateMass("C6H12O6"), "loss hexose & H2O -> HexCer;O3"),
-  c(calculateMass(subtractElements("C3H7NO3", "H2O")), "loss Ser -> LPS"),
+  c(calculateMass(subtractElements("C3H7NO3", "H2O")), "loss Ser -> LPS / PS"),
+  c(calculateMass("C4H11NO"), "loss C4H11NO -> SM"),
   
-  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> Cer (sn1) / LPG / LPI / PA / PE / PG / PI")),
+  cbind(mass2mz(sn$mass, "[M-H]-"), paste0("[", sn$sn, "-H]- -> Cer (sn1) / LPG / LPI / PA / PE / PG / PI / MGDG")),
   cbind(sn$mass, paste("loss", sn$sn, "& H2O -> LPI / PA / PI")),
   cbind(sn$mass - calculateMass("H2O"), paste("loss", sn$sn, "-> PA / PE / PG / PI")),
+  cbind(sn$mass - calculateMass("H2O") + calculateMass("HCOOH"), paste("loss HCOOH &", sn$sn, "-> MGDG")),
   cbind(sn$mass - calculateMass("H2O") + calculateMass("C3H8O3"), paste("loss", sn$sn, "& glycerol -> PG")),
   cbind(sn$mass - calculateMass("H2O") + calculateMass("C6H12O6"), paste("loss", sn$sn, "& inositol -> PI")),
   cbind(mass2mz(calculateMass(addElements(sn$formula, "C2H3N")), "[M-H]-"), paste0("[", sn$sn, "-H+C2H3N]- -> Cer (Ssn1) / HexCer;O3 / LPI")),
@@ -223,6 +225,10 @@ mzdif.neg <- data.frame(rbind(
   cbind(mass2mz(calculateMass(subtractElements(sn$formula, "H2O")), "[M-H]-"), paste0("[", sn$sn, "-H-H2O]- -> Cer (Rsn2)")),
   cbind(mass2mz(calculateMass(addElements(subtractElements(sn$formula, "O"), "NH")), "[M-H]-"), paste0("[", sn$sn, "-OH+NH]- -> Cer (Usn1)")),
   cbind(mass2mz(calculateMass(subtractElements(sn$formula, "C2H4O")), "[M-H]-"), paste0("[", sn$sn, "-H-C2H4O]- -> Cer (Psn2)")),
+  cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "H2OCH2")), paste0("[M-H-", sn$sn, "(sn-N)] -> SM")),
+  cbind(calculateMass(subtractElements(sn$formula, "H2OCH2")) + calculateMass("C5H13NO"), paste0("[M-H-C5H13NO-", sn$sn, "(sn-N)] -> SM")),
+  cbind(calculateMass(addElements("C3H5NO2", sn$formula)), paste0("loss Ser & ", sn$sn, " -> PS")),
+  
   cbind(mass2mz(calculateMass(subtractElements("C3H9O6P", "H2O")), "[M-H]-"), "[GP-H-H2O]- -> LPA"),
   cbind(mass2mz(calculateMass(subtractElements("C6H13O9P", "H2O")), "[M-H]-"), "[IP-H-H2O]- -> LPI")
 ))
@@ -589,7 +595,7 @@ server <- function(input, output) {
         mz = as.numeric(mass2mz(calculateMass(fml), "[M+H]+")), 
         i = 100,
         ad = "[M+H]+"
-        )
+      )
     } else if(input$class == "DG"){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
@@ -598,8 +604,8 @@ server <- function(input, output) {
       sps <- data.frame(
         mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")), 
                as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
-               as.numeric(mz - sn$mass[idx1]),
-               as.numeric(mz - sn$mass[idx2])
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+") - sn$mass[idx1]),
+               as.numeric(mass2mz(calculateMass(fml), "[M+H]+") - sn$mass[idx2])
         ), 
         i = c(30, 100, 60, 40),
         ad = c("[M+H]+",
@@ -650,7 +656,21 @@ server <- function(input, output) {
     fml <- fml_maker(input$class, input$C, input$db)
     mz <- mz_calculator(input$class, fml)
     mz <- mz[grep("]\\-", colnames(mz))]
-    if(input$class %in% c("Cer", "Cer;O3", "Cer;O4")){
+    if(input$class == "SM"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
+      idx1 <- which(sn$sn == input$sn1)
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "CH3")), "[M]-")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C5H13NO")), "[M-H]-")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, subtractElements(addElements(sn$formula[idx1], "N"), "H2O"))), "[M-H]-")),
+               as.numeric(mass2mz(calculateMass(subtractElements(subtractElements(fml, subtractElements(sn$formula[idx1], "H2O")), "C5H13NO")), "[M-H]-"))
+        ),        
+        i = c(100, 20, 100, 10),
+        ad = c("[M-CH3]-", "[M-H-C5H13NO]-", paste0("[M-H-", sn$sn[idx1],"]-"),
+               paste0("[M-H-C5H13NO-", sn$sn[idx1],"]-"))
+      )
+    } else if(input$class %in% c("Cer", "Cer;O3", "Cer;O4")){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
       idx1 <- which(sn$sn == input$sn1)
@@ -674,7 +694,7 @@ server <- function(input, output) {
                paste("S", sn$sn[idx1]), paste("T", sn$sn[idx1]), paste("X", sn$sn[idx1]), 
                paste("R", sn$sn[idx2]), paste0("[", sn$sn[idx1], "-H]-"), paste("U", sn$sn[idx1]), paste("P", sn$sn[idx2]))
       )
-    }else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){
+    } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
       idx1 <- which(sn$sn == input$sn1)
@@ -684,7 +704,7 @@ server <- function(input, output) {
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M-H]-")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M-H]-")),
                as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx1], "C2H3N")), "[M-H]-"))
-               ),        
+        ),        
         i = c(100, 50, 100, 20),
         ad = c("[M-H]-", "[M-H-hexose]-", "[M-H-hexose-H2O]-",
                paste0("[", sn$sn[idx1], "-H+C2H3N]-"))
@@ -697,7 +717,7 @@ server <- function(input, output) {
         i = 100,
         ad = "[GP-H-H2O]-"
       )
-    }else if(input$class == "LPC" | input$class == "PC"){
+    } else if(input$class == "LPC" | input$class == "PC"){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
       sps <- data.frame(
@@ -732,7 +752,7 @@ server <- function(input, output) {
                as.numeric(mass2mz(sn$mass[idx1], "[M-H]-")),
                as.numeric(mz - sn$mass[idx1]),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M-H]-"))
-               ),        
+        ),        
         i = c(40, 100, 40, 50),
         ad = c("[IP-H-H2O]-",
                paste0("[", sn$sn[idx1], "-H]-"),
@@ -812,7 +832,7 @@ server <- function(input, output) {
                paste0("[M-H-", input$sn2, "]-"),
                paste0("[M-H-", input$sn1, "-glycerol]-"),
                paste0("[M-H-", input$sn2, "-glycerol]-")
-               )
+        )
       )
       if(input$sn1 == input$sn2){
         sps <- sps[c(2,4,6),]
@@ -846,7 +866,41 @@ server <- function(input, output) {
       if(input$sn1 == input$sn2){
         sps <- sps[c(2,4,6,8),]
       }
-    }
+    } else if(input$class == "PS"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mz - calculateMass(subtractElements("C3H7NO3", "H2O"))),
+               as.numeric(mass2mz(calculateMass(subtractElements(subtractElements(fml, "C3H5NO2"), sn$formula[idx1])), "[M-H]-")), 
+               as.numeric(mass2mz(calculateMass(subtractElements(subtractElements(fml, "C3H5NO2"), sn$formula[idx2])), "[M-H]-"))), 
+        i = c(100, 20, 20),
+        ad = c("[M-H-Ser]-", paste0("[M-H-Ser-", sn$sn[idx1], "]-"), paste0("[M-H-Ser-", sn$sn[idx2], "]-"))
+      )
+      if(input$sn1 == input$sn2){
+        sps <- sps[c(1:2),]
+      }
+    }  else if(input$class == "MGDG"){
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M-H]-")),
+               as.numeric(mass2mz(calculateMass(fml), "[M-H]-") - calculateMass(subtractElements(sn$formula[idx1], "H2O"))),
+               as.numeric(mass2mz(calculateMass(fml), "[M-H]-") - calculateMass(subtractElements(sn$formula[idx2], "H2O"))),
+               as.numeric(mass2mz(sn$mass[idx1], "[M-H]-")),
+               as.numeric(mass2mz(sn$mass[idx2], "[M-H]-"))
+               ),
+        i = c(100, 20, 10, 30, 60),
+        ad = c("[M-H]-", paste0("[M-H-", sn$sn[idx1],"]-"), paste0("[M-H-", sn$sn[idx2],"]-"), 
+               paste0("[", sn$sn[idx1],"-H]-"), paste0("[", sn$sn[idx2], "]-"))
+        )
+      if(input$sn1 == input$sn2){
+        sps <- sps[c(1,2,4),]
+      }
+    } 
     if(exists("sps")){
       sps$mz <- as.numeric(sps$mz)
       sps$i <- as.numeric(sps$i)
