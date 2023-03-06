@@ -4,7 +4,7 @@ source("lipid_functions.R")
 
 cmps_db <- c()
 
-cls <- c("FA", "pHexFA", "CAR", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS", 
+cls <- c("FA", "pHexFA", "pPentFA", "CAR", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS", 
          "DGMG", "MG", "ST", "Glc-ST")
 C <- seq(from = 12, to = 24, by = 1)
 db <- seq(from = 0, to = 6, by = 1)
@@ -15,7 +15,7 @@ for(i in cls){
 }
 
 cls <- c("SM", "Cer", "Cer;O3", "Cer;O4", "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
-         "PA", "mPA", "dmPA", "PC", "PE", "PG", "PI", "PS", "MGDG", "DGDG", "SQDG", "DGTS", "DG")
+         "PA", "mPA", "dmPA", "PC", "PE", "PG", "PI", "PS", "MGDG", "DGDG", "SQDG", "DGTS", "DGGA", "DG")
 C <- seq(from = 12*2, to = 28*2, by = 1)
 db <- seq(from = 0, to = 6*2, by = 1)
 sn <-  paste(expand.grid(C, db)[,"Var1"], expand.grid(C, db)[,"Var2"], 

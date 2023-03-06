@@ -3,6 +3,7 @@ fml_maker <- function(class, C, db){
     # 1 FA chain -----------------------------------------------------------
     class == "FA" ~ paste0("C", C, "H", C*2 - (2*db), "O2"),
     class == "pHexFA" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "O7"),
+    class == "pPentFA"~ paste0("C", C + 5, "H", C*2 - (2*db) + 10, "O6"),
     class == "CAR" ~ paste0("C", C + 7, "H", C*2 - (2*db) + 13, "NO4"),
     class == "LPA" ~ paste0("C", C + 3, "H", C*2 - (2*db) + 7, "O7P"),
     class == "LPC" ~ paste0("C", C + 8, "H", C*2 - (2*db) + 18, "NO7P"),
@@ -39,6 +40,8 @@ fml_maker <- function(class, C, db){
     class == "SQDG" ~ paste0("C", C +  9, "H", C*2 - (2*db) + 14, "O12S"),
     class == "DGTS" ~ paste0("C", C + 10, "H", C*2 - (2*db) + 17, "NO7"),
     
+    class == "DGGA" ~ paste0("C", C + 9, "H", C*2 - (2*db) + 12, "O11"),
+
     class == "DG"   ~ paste0("C", C +  3, "H", C*2 - (2*db) +  4, "O5"),
     
     # 3 FA chain -----------------------------------------------------------
