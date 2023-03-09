@@ -515,7 +515,7 @@ server <- function(input, output) {
                )
       )
       if(input$sn1 == input$sn2){
-        #sps <- sps[-nrow(sps),]
+        sps <- sps[c(1, 2, 4),]
       }
     } else if(input$class == "DGTS"){
       fml <- fml_maker(input$class, input$C, input$db)
@@ -882,7 +882,7 @@ server <- function(input, output) {
                paste0("[", sn$sn[idx1],"-H]-"), paste0("[", sn$sn[idx2], "-H]-"))
       )
       if(input$sn1 == input$sn2){
-        #sps <- sps[c(1,2,4),]
+        sps <- sps[c(1,3,5,6),]
       }
     } 
     if(exists("sps")){
