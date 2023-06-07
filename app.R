@@ -87,8 +87,8 @@ cmps$db <- as.character(cmps$db)
 
 
 sn <- data.frame(
-  "C" = rep(seq(12, 25), each = 4),
-  "db" = rep(seq(0, 3), 14)
+  "C" = rep(seq(12, 25), each = 6),
+  "db" = rep(seq(0, 5), 14)
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn$sn <- paste0(sn$C, ":", sn$db)
