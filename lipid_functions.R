@@ -48,6 +48,7 @@ fml_maker <- function(class, C, db){
     class == "acMGDG"~paste0("C", C +  9, "H", C*2 - (2*db) + 12, "O11"),
     
     class == "TG"   ~ paste0("C", C +  3, "H", C*2 - (2*db) +  2, "O6"),
-    class == "TG;O" ~ paste0("C", C +  3, "H", C*2 - (2*db) +  2, "O7")
+    class == "TG;O" ~ paste0("C", C +  3, "H", C*2 - (2*db) +  2, "O7"),
+    class == "TG;O2" ~ paste0("C", C +  3, "H", C*2 - (2*db) +  2, "O8")
   )
 }

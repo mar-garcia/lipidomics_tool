@@ -24,7 +24,7 @@ for(i in cls){
   cmps_db <- c(cmps_db, paste(i, sn))
 }
 
-cls <- c("acMGDG", "TG", "TG;O")
+cls <- c("acMGDG", "TG", "TG;O", "TG;O2")
 C <- seq(from = 10*3, to = 24*3, by = 1)
 db <- seq(from = 0, to = 6*3, by = 1)
 sn <-  paste(expand.grid(C, db)[,"Var1"], expand.grid(C, db)[,"Var2"], 
