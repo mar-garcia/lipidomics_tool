@@ -51,14 +51,13 @@ cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 mz_calculator <- function(class, fml){
   if(class == "FA"){
     mass2mz(calculateMass(fml), c("[M-H]-"))
-  } else if(class %in% c("Cer", "Cer;O3", "Cer;O4", 
-                         "HexCer", "HexCer;O3", "HexCer;O4", "LactCer")){
-    mass2mz(calculateMass(fml), c("[M+CHO2]-"))
   } else if(class %in% c("MG", "DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
   } else if(class %in% c("LPE", "LPS", "PE", "PS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
-  } else if(class %in% c("SM", "LPC", "PC", "DGTS")){
+  } else if(class %in% c("Cer", "Cer;O3", "Cer;O4", 
+                         "HexCer", "HexCer;O3", "HexCer;O4", "LactCer",
+                         "SM", "LPC", "PC", "DGTS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M+CHO2]-"))
   } else if(class %in% c("CAR", "LPA", "LPG", "LPI", "PA", "PG", "PI", "DGGA")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
@@ -107,6 +106,9 @@ mzdif.pos <- data.frame(rbind(
   c(calculateMass("CH3"), "loss CH3"),
   cbind(sn$mass + calculateMass("NH3"), paste("loss NH3 &", sn$sn, "-> DG / TG")),
   c(calculateMass("H2O"), "loss H2O -> LPC / LPS"),
+  c(calculateMass("C6H10O5"), "loss hexose -> HexCer"),
+  c(calculateMass("C6H10O5H2O"), "loss hexose & H2O -> HexCer"),
+  c(calculateMass("C6H10O5H2OH2O"), "loss hexose & 2(H2O) -> HexCer"),
   c(mass2mz(calculateMass("C5H14NO4P"), "[M+H]+"), "[PC+H]+ -> LPC"),
   c(calculateMass("C3H7NO3"), "loss serine -> LPS"),
   c(calculateMass("C3H7NO3HPO3"), "loss PS -> LPS / PS"),
@@ -122,7 +124,12 @@ mzdif.pos <- data.frame(rbind(
   
   cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC / DGTS")),
   cbind(sn$mass - calculateMass("H2O"), paste("loss ", sn$sn, " -> PC/ DGTS")),
-  cbind(mass2mz(calculateMass(addElements(sn$formula, "C3H4O")), "[M+H]+"), paste0("[", sn$sn, "+H+C3H4O]+ -> MGDG / DGDG / DGGA"))
+  cbind(mass2mz(calculateMass(addElements(sn$formula, "C3H4O")), "[M+H]+"), paste0("[", sn$sn, "+H+C3H4O]+ -> MGDG / DGDG / DGGA")),
+  cbind(calculateMass(subtractElements(addElements(sn$formula, "NH2"), "O")), paste0("[", sn$sn, "+NH2-O]+ -> HexCer")),
+  cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "O2")), paste0("[", sn$sn, "+N-O2]+ -> HexCer")),
+  cbind(calculateMass(addElements(sn$formula, "C3H4N")), paste0("[", sn$sn, "+C3H4N]+ -> HexCer")),
+  cbind(calculateMass(addElements(sn$formula, "C3H6NO")), paste0("[", sn$sn, "+C3H6NO]+ -> HexCer"))
+  
 ))
 colnames(mzdif.pos) <- c("dif", "add")
 mzdif.pos$dif <- as.numeric(mzdif.pos$dif)
@@ -154,7 +161,7 @@ mzdif.neg <- data.frame(rbind(
   cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "H2OCH2")), paste0("[M-H-", sn$sn, "(sn-N)] -> SM")),
   cbind(calculateMass(subtractElements(sn$formula, "H2OCH2")) + calculateMass("C5H13NO"), paste0("[M-H-C5H13NO-", sn$sn, "(sn-N)] -> SM")),
   cbind(calculateMass(addElements("C3H5NO2", sn$formula)), paste0("loss Ser & ", sn$sn, " -> PS")),
-
+  
   cbind(mass2mz(calculateMass(subtractElements("C3H9O6P", "H2O")), "[M-H]-"), "[GP-H-H2O]- -> LPA"),
   cbind(mass2mz(calculateMass(subtractElements("C6H13O9P", "H2O")), "[M-H]-"), "[IP-H-H2O]- -> LPI")
 ))
@@ -237,50 +244,50 @@ ui <- navbarPage(
                           choices = sn$sn,
                           selected = "18:0"))
   ), # close tabPanel "P1"
-  tabPanel(
-    "Kendrick Mass Defect (KMD)",
-    sidebarLayout(
-      sidebarPanel(
-        checkboxGroupInput("kmd_class", label = "Lipid classes:", 
-                           choices = list("FA" = "FA",
-                                          "pHexFA" = "pHexFA",
-                                          "CAR" = "CAR", 
-                                          "SM" = "SM",
-                                          "Cer" = "Cer",
-                                          "Cer;O3" = "Cer;O3",
-                                          "Cer;O4" = "Cer;O4",
-                                          "HexCer" = "HexCer",
-                                          "HexCer;O3" = "HexCer;O3",
-                                          "HexCer;O4" = "HexCer;O4",
-                                          "LactCer" = "LactCer",
-                                          "LPA" = "LPA",
-                                          "LPC" = "LPC",
-                                          "LPE" = "LPE",
-                                          "LPG" = "LPG",
-                                          "LPI" = "LPI",
-                                          "LPS" = "LPS",
-                                          "PA" = "PA",
-                                          "PC" = "PC",
-                                          "PE" = "PE",
-                                          "PG" = "PG",
-                                          "PI" = "PI",
-                                          "PS" = "PS",
-                                          "MGDG" = "MGDG",
-                                          "DGDG" = "DGDG",
-                                          "DGTS" = "DGTS",
-                                          "MG" = "MG",
-                                          "DG" = "DG",
-                                          "TG" = "TG"),
-                           selected = "TG"),
-        radioButtons("kmd_color", label = "Color by:",
-                     choices = list("Class" = "class", 
-                                    "Double bonds" = "db"),
-                     selected = "class")
-      ),
-      mainPanel(
-        plotlyOutput("kmd")
-      )
-    )), # close tabPanel "KMD"
+  #tabPanel(
+  #  "Kendrick Mass Defect (KMD)",
+  #  sidebarLayout(
+  #    sidebarPanel(
+  #      checkboxGroupInput("kmd_class", label = "Lipid classes:", 
+  #                         choices = list("FA" = "FA",
+  #                                        "pHexFA" = "pHexFA",
+  #                                        "CAR" = "CAR", 
+  #                                        "SM" = "SM",
+  #                                        "Cer" = "Cer",
+  #                                        "Cer;O3" = "Cer;O3",
+  #                                        "Cer;O4" = "Cer;O4",
+  #                                        "HexCer" = "HexCer",
+  #                                        "HexCer;O3" = "HexCer;O3",
+  #                                        "HexCer;O4" = "HexCer;O4",
+  #                                        "LactCer" = "LactCer",
+  #                                        "LPA" = "LPA",
+  #                                        "LPC" = "LPC",
+  #                                        "LPE" = "LPE",
+  #                                        "LPG" = "LPG",
+  #                                        "LPI" = "LPI",
+  #                                        "LPS" = "LPS",
+  #                                        "PA" = "PA",
+  #                                        "PC" = "PC",
+  #                                        "PE" = "PE",
+  #                                        "PG" = "PG",
+  #                                        "PI" = "PI",
+  #                                        "PS" = "PS",
+  #                                        "MGDG" = "MGDG",
+  #                                        "DGDG" = "DGDG",
+  #                                        "DGTS" = "DGTS",
+  #                                        "MG" = "MG",
+  #                                        "DG" = "DG",
+  #                                        "TG" = "TG"),
+  #                         selected = "TG"),
+  #      radioButtons("kmd_color", label = "Color by:",
+  #                   choices = list("Class" = "class", 
+  #                                  "Double bonds" = "db"),
+  #                   selected = "class")
+  #    ),
+  #    mainPanel(
+  #      plotlyOutput("kmd")
+  #    )
+  #  )), # close tabPanel "KMD"
   tabPanel(
     "MS2",
     column(6, h2("ESI+"),
@@ -354,6 +361,7 @@ server <- function(input, output) {
     cmps_db$name[unlist(matchWithPpm(input$mzs, cmps_db[,input$pol], ppm = input$ppms))]
   })
   
+  # MSMS POS ----
   # to add mPA, dmPA + from PC to DG + from TG;O
   output$ms2_thr_pos <- renderPlot({
     fml <- fml_maker(input$class, input$C, input$db)
@@ -365,7 +373,32 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-C3H9N]+"
       )
-    } else if(input$class == "LPA"){
+    } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){ ## HexCer ----
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      idx1 <- which(sn$sn == input$sn1)
+      idx2 <- which(sn$sn == input$sn2)
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6H2O")), "[M+H]+")),
+               as.numeric(calculateMass(subtractElements(addElements(sn$formula[idx1], "NH2"), "O"))),
+               as.numeric(calculateMass(subtractElements(addElements(sn$formula[idx2], "N"), "O2"))),
+               #as.numeric(calculateMass(subtractElements(addElements(sn$formula[idx2], "NH2"), "O"))),
+               as.numeric(calculateMass(addElements(sn$formula[idx2], "C3H4N"))),
+               as.numeric(calculateMass(addElements(sn$formula[idx2], "C3H6NO")))
+        ),        
+        i = c(25, 70, 100, 12, 30, #2, 
+              5, 15),
+        ad = c("[M+H-hexose]+", "[M+H-hexose-H2O]+", "[M+H-hexose-2(H2O)]+",
+               paste0("[", sn$sn[idx1], "+NH2-O]+"),
+               paste0("[", sn$sn[idx2], "+N-O2]+"),
+               #paste0("[", sn$sn[idx2], "+NH2-O]+"),
+               paste0("[", sn$sn[idx2], "+C3H4N]+"),
+               paste0("[", sn$sn[idx2], "+C3H6NO]+")
+               )
+      )
+    } else if(input$class == "LPA"){ ## LPA ----
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
       sps <- data.frame(
@@ -502,17 +535,17 @@ server <- function(input, output) {
       idx2 <- which(sn$sn == input$sn2)
       sps <- data.frame(
         mz = c(#mz,
-               as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
-               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O7")), "[M+H]+")),
-               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H8O6")), "[M+H]+")),
-               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx1], "C3H4O")), "[M+H]+")),
-               as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx2], "C3H4O")), "[M+H]+"))
+          as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+          as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O7")), "[M+H]+")),
+          as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H8O6")), "[M+H]+")),
+          as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx1], "C3H4O")), "[M+H]+")),
+          as.numeric(mass2mz(calculateMass(addElements(sn$formula[idx2], "C3H4O")), "[M+H]+"))
         ),
         i = c(10, 100, 20, 80, 40),
         ad = c("[M+H-H2O]+", "[M+H-glucuronide-H2O]+", "[M+H-glucuronide]+",
                paste0("[", input$sn1, "+H+C3H4O]+"),
                paste0("[", input$sn2, "+H+C3H4O]+")
-               )
+        )
       )
       if(input$sn1 == input$sn2){
         sps <- sps[c(1, 2, 4),]
@@ -603,6 +636,8 @@ server <- function(input, output) {
     }
   })
   
+  # MSMS NEG ----
+  
   output$ms2_thr_neg <- renderPlot({
     fml <- fml_maker(input$class, input$C, input$db)
     mz <- mz_calculator(input$class, fml)
@@ -655,7 +690,7 @@ server <- function(input, output) {
                paste("S", sn$sn[idx1]), paste("T", sn$sn[idx1]), paste("X", sn$sn[idx1]), 
                paste("R", sn$sn[idx2]), paste0("[", sn$sn[idx1], "-H]-"), paste("U", sn$sn[idx1]), paste("P", sn$sn[idx2]))
       )
-    } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){
+    } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){ ## HexCer ----
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
       idx1 <- which(sn$sn == input$sn1)
@@ -853,11 +888,11 @@ server <- function(input, output) {
                as.numeric(mass2mz(calculateMass(fml), "[M-H]-") - calculateMass(subtractElements(sn$formula[idx2], "H2O"))),
                as.numeric(mass2mz(sn$mass[idx1], "[M-H]-")),
                as.numeric(mass2mz(sn$mass[idx2], "[M-H]-"))
-               ),
+        ),
         i = c(100, 20, 10, 30, 60),
         ad = c("[M-H]-", paste0("[M-H-", sn$sn[idx1],"]-"), paste0("[M-H-", sn$sn[idx2],"]-"), 
                paste0("[", sn$sn[idx1],"-H]-"), paste0("[", sn$sn[idx2], "-H]-"))
-        )
+      )
       if(input$sn1 == input$sn2){
         sps <- sps[c(1,2,4),]
       }
