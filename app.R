@@ -86,10 +86,11 @@ cmps$db <- as.character(cmps$db)
 
 
 sn <- data.frame(
-  "C" = rep(seq(12, 25), each = 6),
-  "db" = rep(seq(0, 5), 14)
+  "C" = rep(seq(3, 25), each = 6),
+  "db" = rep(seq(0, 5), (25-3+1))
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
+sn <- sn[!grepl("-", sn$formula),]
 sn$sn <- paste0(sn$C, ":", sn$db)
 sn$mass <- NA
 sn.list <- list()
@@ -155,11 +156,11 @@ mzdif.neg <- data.frame(rbind(
   cbind(mass2mz(calculateMass(addElements(sn$formula, "C2H3N")), "[M-H]-"), paste0("[", sn$sn, "-H+C2H3N]- -> Cer (Ssn1) / HexCer;O3 / LPI")),
   cbind(mass2mz(calculateMass(subtractElements(addElements(sn$formula, "NH3C2"), "O")), "[M-H]-"), paste0("[", sn$sn, "-OH+C2H3N]- -> Cer (Tsn1)")),
   cbind(mass2mz(calculateMass(subtractElements(addElements(sn$formula, "NH3C2"), "CO")), "[M-H]-"), paste0("[", sn$sn, "-CHO+C2H3N]- -> Cer (Xsn1)")),
-  cbind(mass2mz(calculateMass(subtractElements(sn$formula, "H2O")), "[M-H]-"), paste0("[", sn$sn, "-H-H2O]- -> Cer (Rsn2)")),
+  #cbind(mass2mz(calculateMass(subtractElements(sn$formula, "H2O")), "[M-H]-"), paste0("[", sn$sn, "-H-H2O]- -> Cer (Rsn2)")),
   cbind(mass2mz(calculateMass(addElements(subtractElements(sn$formula, "O"), "NH")), "[M-H]-"), paste0("[", sn$sn, "-OH+NH]- -> Cer (Usn1)")),
-  cbind(mass2mz(calculateMass(subtractElements(sn$formula, "C2H4O")), "[M-H]-"), paste0("[", sn$sn, "-H-C2H4O]- -> Cer (Psn2)")),
-  cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "H2OCH2")), paste0("[M-H-", sn$sn, "(sn-N)] -> SM")),
-  cbind(calculateMass(subtractElements(sn$formula, "H2OCH2")) + calculateMass("C5H13NO"), paste0("[M-H-C5H13NO-", sn$sn, "(sn-N)] -> SM")),
+  #cbind(mass2mz(calculateMass(subtractElements(sn$formula, "C2H4O")), "[M-H]-"), paste0("[", sn$sn, "-H-C2H4O]- -> Cer (Psn2)")),
+  #cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "H2OCH2")), paste0("[M-H-", sn$sn, "(sn-N)] -> SM")),
+  #cbind(calculateMass(subtractElements(sn$formula, "H2OCH2")) + calculateMass("C5H13NO"), paste0("[M-H-C5H13NO-", sn$sn, "(sn-N)] -> SM")),
   cbind(calculateMass(addElements("C3H5NO2", sn$formula)), paste0("loss Ser & ", sn$sn, " -> PS")),
   
   cbind(mass2mz(calculateMass(subtractElements("C3H9O6P", "H2O")), "[M-H]-"), "[GP-H-H2O]- -> LPA"),
