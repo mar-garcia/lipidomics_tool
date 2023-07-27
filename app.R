@@ -123,13 +123,15 @@ mzdif.pos <- data.frame(rbind(
   c(calculateMass("NH3C6H10O7"), "loss NH3 & glucuronide & H2O -> DGGA"),
   c(calculateMass("NH3C6H8O6"), "loss NH3 & glucuronide -> DGGA"),
   
-  cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC / DGTS")),
+  cbind(sn$mass, paste0("loss '", sn$sn, "-H2O' -> PC / DGTS / TG;O / TG;O2")),
   cbind(sn$mass - calculateMass("H2O"), paste("loss ", sn$sn, " -> PC/ DGTS")),
   cbind(mass2mz(calculateMass(addElements(sn$formula, "C3H4O")), "[M+H]+"), paste0("[", sn$sn, "+H+C3H4O]+ -> MGDG / DGDG / DGGA")),
   cbind(calculateMass(subtractElements(addElements(sn$formula, "NH2"), "O")), paste0("[", sn$sn, "+NH2-O]+ -> HexCer")),
   cbind(calculateMass(subtractElements(addElements(sn$formula, "N"), "O2")), paste0("[", sn$sn, "+N-O2]+ -> HexCer")),
   cbind(calculateMass(addElements(sn$formula, "C3H4N")), paste0("[", sn$sn, "+C3H4N]+ -> HexCer")),
-  cbind(calculateMass(addElements(sn$formula, "C3H6NO")), paste0("[", sn$sn, "+C3H6NO]+ -> HexCer"))
+  cbind(calculateMass(addElements(sn$formula, "C3H6NO")), paste0("[", sn$sn, "+C3H6NO]+ -> HexCer")),
+  cbind(mass2mz(calculateMass(addElements(sn$formula, "O")), "[M+Na]+"), paste0("[", sn$sn, ";O2+Na]+ -> TG;O")),
+  cbind(mass2mz(calculateMass(addElements(sn$formula, "O2")), "[M+Na]+"), paste0("[", sn$sn, ";O2+Na]+ -> TG;O2"))
   
 ))
 colnames(mzdif.pos) <- c("dif", "add")
