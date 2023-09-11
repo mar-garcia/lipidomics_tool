@@ -390,7 +390,8 @@ server <- function(input, output) {
       idx1 <- which(sn$sn == input$sn1)
       idx2 <- which(sn$sn == input$sn2)
       sps <- data.frame(
-        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M+H]+")),
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6H2O")), "[M+H]+")),
                as.numeric(calculateMass(subtractElements(addElements(sn$formula[idx1], "NH2"), "O"))),
@@ -399,9 +400,9 @@ server <- function(input, output) {
                as.numeric(calculateMass(addElements(sn$formula[idx2], "C3H4N"))),
                as.numeric(calculateMass(addElements(sn$formula[idx2], "C3H6NO")))
         ),        
-        i = c(25, 70, 100, 12, 30, #2, 
+        i = c(100, 25, 70, 100, 12, 30, #2, 
               5, 15),
-        ad = c("[M+H-hexose]+", "[M+H-hexose-H2O]+", "[M+H-hexose-2(H2O)]+",
+        ad = c("[M+H-H2O]+", "[M+H-hexose]+", "[M+H-hexose-H2O]+", "[M+H-hexose-2(H2O)]+",
                paste0("[", sn$sn[idx1], "+NH2-O]+"),
                paste0("[", sn$sn[idx2], "+N-O2]+"),
                #paste0("[", sn$sn[idx2], "+NH2-O]+"),
