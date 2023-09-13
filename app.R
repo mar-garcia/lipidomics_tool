@@ -975,37 +975,37 @@ server <- function(input, output) {
   output$posfrag1add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag1) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag1, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag2add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag2) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag2, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag3add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag3) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag3, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag4add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag4) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag4, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag5add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag5) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag5, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag6add <- renderPrint({
     idx1 <- c(which(abs((input$posprec - input$posfrag6) - mzdif.pos1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$posfrag6, mzdif.pos2$dif, ppm = 10)))
-    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2[idx2]))
+    unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   
@@ -1013,37 +1013,37 @@ server <- function(input, output) {
   output$negfrag1add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag1, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag2add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag2) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag2, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag3add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag3, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag4add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag4) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag4, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag5add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag5) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag5, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag6add <- renderPrint({
     idx1 <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg1$dif) < 0.01))
     idx2 <- c(unlist(matchWithPpm(input$negfrag6, mzdif.neg2$dif, ppm = 10)))
-    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2[idx2]))
+    unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   
