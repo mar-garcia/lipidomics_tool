@@ -55,11 +55,11 @@ mz_calculator <- function(class, fml){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
   } else if(class %in% c("LPE", "LPS", "PE", "PS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
-  } else if(class %in% c("Cer", "Cer;O3", "Cer;O4", 
+  } else if(class %in% c("CAR", "Cer", "Cer;O3", "Cer;O4", 
                          "HexCer", "HexCer;O3", "HexCer;O4", "LactCer",
                          "SM", "LPC", "PC", "DGTS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M+CHO2]-"))
-  } else if(class %in% c("CAR", "LPA", "LPG", "LPI", "PA", "PG", "PI", "TG;O2", "DGGA")){
+  } else if(class %in% c("LPA", "LPG", "LPI", "PA", "PG", "PI", "TG;O2", "DGGA")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
   }  else if(class %in% c("TG;O")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M+Na]+", "[M-H]-"))
