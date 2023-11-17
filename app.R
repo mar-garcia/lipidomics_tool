@@ -88,8 +88,8 @@ cmps$db <- as.character(cmps$db)
 
 
 sn <- data.frame(
-  "C" = rep(seq(3, 25), each = 6),
-  "db" = rep(seq(0, 5), (25-3+1))
+  "C" = rep(seq(2, 25), each = 6),
+  "db" = rep(seq(0, 5), (25-2+1))
 )
 sn$formula <- paste0("C", sn$C, "H", sn$C*2 - 2*sn$db, "O2")
 sn <- sn[!grepl("-", sn$formula),]
@@ -384,11 +384,17 @@ server <- function(input, output) {
     fml <- fml_maker(input$class, input$C, input$db)
     mz <- mz_calculator(input$class, fml)
     mz <- mz[grep("]\\+", colnames(mz))]
-    if(input$class == "CAR"){
+    if(input$class == "CAR"){## CAR ----
       sps <- data.frame(
         mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H9N")), "[M+H]+")),
         i = 100,
         ad = "[M+H-C3H9N]+"
+      )
+    } else if(input$class == "Cer"){ ## Cer ----
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+        i = 100,
+        ad = "[M+H-H2O]+"
       )
     } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){ ## HexCer ----
       fml <- fml_maker(input$class, input$C, input$db)
