@@ -473,11 +473,11 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-PE]+"
       )
-    } else if(input$class == "PG"){
+    } else if(input$class == "PG"){ # PG -----
       fml <- fml_maker(input$class, input$C, input$db)
-      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
       sps <- data.frame(
-        mz = c(mz,
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C3H8O3HPO3")), "[M+H]+"))
         ),
         i = c(60, 100),
