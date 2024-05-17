@@ -473,7 +473,7 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-PE]+"
       )
-    } else if(input$class == "PG"){ # PG -----
+    } else if(input$class == "PG"){ ## PG -----
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
       sps <- data.frame(
@@ -491,13 +491,13 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-PS]+"
       )
-    } else if(input$class == "MGDG"){
+    } else if(input$class == "MGDG"){ ## MGDG ----
       fml <- fml_maker(input$class, input$C, input$db)
-      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+NH4]+"))
       idx1 <- which(sn$sn == input$sn1)
       idx2 <- which(sn$sn == input$sn2)
       sps <- data.frame(
-        mz = c(mz,
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M+H]+")),
                as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H12O6")), "[M+H]+")),
