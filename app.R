@@ -28,7 +28,8 @@ idx <- which(cmps_db$class %in% c("FA", "CAR",
                                   "SM", "Cer", "Cer;O3", "Cer;O4", 
                                   "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
                                   "LPC", "LPE", "LPS", "PC", "PE", "PS",
-                                  "DGTS"))
+                                  "DGTS",
+                                  "AI", "AGI", "ARC"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+H]+")
 idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
                                   "PA", "mPA", "dmPA", "PG", "PI", "MGDG", "DGDG", "DGGA", "SQDG", 
@@ -38,7 +39,8 @@ idx <- which(cmps_db$class %in% c("pHexFA"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+Na]+")
 idx <- which(cmps_db$class %in% c("FA", "LPA", "LPE", "LPG", "LPI", "LPS", 
                                   "PA", "mPA", "dmPA", "PE", "PG", "PI", "PS", 
-                                  "MG", "DG", "TG", "TG;O2", "DGGA", "SQDG"))
+                                  "MG", "DG", "TG", "TG;O2", "DGGA", "SQDG",
+                                  "AI", "AGI", "ARC"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M-H]-")
 idx <- which(cmps_db$class %in% c("pHexFA", "CAR", 
                                   "SM", "Cer", "Cer;O3", "Cer;O4", 
@@ -53,7 +55,8 @@ mz_calculator <- function(class, fml){
     mass2mz(calculateMass(fml), c("[M-H]-"))
   } else if(class %in% c("MG", "DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
-  } else if(class %in% c("LPE", "LPS", "PE", "PS")){
+  } else if(class %in% c("LPE", "LPS", "PE", "PS",
+                         "AI", "AGI", "ARC")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
   } else if(class %in% c("CAR", "Cer", "Cer;O3", "Cer;O4", 
                          "HexCer", "HexCer;O3", "HexCer;O4", "LactCer",
@@ -229,7 +232,10 @@ ui <- navbarPage(
                                                   "DG" = "DG",
                                                   "TG" = "TG",
                                                   "TG;O" = "TG;O",
-                                                  "TG;O2" = "TG;O2"))),
+                                                  "TG;O2" = "TG;O2",
+                                                  "AI" = "AI",
+                                                  "AGI" = "AGI",
+                                                  "ARC" = "ARC"))),
              column(2, numericInput(inputId = "C", label = "C", value = 18)),
              column(2, numericInput(inputId = "db", label = "db", value = 0))
            ),

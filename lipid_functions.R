@@ -41,6 +41,10 @@ fml_maker <- function(class, C, db){
     class == "DGTS" ~ paste0("C", C + 10, "H", C*2 - (2*db) + 17, "NO7"),
     
     class == "DGGA" ~ paste0("C", C + 9, "H", C*2 - (2*db) + 12, "O11"),
+    
+    class == "AI" ~ paste0("C", C + 19, "H", C*2 - (2*db) + 39, "O11P"),
+    class == "AGI" ~ paste0("C", C + 25, "H", C*2 - (2*db) + 49, "O16P"),
+    class == "ARC" ~ paste0("C", C + 13, "H", C*2 - (2*db) + 28, "O3"),
 
     class == "DG"   ~ paste0("C", C +  3, "H", C*2 - (2*db) +  4, "O5"),
     
