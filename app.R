@@ -1046,6 +1046,24 @@ server <- function(input, output) {
       if(input$sn1 == input$sn2){
         sps <- sps[c(1,3),]
       }
+    } else if(input$class == "AI"){ ## AI ----
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
+      sps <- data.frame(
+        mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M-H]-")),        
+        i = 100,
+        ad = "[M-H-hexose]-"
+      )
+    } else if(input$class == "AGI"){ ## AI ----
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M-H]-")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5C6H10O5")), "[M-H]-"))
+               ),        
+        i = c(30, 100),
+        ad = c("[M-H-hexose]-", "[M-H-2(hexose)]-")
+      )
     } 
     if(exists("sps")){
       sps$mz <- as.numeric(sps$mz)
