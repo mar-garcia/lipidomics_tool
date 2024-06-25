@@ -358,11 +358,22 @@ server <- function(input, output) {
         i = 100,
         ad = "[M+H-C3H9N]+"
       )
-    } else if(input$class == "Cer"){ ## Cer ----
+    } else if(input$class %in% c("Cer")){ ## Cer ----
       sps <- data.frame(
-        mz = as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
-        i = 100,
-        ad = "[M+H-H2O]+"
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OH2O")), "[M+H]+"))
+               ),
+        i = c(100, 50),
+        ad = c("[M+H-H2O]+", "[M+H-2(H2O)]+")
+      )
+    } else if(input$class %in% c("SM")){ ## SM ----
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(fml), "[M+H-H2O]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OC3H9N")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OC3H9NC2H5O4P")), "[M+H]+"))
+                          ),
+        i = c(100, 80, 60),
+        ad = c("[M+H-H2O]+", "[M+H-H2O-C3H9N]+", "[M+H-H2O-C3H9N-C2H5O4P]+")
       )
     } else if(input$class %in% c("HexCer", "HexCer;O3", "HexCer;O4")){ ## HexCer ----
       fml <- fml_maker(input$class, input$C, input$db)
