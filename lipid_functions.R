@@ -1,4 +1,4 @@
-fml_maker <- function(class, C, db){
+fml_maker <- function(class, C = 0, db = 0, M = 0){
   case_when(
     # 1 FA chain -----------------------------------------------------------
     class == "FA" ~ paste0("C", C, "H", C*2 - (2*db), "O2"),
@@ -42,9 +42,9 @@ fml_maker <- function(class, C, db){
     
     class == "DGGA" ~ paste0("C", C + 9, "H", C*2 - (2*db) + 12, "O11"),
     
-    class == "AI" ~ paste0("C", C + 19, "H", C*2 - (2*db) + 39, "O11P"),
-    class == "AGI" ~ paste0("C", C + 25, "H", C*2 - (2*db) + 49, "O16P"),
-    class == "ARC" ~ paste0("C", C + 13, "H", C*2 - (2*db) + 28, "O3"),
+    class == "AI"  ~ paste0("C", 5*M +  9, "H", 10*M - (2*db) + 19, "O11P"),
+    class == "AGI" ~ paste0("C", 5*M + 15, "H", 10*M - (2*db) + 29, "O16P"),
+    class == "ARC" ~ paste0("C", 5*M +  3, "H", 10*M - (2*db) +  8, "O3"),
 
     class == "DG"   ~ paste0("C", C +  3, "H", C*2 - (2*db) +  4, "O5"),
     

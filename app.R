@@ -48,6 +48,10 @@ idx <- which(cmps_db$class %in% c("pHexFA", "CAR",
                                   "LPC", "PC", "MGDG", "DGDG", "DGTS"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 
+idx <- which(cmps_db$class %in% c("ARC", "AI", "AGI"))
+if(length(idx) > 0){
+  cmps_db$name[idx] <- paste0(cmps_db$class[idx], " ", cmps_db$M[idx]*4, ":", cmps_db$db[idx])
+}
 
 
 mz_calculator <- function(class, fml){
@@ -334,11 +338,19 @@ ui <- navbarPage(
 server <- function(input, output) {
   
   output$formula <- renderPrint({
-    fml_maker(input$class, input$C, input$db)
+    if(input$class %in% c("ARC", "AI", "AGI")){
+      fml_maker(input$class, M = input$C/4, db = input$db)
+    } else {
+      fml_maker(input$class, input$C, input$db)
+    }
   })
   
   output$mzvals <- renderPrint({
-    fml <- fml_maker(input$class, input$C, input$db)
+    if(input$class %in% c("ARC", "AI", "AGI")){
+      fml <- fml_maker(input$class, M = input$C/4, db = input$db)
+    } else {
+      fml <- fml_maker(input$class, input$C, input$db)
+    }
     mz_calculator(input$class, fml)
   })
   
@@ -1047,7 +1059,7 @@ server <- function(input, output) {
         sps <- sps[c(1,3),]
       }
     } else if(input$class == "AI"){ ## AI ----
-      fml <- fml_maker(input$class, input$C, input$db)
+      fml <- fml_maker(input$class, M = input$C/4, db = input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
       sps <- data.frame(
         mz = as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M-H]-")),        
@@ -1055,7 +1067,7 @@ server <- function(input, output) {
         ad = "[M-H-hexose]-"
       )
     } else if(input$class == "AGI"){ ## AI ----
-      fml <- fml_maker(input$class, input$C, input$db)
+      fml <- fml_maker(input$class, M = input$C/4, db = input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
       sps <- data.frame(
         mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "C6H10O5")), "[M-H]-")),
