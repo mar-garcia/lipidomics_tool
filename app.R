@@ -24,7 +24,7 @@ source("lipid_functions.R")
 load("lipid_workspace.RData")
 
 cmps_db$pos <- cmps_db$neg <- NA
-idx <- which(cmps_db$class %in% c("FA", "CAR", 
+idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4", "CAR", 
                                   "SM", "Cer", "Cer;O3", "Cer;O4", 
                                   "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
                                   "LPC", "LPE", "LPS", "PC", "PE", "PS",
@@ -37,7 +37,7 @@ idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+NH4]+")
 idx <- which(cmps_db$class %in% c("pHexFA"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+Na]+")
-idx <- which(cmps_db$class %in% c("FA", "LPA", "LPE", "LPG", "LPI", "LPS", 
+idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4", "LPA", "LPE", "LPG", "LPI", "LPS", 
                                   "PA", "mPA", "dmPA", "PE", "PG", "PI", "PS", 
                                   "MG", "DG", "TG", "TG;O2", "DGGA", "SQDG",
                                   "AI", "AGI", "ARC"))
@@ -55,9 +55,11 @@ if(length(idx) > 0){
 
 
 mz_calculator <- function(class, fml){
-  if(class == "FA"){
+  if(class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4")){
     mass2mz(calculateMass(fml), c("[M-H]-"))
-  } else if(class %in% c("MG", "DG", "TG")){
+  } else if(class %in% c("MG")){
+    mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
+  } else if(class %in% c("DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
   } else if(class %in% c("LPE", "LPS", "PE", "PS",
                          "AI", "AGI", "ARC")){
@@ -201,8 +203,12 @@ ui <- navbarPage(
     "Main Panel",
     column(6, h3("Formula"),
            fluidRow(
-             column(2, selectInput(inputId = "class", label = "Lipid class:",
+             column(2, selectInput(inputId = "class", label = "Lipid class:", selectize=TRUE,
                                    choices = list("FA" = "FA",
+                                                  "FA;O" = "FA;O",
+                                                  "FA;O2" = "FA;O2",
+                                                  "FA;O3" = "FA;O3",
+                                                  "FA;O4" = "FA;O4",
                                                   "pHexFA" = "pHexFA",
                                                   "CAR" = "CAR", 
                                                   "SM" = "SM",
@@ -214,18 +220,18 @@ ui <- navbarPage(
                                                   "HexCer;O4" = "HexCer;O4",
                                                   "LactCer" = "LactCer",
                                                   "LPA" = "LPA",
-                                                  "LPC" = "LPC",
-                                                  "LPE" = "LPE",
-                                                  "LPG" = "LPG",
-                                                  "LPI" = "LPI",
-                                                  "LPS" = "LPS",
                                                   "PA" = "PA",
                                                   "mPA" = "mPA",
                                                   "dmPA" = "dmPA",
+                                                  "LPC" = "LPC",
                                                   "PC" = "PC",
+                                                  "LPE" = "LPE",
                                                   "PE" = "PE",
+                                                  "LPG" = "LPG",
                                                   "PG" = "PG",
+                                                  "LPI" = "LPI",
                                                   "PI" = "PI",
+                                                  "LPS" = "LPS",
                                                   "PS" = "PS",
                                                   "MGDG" = "MGDG",
                                                   "DGDG" = "DGDG",

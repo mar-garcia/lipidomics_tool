@@ -2,6 +2,10 @@ fml_maker <- function(class, C = 0, db = 0, M = 0){
   case_when(
     # 1 FA chain -----------------------------------------------------------
     class == "FA" ~ paste0("C", C, "H", C*2 - (2*db), "O2"),
+    class == "FA;O" ~ paste0("C", C, "H", C*2 - (2*db), "O3"),
+    class == "FA;O2" ~ paste0("C", C, "H", C*2 - (2*db), "O4"),
+    class == "FA;O3" ~ paste0("C", C, "H", C*2 - (2*db), "O5"),
+    class == "FA;O4" ~ paste0("C", C, "H", C*2 - (2*db), "O6"),
     class == "pHexFA" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "O7"),
     class == "pPentFA"~ paste0("C", C + 5, "H", C*2 - (2*db) + 10, "O6"),
     class == "CAR" ~ paste0("C", C + 7, "H", C*2 - (2*db) + 13, "NO4"),
