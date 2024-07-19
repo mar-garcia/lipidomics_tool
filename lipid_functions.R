@@ -3,7 +3,7 @@ fml_maker <- function(class, C = 0, db = 0, M = 0){
     # 1 FA chain -----------------------------------------------------------
     class == "FA" ~ paste0("C", C, "H", C*2 - (2*db), "O2"),
     class == "FA;O" ~ paste0("C", C, "H", C*2 - (2*db), "O3"),
-    class == "FA;O2" ~ paste0("C", C, "H", C*2 - (2*db), "O4"),
+    class == "FA;COOH" ~ paste0("C", C, "H", C*2 - 2 - (2*db), "O4"),
     class == "FA;O3" ~ paste0("C", C, "H", C*2 - (2*db), "O5"),
     class == "FA;O4" ~ paste0("C", C, "H", C*2 - (2*db), "O6"),
     class == "pHexFA" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "O7"),

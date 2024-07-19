@@ -24,7 +24,7 @@ source("lipid_functions.R")
 load("lipid_workspace.RData")
 
 cmps_db$pos <- cmps_db$neg <- NA
-idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4", "CAR", 
+idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;COOH", "FA;O3", "FA;O4", "CAR", 
                                   "SM", "Cer", "Cer;O3", "Cer;O4", 
                                   "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
                                   "LPC", "LPE", "LPS", "PC", "PE", "PS",
@@ -37,7 +37,7 @@ idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+NH4]+")
 idx <- which(cmps_db$class %in% c("pHexFA"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+Na]+")
-idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4", "LPA", "LPE", "LPG", "LPI", "LPS", 
+idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;COOH", "FA;O3", "FA;O4", "LPA", "LPE", "LPG", "LPI", "LPS", 
                                   "PA", "mPA", "dmPA", "PE", "PG", "PI", "PS", 
                                   "MG", "DG", "TG", "TG;O2", "DGGA", "SQDG",
                                   "AI", "AGI", "ARC"))
@@ -55,7 +55,7 @@ if(length(idx) > 0){
 
 
 mz_calculator <- function(class, fml){
-  if(class %in% c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4")){
+  if(class %in% c("FA", "FA;O", "FA;COOH", "FA;O3", "FA;O4")){
     mass2mz(calculateMass(fml), c("[M-H]-"))
   } else if(class %in% c("MG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
@@ -206,7 +206,7 @@ ui <- navbarPage(
              column(2, selectInput(inputId = "class", label = "Lipid class:", selectize=TRUE,
                                    choices = list("FA" = "FA",
                                                   "FA;O" = "FA;O",
-                                                  "FA;O2" = "FA;O2",
+                                                  "FA;COOH" = "FA;COOH",
                                                   "FA;O3" = "FA;O3",
                                                   "FA;O4" = "FA;O4",
                                                   "pHexFA" = "pHexFA",
@@ -750,7 +750,17 @@ server <- function(input, output) {
     fml <- fml_maker(input$class, input$C, input$db)
     mz <- mz_calculator(input$class, fml)
     mz <- mz[grep("]\\-", colnames(mz))]
-    if(input$class == "pHexFA"){
+    if(input$class == "FA;COOH"){ # dicarboxylic acids
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M-H]-"))
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M-H]-")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "CH2O3")), "[M-H]-"))
+               ),
+        i = c(100, 50),
+        ad = c("[M-H-H2O]-", "[M-H-H2O-CO2]-")
+      )
+    } else if(input$class == "pHexFA"){
       fml <- fml_maker(input$class, input$C, input$db)
       mz <- as.numeric(mass2mz(calculateMass(fml), "[M+CHO2]-"))
       idx1 <- which(sn$C == input$C & sn$db == input$db)

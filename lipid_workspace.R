@@ -4,7 +4,7 @@ source("lipid_functions.R")
 
 cmps_db <- c()
 
-cls <- c("FA", "FA;O", "FA;O2", "FA;O3", "FA;O4", "pHexFA", "pPentFA", "CAR", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS", 
+cls <- c("FA", "FA;O", "FA;COOH", "FA;O3", "FA;O4", "pHexFA", "pPentFA", "CAR", "LPA", "LPC", "LPE", "LPG", "LPI", "LPS", 
          "DGMG", "MG", "ST", "Glc-ST")
 C <- seq(from = 7, to = 40, by = 1)
 db <- seq(from = 0, to = 6, by = 1)
