@@ -14,6 +14,7 @@ fml_maker <- function(class, C = 0, db = 0, M = 0){
     class == "LPE" ~ paste0("C", C + 5, "H", C*2 - (2*db) + 12, "NO7P"),
     class == "LPG" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 13, "O9P"),
     class == "LPI" ~ paste0("C", C + 9, "H", C*2 - (2*db) + 17, "O12P"),
+    #class == "LPM" ~ paste0("C", C + 4, "H", C*2 - (2*db) + 9, "O7P"), Lysophosphatidylmethanols - RefMet 
     class == "LPS" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "NO9P"),
     class == "DGMG"~ paste0("C", C +15, "H", C*2 - (2*db) + 26, "O14"),
     class == "MG"  ~ paste0("C", C + 3, "H", C*2 - (2*db) +  6, "O4"),
