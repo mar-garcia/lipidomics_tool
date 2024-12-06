@@ -56,16 +56,14 @@ if(length(idx) > 0){
 
 
 mz_calculator <- function(class, fml){
-  if(class %in% c("FA", "FA;O", "FA;COOH", "FA;3OH", "FA;4OH", "FA;6OH")){
-    mass2mz(calculateMass(fml), c("[M-H]-"))
+  if(class %in% c("FA", "FA;O", "FA;3OH", "FA;4OH", "FA;6OH", 
+                  "LPE", "LPS", "PE", "PS", "AI", "AGI", "ARC")){
+    mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
   } else if(class %in% c("MG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+", "[M-H]-"))
   } else if(class %in% c("DG", "TG")){
     mass2mz(calculateMass(fml), c("[M+NH4]+"))
-  } else if(class %in% c("LPE", "LPS", "PE", "PS",
-                         "AI", "AGI", "ARC")){
-    mass2mz(calculateMass(fml), c("[M+H]+", "[M-H]-"))
-  } else if(class %in% c("CAR", "Cer", "Cer;O3", "Cer;O4", 
+  } else if(class %in% c("FA;COOH", "CAR", "Cer", "Cer;O3", "Cer;O4", 
                          "HexCer", "HexCer;O3", "HexCer;O4", "LactCer",
                          "SM", "LPC", "PC", "DGTS")){
     mass2mz(calculateMass(fml), c("[M+H]+", "[M+CHO2]-"))
@@ -287,6 +285,10 @@ ui <- navbarPage(
   ), 
   tabPanel(
     "MS2",
+    fluidRow(
+      numericInput("ppmfrag", "ppm", value = 10),
+      numericInput("dafag", "Da", value = 0.01)
+    ),
     column(6, h2("ESI+"),
            numericInput("posprec", "Precursor", value = 0),
            fluidRow(
@@ -381,6 +383,18 @@ server <- function(input, output) {
         ),
         i = c(50, 100),
         ad = c("[M+H]+", "[M-H-H2O]-")
+      )
+    } else if(input$class == "FA;4OH"){ # FA;4OH ---------------
+      fml <- fml_maker(input$class, input$C, input$db)
+      mz <- as.numeric(mass2mz(calculateMass(fml), "[M+H]+"))
+      sps <- data.frame(
+        mz = c(as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OH2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OH2OH2O")), "[M+H]+")),
+               as.numeric(mass2mz(calculateMass(subtractElements(fml, "H2OH2OH2OH2O")), "[M+H]+"))
+        ),
+        i = c(40, 100, 80, 20),
+        ad = c("[M+H-H2O]+", "[M-H-2(H2O)]-", "[M-H-3(H2O)]-", "[M-H-4(H2O)]-")
       )
     } else if(input$class == "CAR"){## CAR ----
       sps <- data.frame(
@@ -1146,76 +1160,76 @@ server <- function(input, output) {
   
   # ESI+ ----
   output$posfrag1add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag1) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag1, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag1) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag1, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag2add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag2) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag2, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag2) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag2, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag3add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag3) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag3, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag3) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag3, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag4add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag4) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag4, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag4) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag4, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag5add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag5) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag5, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag5) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag5, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   output$posfrag6add <- renderPrint({
-    idx1 <- c(which(abs((input$posprec - input$posfrag6) - mzdif.pos1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$posfrag6, mzdif.pos2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$posprec - input$posfrag6) - mzdif.pos1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$posfrag6, mzdif.pos2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.pos1$add[idx1], mzdif.pos2$add[idx2]))
   })
   
   
   # ESI- -----
   output$negfrag1add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag1, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag1) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag1, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag2add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag2) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag2, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag2) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag2, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag3add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag3, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag3) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag3, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag4add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag4) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag4, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag4) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag4, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag5add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag5) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag5, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag5) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag5, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
   output$negfrag6add <- renderPrint({
-    idx1 <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg1$dif) < 0.01))
-    idx2 <- c(unlist(matchWithPpm(input$negfrag6, mzdif.neg2$dif, ppm = 10)))
+    idx1 <- c(which(abs((input$negprec - input$negfrag6) - mzdif.neg1$dif) < input$dafag))
+    idx2 <- c(unlist(matchWithPpm(input$negfrag6, mzdif.neg2$dif, ppm = input$ppmfrag)))
     unlist(c(mzdif.neg1$add[idx1], mzdif.neg2$add[idx2]))
   })
   
