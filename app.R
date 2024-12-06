@@ -28,7 +28,7 @@ idx <- which(cmps_db$class %in% c("FA", "FA;O", "FA;COOH", "FA;3OH", "FA;4OH", "
                                   "CAR", "SM", "Cer", "Cer;O3", "Cer;O4", 
                                   "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
                                   "LPC", "LPE", "LPS", "PC", "PE", "PS",
-                                  "DGTS",
+                                  "DGTS", "DGCC",
                                   "AI", "AGI", "ARC"))
 cmps_db$pos[idx] <- mass2mz(cmps_db$mass[idx], "[M+H]+")
 idx <- which(cmps_db$class %in% c("LPA", "LPG", "LPI",
@@ -46,7 +46,7 @@ cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M-H]-")
 idx <- which(cmps_db$class %in% c("pHexFA", "CAR", 
                                   "SM", "Cer", "Cer;O3", "Cer;O4", 
                                   "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
-                                  "LPC", "PC", "MGDG", "DGDG", "DGTS"))
+                                  "LPC", "PC", "MGDG", "DGDG", "DGTS", "DGCC"))
 cmps_db$neg[idx] <- mass2mz(cmps_db$mass[idx], "[M+CHO2]-")
 
 idx <- which(cmps_db$class %in% c("ARC", "AI", "AGI"))

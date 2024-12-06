@@ -17,7 +17,7 @@ for(i in cls){
 
 cls <- c("SM", "Cer", "Cer;O3", "Cer;O4", "HexCer", "HexCer;O3", "HexCer;O4", "LactCer", 
          "PA", "mPA", "dmPA", "PC", "PE", "PG", "PI", "PS", 
-         "MGDG", "DGDG", "SQDG", "DGTS", "DGGA", "DG")
+         "MGDG", "DGDG", "SQDG", "DGTS", "DGCC", "DGGA", "DG")
 C <- seq(from = 12*2, to = 28*2, by = 1)
 db <- seq(from = 0, to = 6*2, by = 1)
 sn <-  paste(expand.grid(C, db)[,"Var1"], expand.grid(C, db)[,"Var2"], 
