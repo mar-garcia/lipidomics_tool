@@ -9,6 +9,7 @@ fml_maker <- function(class, C = 0, db = 0, M = 0){
     class == "FA;6OH" ~ paste0("C", C, "H", C*2 - (2*db), "O8"),
     class == "pHexFA" ~ paste0("C", C + 6, "H", C*2 - (2*db) + 12, "O7"),
     class == "pPentFA"~ paste0("C", C + 5, "H", C*2 - (2*db) + 10, "O6"),
+    class == "DTFA" ~ paste0("C", C + 20, "H", C*2 - (2*db) + 32, "O2"), #diterpenoid fatty acid 
     class == "CAR" ~ paste0("C", C + 7, "H", C*2 - (2*db) + 13, "NO4"),
     class == "LPA" ~ paste0("C", C + 3, "H", C*2 - (2*db) + 7, "O7P"),
     class == "LPC" ~ paste0("C", C + 8, "H", C*2 - (2*db) + 18, "NO7P"),
